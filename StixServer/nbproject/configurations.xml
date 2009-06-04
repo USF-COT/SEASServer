@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>config.h</itemPath>
       <itemPath>MINISEASPROTO.h</itemPath>
+      <itemPath>protocol.h</itemPath>
       <itemPath>requestdispatch.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -51,6 +52,9 @@
       <item path="main.c">
         <itemTool>0</itemTool>
       </item>
+      <item path="protocol.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="requestdispatch.c">
         <itemTool>0</itemTool>
       </item>
@@ -89,6 +93,9 @@
         <itemTool>0</itemTool>
       </item>
       <item path="main.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="protocol.h">
         <itemTool>0</itemTool>
       </item>
       <item path="requestdispatch.c">
