@@ -53,7 +53,7 @@ int main(){
   printf("Daemon started.  Writing all further notices to daemon log: /var/log/daemon.log\n");
 
   /* Open Log File Here */
-  openlog("DTEST",LOG_PID,LOG_DAEMON);
+  openlog("STIXSERVER",LOG_PID,LOG_DAEMON);
   syslog(LOG_DAEMON||LOG_INFO,"Daemon Started.");
 
   /* Open Config File Here */
@@ -105,8 +105,8 @@ int main(){
     exit(EXIT_FAILURE);
   }
 
-
   while(1){
+    syslog(LOG_DAEMON||LOG_INFO,"Listening for connection on port %i", port);
     /* Wait for TCP/IP Connection */
     if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
         syslog(LOG_DAEMON||LOG_ERR,"Unable to call accept() on socket. Daemon Terminated.");
@@ -114,7 +114,12 @@ int main(){
     }
 
     /* Spawn a POSIX Server Thread to Handle Connected Socket */
-    
+    syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
+    if ( close(conn_s) < 0 ) {
+        syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
+        exit(EXIT_FAILURE);
+    }
+    syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
   }
   
 
