@@ -31,6 +31,8 @@
 #define NUM_THREADS 10
 #define MAXBUF 512
 
+pthread_t threads[NUM_THREADS];
+
 void* handleConnection(void* conn_s){
     int* connection = (int *)conn_s;
     char buffer[MAXBUF];
@@ -46,6 +48,7 @@ void* handleConnection(void* conn_s){
         exit(EXIT_FAILURE);
     }
     syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
+    pthread_exit(NULL);
 }
 
 int main(){
@@ -54,7 +57,6 @@ int main(){
   int       conn_s;                /*  connection socket         */
   short int port = 1994;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
-  pthread_t threads[NUM_THREADS];
   int i,availableThreadID;
 
 
@@ -127,8 +129,7 @@ int main(){
     exit(EXIT_FAILURE);
   }
 
-  /* Init Threads Array */
-  for(i = 0; i < NUM_THREADS; i++)
+  for(i=0; i < NUM_THREADS; i++)
       threads[i] = -1;
 
   while(1){
@@ -141,26 +142,7 @@ int main(){
 
     /* Spawn a POSIX Server Thread to Handle Connected Socket */
     syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
-    /* Find next available thread */
-    for(i=0; i < NUM_THREADS; i++){
-        if(threads[i] == -1){
-            availableThreadID = i;
-            break;
-        }
-        availableThreadID = -1;
-    }
-
-    if(availableThreadID == -1){
-        syslog(LOG_DAEMON||LOG_ERR,"No thread available to handle client connection.  Closing connection and continuing to listen for other clients.");
-        if ( close(conn_s) < 0 ) {
-            syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
-            exit(EXIT_FAILURE);
-        }
-        continue;
-    }
-    else{
-        pthread_create(&threads[availableThreadID],NULL,handleConnection, (void*)&conn_s);
-    }
+    pthread_create(NULL,NULL,handleConnection, (void*)&conn_s);
   }
   
 
