@@ -16,6 +16,13 @@
 extern "C" {
 #endif
 
+#include "../../../GUI/Source/GUI protocol.h"
+
+
+    typedef struct SYSTEMSTATUS{
+        
+    }systemStatus;
+
 char readConfig(char* path);
 
 #ifdef	__cplusplus

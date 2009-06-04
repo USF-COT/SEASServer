@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>config.h</itemPath>
+      <itemPath>../../../GUI/Source/GUI protocol.h</itemPath>
       <itemPath>MINISEASPROTO.h</itemPath>
       <itemPath>protocol.h</itemPath>
       <itemPath>requestdispatch.h</itemPath>
@@ -40,6 +41,9 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="../../../GUI/Source/GUI protocol.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="MINISEASPROTO.h">
         <itemTool>0</itemTool>
       </item>
@@ -83,6 +87,9 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="../../../GUI/Source/GUI protocol.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="MINISEASPROTO.h">
         <itemTool>0</itemTool>
       </item>

@@ -22,9 +22,9 @@ char readConfig(char* path){
 
         if(strncmp("PUMPCTRL",configPrefix,MAXCONFIGPREFIX) == 0){
             if(strncmp("ON",configSuffix,MAXCONFIGSUFFIX) == 0){
-
+                
             }
         }
     }
-
+    return 1;
 }
