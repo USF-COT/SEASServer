@@ -28,6 +28,25 @@
 #include <pthread.h>
 
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
+#define NUM_THREADS 10
+#define MAXBUF 512
+
+void* handleConnection(void* conn_s){
+    int* connection = (int *)conn_s;
+    char buffer[MAXBUF];
+
+    /*
+    while(recv(*connection,buffer,MAXBUF,0) > 0){
+        
+    }
+    */
+
+    if ( close(*connection) < 0 ) {
+        syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
+        exit(EXIT_FAILURE);
+    }
+    syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
+}
 
 int main(){
   pid_t pid, sid;
@@ -35,6 +54,9 @@ int main(){
   int       conn_s;                /*  connection socket         */
   short int port = 1994;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
+  pthread_t threads[NUM_THREADS];
+  int i,availableThreadID;
+
 
 
   /* Fork off the parent process */
@@ -100,10 +122,14 @@ int main(){
     exit(EXIT_FAILURE);
   }
 
-  if ( listen(list_s, 128) < 0 ) {
+  if ( listen(list_s, NUM_THREADS) < 0 ) {
     syslog(LOG_DAEMON||LOG_ERR,"Unable to listen on socket. Daemon Terminated.");
     exit(EXIT_FAILURE);
   }
+
+  /* Init Threads Array */
+  for(i = 0; i < NUM_THREADS; i++)
+      threads[i] = -1;
 
   while(1){
     syslog(LOG_DAEMON||LOG_INFO,"Listening for connection on port %i", port);
@@ -115,11 +141,26 @@ int main(){
 
     /* Spawn a POSIX Server Thread to Handle Connected Socket */
     syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
-    if ( close(conn_s) < 0 ) {
-        syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
-        exit(EXIT_FAILURE);
+    /* Find next available thread */
+    for(i=0; i < NUM_THREADS; i++){
+        if(threads[i] == -1){
+            availableThreadID = i;
+            break;
+        }
+        availableThreadID = -1;
     }
-    syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
+
+    if(availableThreadID == -1){
+        syslog(LOG_DAEMON||LOG_ERR,"No thread available to handle client connection.  Closing connection and continuing to listen for other clients.");
+        if ( close(conn_s) < 0 ) {
+            syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
+            exit(EXIT_FAILURE);
+        }
+        continue;
+    }
+    else{
+        pthread_create(&threads[availableThreadID],NULL,handleConnection, (void*)&conn_s);
+    }
   }
   
 
