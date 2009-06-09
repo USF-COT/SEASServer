@@ -45,11 +45,12 @@ void* handleConnection(void* info){
     int* connection = &((threadInfo*)info)->socket_connection;
     char buffer[MAXBUF];
 
-    /*
+    
     while(recv(*connection,buffer,MAXBUF,0) > 0){
+        syslog(LOG_DAEMON||LOG_INFO,"Received: %s",buffer);
         
     }
-    */
+    
 
     if ( close(*connection) < 0 ) {
         syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
