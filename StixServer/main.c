@@ -27,14 +27,22 @@
 #include <string.h>
 #include <pthread.h>
 
-#define CONFIGPATH "/media/card/StixServerConfig.txt"
+#define CONFIGPATH "/media/card/StixServ    erConfig.txt"
 #define NUM_THREADS 10
 #define MAXBUF 512
 
-pthread_t threads[NUM_THREADS];
+typedef enum {UNAVAILABLE,AVAILABLE}AVAILABILITY;
 
-void* handleConnection(void* conn_s){
-    int* connection = (int *)conn_s;
+pthread_t thread_bin[NUM_THREADS];
+AVAILABILITY thread_bin_available[NUM_THREADS];
+
+typedef struct THREADINFO{
+    unsigned short thread_bin_index;
+    int socket_connection;
+}threadInfo;
+
+void* handleConnection(void* info){
+    int* connection = &((threadInfo*)info)->socket_connection;
     char buffer[MAXBUF];
 
     /*
@@ -48,6 +56,8 @@ void* handleConnection(void* conn_s){
         exit(EXIT_FAILURE);
     }
     syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
+    thread_bin_available[((threadInfo*)info)->thread_bin_index] = AVAILABLE;
+    free(info);
     pthread_exit(NULL);
 }
 
@@ -58,6 +68,7 @@ int main(){
   short int port = 1994;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
   int i,availableThreadID;
+  threadInfo* info;
 
 
 
@@ -130,7 +141,7 @@ int main(){
   }
 
   for(i=0; i < NUM_THREADS; i++)
-      threads[i] = -1;
+      thread_bin_available[i] = AVAILABLE;
 
   while(1){
     syslog(LOG_DAEMON||LOG_INFO,"Listening for connection on port %i", port);
@@ -141,8 +152,22 @@ int main(){
     }
 
     /* Spawn a POSIX Server Thread to Handle Connected Socket */
-    syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
-    pthread_create(NULL,NULL,handleConnection, (void*)&conn_s);
+    for(i=0; i < NUM_THREADS; i++){
+        if(thread_bin_available[i]){
+            thread_bin_available[i] = UNAVAILABLE;
+            syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
+            info = malloc(sizeof(threadInfo));
+            info->socket_connection = conn_s;
+            info->thread_bin_index = i;
+            pthread_create(&thread_bin[i],NULL,handleConnection, (void*)info);
+            break;
+        }
+    }
+
+    if(i > NUM_THREADS){
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to create thread to handle connection.  Continuing...");
+    }
+    
   }
   
 
