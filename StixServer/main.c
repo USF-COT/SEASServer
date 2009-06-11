@@ -26,8 +26,9 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include "parseGUI.h"
 
-#define CONFIGPATH "/media/card/StixServ    erConfig.txt"
+#define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define NUM_THREADS 10
 #define MAXBUF 512
 
@@ -48,9 +49,8 @@ void* handleConnection(void* info){
     
     while(recv(*connection,buffer,MAXBUF,0) > 0){
         syslog(LOG_DAEMON||LOG_INFO,"Received: %s",buffer);
-        
+        //parseGUI(buffer);
     }
-    
 
     if ( close(*connection) < 0 ) {
         syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
@@ -66,12 +66,10 @@ int main(){
   pid_t pid, sid;
   int       list_s;                /*  listening socket          */
   int       conn_s;                /*  connection socket         */
-  short int port = 1994;                  /*  port number               */
+  short int port = 1995;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
   int i,availableThreadID;
   threadInfo* info;
-
-
 
   /* Fork off the parent process */
   pid = fork();

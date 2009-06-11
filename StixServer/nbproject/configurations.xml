@@ -7,8 +7,9 @@
       <itemPath>config.h</itemPath>
       <itemPath>../../../GUI/Source/GUI protocol.h</itemPath>
       <itemPath>MINISEASPROTO.h</itemPath>
+      <itemPath>parseGUI.h</itemPath>
       <itemPath>protocol.h</itemPath>
-      <itemPath>requestdispatch.h</itemPath>
+      <itemPath>SEASStatus.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -19,7 +20,7 @@
                    projectFiles="true">
       <itemPath>config.c</itemPath>
       <itemPath>main.c</itemPath>
-      <itemPath>requestdispatch.c</itemPath>
+      <itemPath>parseGUI.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -37,6 +38,9 @@
       </toolsSet>
       <compileType>
         <linkerTool>
+          <linkerAddLib>
+            <directoryPath>../USB4000Gum</directoryPath>
+          </linkerAddLib>
           <linkerLibItems>
             <linkerLibStdlibItem>PosixThreads</linkerLibStdlibItem>
           </linkerLibItems>
@@ -48,6 +52,9 @@
       <item path="MINISEASPROTO.h">
         <itemTool>0</itemTool>
       </item>
+      <item path="SEASStatus.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="config.c">
         <itemTool>0</itemTool>
       </item>
@@ -57,13 +64,13 @@
       <item path="main.c">
         <itemTool>0</itemTool>
       </item>
+      <item path="parseGUI.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="parseGUI.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="protocol.h">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="requestdispatch.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="requestdispatch.h">
         <itemTool>0</itemTool>
       </item>
     </conf>
@@ -94,6 +101,9 @@
       <item path="MINISEASPROTO.h">
         <itemTool>0</itemTool>
       </item>
+      <item path="SEASStatus.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="config.c">
         <itemTool>0</itemTool>
       </item>
@@ -103,13 +113,13 @@
       <item path="main.c">
         <itemTool>0</itemTool>
       </item>
+      <item path="parseGUI.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="parseGUI.h">
+        <itemTool>0</itemTool>
+      </item>
       <item path="protocol.h">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="requestdispatch.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="requestdispatch.h">
         <itemTool>0</itemTool>
       </item>
     </conf>

@@ -30,7 +30,7 @@ OBJECTDIR=build/Release/${PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/config.o \
 	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/requestdispatch.o
+	${OBJECTDIR}/parseGUI.o
 
 # C Compiler Flags
 CFLAGS=
@@ -53,30 +53,45 @@ dist/Release/${PLATFORM}/stixserver: ${OBJECTFILES}
 	${MKDIR} -p dist/Release/${PLATFORM}
 	${LINK.c} -o dist/Release/${PLATFORM}/stixserver ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
-${OBJECTDIR}/requestdispatch.h.gch: requestdispatch.h 
+${OBJECTDIR}/_ext/home/seraph/NetBeansProjects/MiniSEAS/Gumstix/Source/StixServer/../../../GUI/Source/GUI_protocol.h.gch: ../../../GUI/Source/GUI\ protocol.h 
+	${MKDIR} -p ${OBJECTDIR}/_ext/home/seraph/NetBeansProjects/MiniSEAS/Gumstix/Source/StixServer/../../../GUI/Source
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ ../../../GUI/Source/GUI\ protocol.h
+
+${OBJECTDIR}/protocol.h.gch: protocol.h 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ requestdispatch.h
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ protocol.h
 
 ${OBJECTDIR}/config.o: config.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/config.o config.c
 
+${OBJECTDIR}/SEASStatus.h.gch: SEASStatus.h 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ SEASStatus.h
+
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
 
-${OBJECTDIR}/requestdispatch.o: requestdispatch.c 
+${OBJECTDIR}/parseGUI.h.gch: parseGUI.h 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/requestdispatch.o requestdispatch.c
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ parseGUI.h
 
 ${OBJECTDIR}/config.h.gch: config.h 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o $@ config.h
+
+${OBJECTDIR}/parseGUI.o: parseGUI.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/parseGUI.o parseGUI.c
 
 ${OBJECTDIR}/MINISEASPROTO.h.gch: MINISEASPROTO.h 
 	${MKDIR} -p ${OBJECTDIR}

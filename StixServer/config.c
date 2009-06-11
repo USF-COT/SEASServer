@@ -1,5 +1,4 @@
 #include "config.h"
-#include "requestdispatch.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -9,7 +8,7 @@ char readConfig(char* path){
     char configLine[MAXCONFIGLINE];
     char configPrefix[MAXCONFIGPREFIX];
     char configSuffix[MAXCONFIGSUFFIX];
-    char request[MAXREQUEST];
+    char request[MAXCONFIGLINE];
 
     if(access(path,R_OK||W_OK)){
         return 0; // Do not have access to file
