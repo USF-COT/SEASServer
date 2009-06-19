@@ -64,7 +64,7 @@ typedef struct SPECTROMETER{
 }spectrometer;
 
 // Device Connectivity
-spectrometer* openUSB4000();
+spectrometer* openUSB4000(char* serialNumber);
 BOOL isConnected(spectrometer* USB4000);
 STATUS closeUSB4000(spectrometer* USB4000);
 
