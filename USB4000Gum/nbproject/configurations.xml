@@ -24,21 +24,15 @@
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="Debug" type="1">
+    <conf name="Debug" type="3">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
         <platform>2</platform>
       </toolsSet>
       <compileType>
-        <linkerTool>
-          <linkerAddLib>
-            <directoryPath>-L libusb</directoryPath>
-          </linkerAddLib>
-          <linkerLibItems>
-            <linkerLibLibItem>usb</linkerLibLibItem>
-          </linkerLibItems>
-        </linkerTool>
+        <archiverTool>
+        </archiverTool>
       </compileType>
       <item path="source/USB4000Gum.c">
         <itemTool>0</itemTool>

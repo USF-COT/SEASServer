@@ -5,6 +5,9 @@
 *                Provides connection to the device, and data collection functions.
 */
 
+#ifndef _USB4000GUM_H
+#define _USB4000GUM_H
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -100,5 +103,5 @@ void printStatus(spectrometer* USB4000);
 STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
 
-
+#endif
 
