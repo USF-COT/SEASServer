@@ -26,7 +26,6 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
-#include "parseGUI.h"
 
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define NUM_THREADS 10
@@ -44,19 +43,31 @@ typedef struct THREADINFO{
 
 void* handleConnection(void* info){
     int* connection = &((threadInfo*)info)->socket_connection;
-    char buffer[MAXBUF];
+    char buffer[MAXBUF+1];
+    char hexString[3*MAXBUF+10];
+    char hexBuf[4];
+    int i,j;
+    int numBytesReceived;    
 
-    
-    while(recv(*connection,buffer,MAXBUF,0) > 0){
-        syslog(LOG_DAEMON||LOG_INFO,"Received: %s",buffer);
-        //parseGUI(buffer);
+    numBytesReceived = recv(*connection,buffer,MAXBUF,0);
+    while(numBytesReceived > 0){
+	hexString[0] = '\0';
+	hexBuf[0] = '\0';
+        for(i=0; i<numBytesReceived;i++){
+		snprintf(hexBuf,4,"%02X ",buffer[i]);
+		strncat(hexString,hexBuf,4);	
+	}
+        syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
+
+	//parseGUI(buffer);
+        numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     }
 
     if ( close(*connection) < 0 ) {
-        syslog(LOG_DAEMON||LOG_ERR,"Error calling close() on connection socket. Daemon Terminated.");
+        syslog(LOG_DAEMON||LOG_ERR,"(Thread %i)Error calling close() on connection socket. Daemon Terminated.",((threadInfo*)info)->thread_bin_index);
         exit(EXIT_FAILURE);
     }
-    syslog(LOG_DAEMON||LOG_INFO,"Connected Socket Closed.");
+    syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Connected Socket Closed.",((threadInfo*)info)->thread_bin_index);
     thread_bin_available[((threadInfo*)info)->thread_bin_index] = AVAILABLE;
     free(info);
     pthread_exit(NULL);
