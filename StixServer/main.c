@@ -60,6 +60,7 @@ void* handleConnection(void* info){
         syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
 
 	//parseGUI(buffer);
+
         numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     }
 
