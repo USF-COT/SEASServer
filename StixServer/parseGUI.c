@@ -24,19 +24,11 @@ void parseGUI(char* command){
             break;
         case SVS:
             break;
-        case SAW:
-            break;
-        case SNW:
-            break;
         case RFS:
+
             break;
-        case RWL:
-            break;
-        case SIT:
-            break;
-        case SBX:
-            break;
-        case SSA:
+        case RCD:
+            
             break;
         case EXM:
             break;
