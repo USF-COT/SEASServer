@@ -26,10 +26,12 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include "parseGUI.h"
 
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define NUM_THREADS 10
 #define MAXBUF 512
+#define DEBUG 1
 
 typedef enum {UNAVAILABLE,AVAILABLE}AVAILABILITY;
 
@@ -46,11 +48,13 @@ void* handleConnection(void* info){
     char buffer[MAXBUF+1];
     char hexString[3*MAXBUF+10];
     char hexBuf[4];
+    GUIresponse* response;
     int i,j;
     int numBytesReceived;    
 
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     while(numBytesReceived > 0){
+#ifdef DEBUG
 	hexString[0] = '\0';
 	hexBuf[0] = '\0';
         for(i=0; i<numBytesReceived;i++){
@@ -58,8 +62,24 @@ void* handleConnection(void* info){
 		strncat(hexString,hexBuf,4);	
 	}
         syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
+#endif
 
-	//parseGUI(buffer);
+	response = parseGUI(buffer);
+        if(response){
+#ifdef DEBUG
+            hexString[0] = '\0';
+            hexBuf[0] = '\0';
+            for(i=0; i < MAXBUF*3 && i < response->length; i++){
+                snprintf(hexBuf,4,"%02X ",((char*)response->response)[i]);
+                strncat(hexString,hexBuf,4);
+            }
+            syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,i,hexString);
+#endif
+            send(*connection,response->response,response->length,0);
+            freeResponse(response);
+        }
+        else
+            syslog(LOG_DAEMON||LOG_ERR,"Unknown command sent.  Unable to handle request.  Continuing...");
 
         numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     }
@@ -138,6 +158,9 @@ int main(){
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servaddr.sin_port = htons(port);
 
+  // Connect the USB Spectrometers
+  connectSpectrometers("USB4F02572","blah");
+
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */
 
@@ -181,7 +204,8 @@ int main(){
     
   }
   
-
+  // Disconnect Spectrometers
+  disconnectSpectrometers();
   syslog(LOG_DAEMON||LOG_INFO,"Daemon Exited.");
   exit(EXIT_SUCCESS);
 

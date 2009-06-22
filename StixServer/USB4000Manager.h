@@ -4,27 +4,24 @@
  * By: Michael Lindemuth
  */
 
-#ifndef _USB4000MANAGER_H
-#define _USB4000MANAGER_H
-
 #include <stdio.h>
 #include <pthread.h>
-#include "USB4000.h"
+#include <sys/syslog.h>
+#include "USB4000Gum.h"
+
+#ifndef _USB4000MANAGER_H
+#define _USB4000MANAGER_H
 
 #define CONNECTED 1
 #define DISCONNECTED 0
 #define CONNECT_OK 1
 #define CONNECT_ERR 0
 
-spectrometer* spectrometers[2];
-char connected = DISCONNECTED;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-int connect(char* serialNumber1, char* serialNumber2);
+int connectSpectrometers(char* serialNumber1, char* serialNumber2);
 
 calibrationCoefficients* getCalCos(char specNumber);
-specSample* getSpecSample(char specNumber);
+specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 
-int disconnect();
+int disconnectSpectrometers();
 
 #endif

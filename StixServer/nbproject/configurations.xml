@@ -41,7 +41,7 @@
       <compileType>
         <cCompilerTool>
           <includeDirectories>
-            <directoryPath>../../../../USB4000Lib</directoryPath>
+            <directoryPath>../USB4000Gum/source</directoryPath>
           </includeDirectories>
         </cCompilerTool>
         <linkerTool>

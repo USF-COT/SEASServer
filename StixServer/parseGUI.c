@@ -1,6 +1,8 @@
 #include "parseGUI.h"
 
-void parseGUI(char* command){
+GUIresponse* parseGUI(char* command){
+    GUIresponse* response = NULL;
+
     switch(command[0]){
         case STM:
             break;
@@ -25,10 +27,12 @@ void parseGUI(char* command){
         case SVS:
             break;
         case RFS:
-
+            response->response = (void *)getSpecSample(0,10,100);
+            response->length = sizeof(specSample);
             break;
         case RCD:
-            
+            response->response = (void *)getCalCos(0);
+            response->length = sizeof(calibrationCoefficients);
             break;
         case EXM:
             break;
@@ -64,5 +68,13 @@ void parseGUI(char* command){
             break;
         case RVS:
             break;
+    }
+    return response;
+}
+
+void freeResponse(GUIresponse* response){
+    if(response){
+        free(response->response);
+        free(response);
     }
 }

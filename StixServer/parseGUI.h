@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../../GUI/Source/GUI protocol.h"
+#include "USB4000Manager.h"
 
 #ifndef _PARSEGUI_H
 #define	_PARSEGUI_H
@@ -16,7 +17,13 @@
 extern "C" {
 #endif
 
-    void parseGUI(char* command);
+    typedef struct GUIRESPONSE{
+        void* response;
+        unsigned int length;
+    }GUIresponse;
+
+    GUIresponse* parseGUI(char* command);
+    void freeResponse(GUIresponse* response);
 
 #ifdef	__cplusplus
 }
