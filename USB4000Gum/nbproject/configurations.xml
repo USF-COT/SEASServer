@@ -24,15 +24,18 @@
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="Debug" type="3">
+    <conf name="Debug" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
         <platform>2</platform>
       </toolsSet>
       <compileType>
-        <archiverTool>
-        </archiverTool>
+        <linkerTool>
+          <output>dist/Debug/${PLATFORM}/libUSB4000Gum.so</output>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
       <item path="source/USB4000Gum.c">
         <itemTool>0</itemTool>
