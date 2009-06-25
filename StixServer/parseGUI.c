@@ -27,12 +27,18 @@ GUIresponse* parseGUI(char* command){
         case SVS:
             break;
         case RFS:
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
+            response = malloc(sizeof(GUIresponse));
             response->response = (void *)getSpecSample(0,10,100);
             response->length = sizeof(specSample);
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning.");
             break;
         case RCD:
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieving calibration coefficients from USB4000");
+            response = malloc(sizeof(GUIresponse));
             response->response = (void *)getCalCos(0);
             response->length = sizeof(calibrationCoefficients);
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieved calibration coefficients. Returning.");
             break;
         case EXM:
             break;

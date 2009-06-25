@@ -16,7 +16,6 @@
 extern "C" {
 #endif
 
-#include "../../../GUI/Source/GUI protocol.h"
 
 
     typedef struct SYSTEMSTATUS{

@@ -7,7 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../../GUI/Source/GUI protocol.h"
+#include <sys/syslog.h>
+#include "GUI protocol.h"
 #include "USB4000Manager.h"
 
 #ifndef _PARSEGUI_H
