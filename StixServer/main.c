@@ -14,6 +14,8 @@
  * Created on May 29, 2009, 2:40 PM
  */
 
+#define DEBUG 1
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -31,7 +33,6 @@
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define NUM_THREADS 10
 #define MAXBUF 512
-#define DEBUG 1
 
 typedef enum {UNAVAILABLE,AVAILABLE}AVAILABILITY;
 
@@ -73,7 +74,10 @@ void* handleConnection(void* info){
                 snprintf(hexBuf,4,"%02X ",((char*)response->response)[i]);
                 strncat(hexString,hexBuf,4);
             }
-            syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,i,hexString);
+            if(i < MAXBUF*3)
+                syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,response->length,hexString);
+            else
+                syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s...",((threadInfo*)info)->thread_bin_index,response->length,hexString);
 #endif
             send(*connection,response->response,response->length,0);
             freeResponse(response);
@@ -116,7 +120,7 @@ int main(){
 
   umask(0);
 
-  printf("Daemon started.  Writing all further notices to daemon log: /var/log/daemon.log\n");
+  printf("Daemon started.  Writing all further notices to daemon log: /var/log/messages\n");
 
   /* Open Log File Here */
   openlog("STIXSERVER",LOG_PID,LOG_DAEMON);

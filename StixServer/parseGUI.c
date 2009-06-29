@@ -2,6 +2,8 @@
 
 GUIresponse* parseGUI(char* command){
     GUIresponse* response = NULL;
+    specSample* sample = NULL;
+    int i;
 
     switch(command[0]){
         case STM:
@@ -29,9 +31,10 @@ GUIresponse* parseGUI(char* command){
         case RFS:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
-            response->response = (void *)getSpecSample(0,10,100);
-            response->length = sizeof(specSample);
-            syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning.");
+            sample = getSpecSample(0,1,100);
+            response->response = sample->pixels;
+            response->length = sizeof(short)*3840;
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning");
             break;
         case RCD:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving calibration coefficients from USB4000");

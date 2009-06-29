@@ -6,7 +6,6 @@
 */
 
 #include "USB4000Gum.h"
-#define DEBUG
 
 spectrometer* allocateSpec(){
     spectrometer* USB4000 = malloc(sizeof(spectrometer));
@@ -362,7 +361,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     // Setup variables
     numRead = 0;
     if(USB4000->sample != NULL){
-        free(USB4000->sample);
+        deallocateSample(USB4000->sample);
         USB4000->sample = NULL;
     }
     sample = allocateSample(numScansPerSample, USB4000->status->numPixels);
@@ -377,7 +376,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                 numRead += usb_bulk_read(USB4000->usbHandle, EP2IN,response+2048,5633,1000);
             }
             else{
-                numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,1000);
+                numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
