@@ -6,6 +6,7 @@
 */
 
 #include "USB4000Gum.h"
+#define DEBUG
 
 spectrometer* allocateSpec(){
     spectrometer* USB4000 = malloc(sizeof(spectrometer));
@@ -25,7 +26,7 @@ void deallocateSpec(spectrometer* USB4000){
 }
 
 // Device Connectivity
-spectrometer* openUSB4000(char* serialNumber){
+spectrometer* openUSB4000(const char* serialNumber){
     int claimRetVal,interface;
     char* devNumber;
     struct usb_bus *bus;
@@ -62,9 +63,6 @@ spectrometer* openUSB4000(char* serialNumber){
                             // Store USB4000 Serial Number in Struct
                             USB4000->serialNumber = malloc(strlen(serialNumber)*sizeof(char));
                             strncpy(USB4000->serialNumber,serialNumber,strlen(serialNumber));
-
-                            // Get USB4000 Status
-                            updateStatus(USB4000);
 
                             #ifdef DEBUG
                                 fprintf(stderr,"Found and Opened USB4000 with serial number: %s\n",devNumber+2);
@@ -206,12 +204,20 @@ void printStatus(spectrometer* USB4000){
 
 // Command Methods
 STATUS initDevice(spectrometer* USB4000){
-    char command[1];
-    //char response[NUMPIXELS*BYTESPERPIXEL+1]; // 2 bytes per pixel + sync byte
+    char command[2];
+    char response[17];
 
     // Send Initialize Command
     command[0] = 0x01;
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,1,1000);
+
+    // Get Saturation Level
+    command[0] = 0x05;
+    command[1] = 11;
+    usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
+    usb_bulk_read(USB4000->usbHandle,EP1IN,command,17,1000);
+
+    USB4000->saturation_level = ((response[7] & 0x00FF) << 8) | buffer[6];
 
     updateWavelengthCalibrationCoefficients(USB4000);
     updateStatus(USB4000);
@@ -222,11 +228,24 @@ STATUS initDevice(spectrometer* USB4000){
     //scanUSB(response);
 }
 
+void swapBytes(char* bytes, unsigned int numBytes){
+    unsigned int i,j;
+    char temp;
+
+    for(i=0,j=numBytes-1; i < numBytes && i != j; i++,j--){
+        temp = bytes[i];
+        bytes[i] = bytes[j];
+        bytes[j] = temp; 
+    }
+
+}
+
 STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
     char command[5];
 
     command[0] = 0x02;
     memcpy(command+1,&time,4);
+    swapBytes(command+1,4);
 
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,5,1000);
 
@@ -354,9 +373,12 @@ void deallocateSample(specSample* sample){
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){ // 0x09
     specSample* sample;
     char command[1];
+    char EEPROMCommand[] = {0x05,0x11};
+    char EEPROMResponse[17];
     char response[7681];
-    int i,j,numRead;
+    int i,j,k,numRead;
     short newPixel;
+    float satScale = 65535.0/(float)USB4000->saturation_level;
 
     // Setup variables
     numRead = 0;
@@ -370,14 +392,26 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     for(i=0; i < numScansPerSample; i++){
         if(usb_bulk_write(USB4000->usbHandle,EP1OUT,command,1,1000) > 0){
 
+            usleep(100);
             // Handle Response Depending on USB Connection
             if(USB4000->status->isHighSpeed){
+                fprintf(stderr,"Handling High-Speed USB Connection.");
                 numRead = usb_bulk_read(USB4000->usbHandle, EP6IN,response,2048,1000);
                 numRead += usb_bulk_read(USB4000->usbHandle, EP2IN,response+2048,5633,1000);
             }
             else{
+                fprintf(stderr,"Handling Full Speed (Slower Speed) USB Connection.");
                 numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
+
+            // Check EEPROM
+            usb_bulk_write(USB4000->usbHandle,0x01,EEPROMCommand,2,1000);
+            usb_bulk_read(USB4000->usbHandle,0x81,EEPROMResponse,17,1000);
+            for(k=0; k < 17; k++){
+                fprintf(stderr,"0x%x ",EEPROMResponse[k]);
+            }
+
+            fprintf(stderr,"Read %d Bytes.  Sync byte (0x69) is 0x%x. Any errors?: %s\n",numRead,response[7680],usb_strerror());
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
                 #ifdef DEBUG
@@ -386,7 +420,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
 
                 // Convert Each Pixel to Short
                 for(j=0; j < USB4000->status->numPixels; j++){
-                    newPixel = (unsigned short)UnsignedLEtoInt(response+2*j,2);
+                    newPixel = (unsigned short)UnsignedLEtoInt(response+(2*j),2);
                     sample->pixels[j] = (sample->pixels[j]*i + newPixel)/(i+1);
                 }
             }

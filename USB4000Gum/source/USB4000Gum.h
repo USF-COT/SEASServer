@@ -26,10 +26,10 @@
 #define BYTESPERPIXEL 2
 
 // End Point Definitions
-#define EP1IN 0x01
+#define EP1IN 0x81
 #define EP1OUT 0x01
-#define EP2IN 0x02
-#define EP6IN 0x06
+#define EP2IN 0x82
+#define EP6IN 0x86
 
 typedef enum {NORMAL,SOFTWARE,EXSYNC,EXHARD,QREAL}TRIGGER;
 
@@ -50,6 +50,7 @@ typedef struct CALIBRATIONCOEFFICIENTS{
     float strayLightConstant;
     float nonLinearCorrectionOrder[8];
     unsigned short polyOrderNonLinearCal;
+    unsigned short dummyShort;
 }calibrationCoefficients;
 
 typedef struct SPECSSAMPLE{
@@ -64,10 +65,11 @@ typedef struct SPECTROMETER{
     specStatus* status;
     calibrationCoefficients* calibration;
     specSample* sample;
+    int saturation_level;
 }spectrometer;
 
 // Device Connectivity
-spectrometer* openUSB4000(char* serialNumber);
+spectrometer* openUSB4000(const char* serialNumber);
 BOOL isConnected(spectrometer* USB4000);
 STATUS closeUSB4000(spectrometer* USB4000);
 

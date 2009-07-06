@@ -1,5 +1,21 @@
 #include "parseGUI.h"
 
+void parseParameterBytes(char* parameterBytes){
+    int specID;
+    unsigned short integrationTime;
+    unsigned short scansPerSample;
+    unsigned short boxcarSmoothing;
+
+    specID = (int)parameterBytes[0];
+    memcpy(&integrationTime,parameterBytes+1,2);
+    memcpy(&scansPerSample,parameterBytes+3,2);
+    memcpy(&boxcarSmoothing,parameterBytes+5,2);
+    
+    // Set Spectrometer Integration Time Immediately
+    setSpecIntegrationTime(specID, integrationTime);
+    setSpectrometerParameters(specID,integrationTime,scansPerSample,boxcarSmoothing);
+}
+
 GUIresponse* parseGUI(char* command){
     GUIresponse* response = NULL;
     specSample* sample = NULL;
@@ -28,21 +44,29 @@ GUIresponse* parseGUI(char* command){
             break;
         case SVS:
             break;
+
+        case SSP:
+            syslog(LOG_DAEMON||LOG_INFO,"Setting Spectrometer Parameters...");
+            parseParameterBytes(command+1);
+            syslog(LOG_DAEMON||LOG_INFO,"Spectrometer Parameters Set.");
+            break;
         case RFS:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
-            sample = getSpecSample(0,1,100);
+            sample = getSpecSample(command[1],1,100);
             response->response = sample->pixels;
             response->length = sizeof(short)*3840;
             syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning");
             break;
+
         case RCD:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving calibration coefficients from USB4000");
             response = malloc(sizeof(GUIresponse));
-            response->response = (void *)getCalCos(0);
+            response->response = (void *)getCalCos(command[1]);
             response->length = sizeof(calibrationCoefficients);
             syslog(LOG_DAEMON||LOG_INFO,"Retrieved calibration coefficients. Returning.");
             break;
+
         case EXM:
             break;
         case TRM:
@@ -83,7 +107,6 @@ GUIresponse* parseGUI(char* command){
 
 void freeResponse(GUIresponse* response){
     if(response){
-        free(response->response);
         free(response);
     }
 }

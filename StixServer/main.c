@@ -28,9 +28,9 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include "config.h"
 #include "parseGUI.h"
 
-#define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define NUM_THREADS 10
 #define MAXBUF 512
 
@@ -74,7 +74,7 @@ void* handleConnection(void* info){
                 snprintf(hexBuf,4,"%02X ",((char*)response->response)[i]);
                 strncat(hexString,hexBuf,4);
             }
-            if(i < MAXBUF*3)
+            if(response->length < MAXBUF)
                 syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,response->length,hexString);
             else
                 syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s...",((threadInfo*)info)->thread_bin_index,response->length,hexString);
@@ -127,12 +127,12 @@ int main(){
   syslog(LOG_DAEMON||LOG_INFO,"Daemon Started.");
 
   /* Open Config File Here */
-  /*
-  if(!readConfig(CONFIGPATH)){
+  if(!readConfig()){
     syslog(LOG_DAEMON||LOG_ERR,"Unable to Read Configuration File.  Daemon Terminated.\n");
     exit(EXIT_FAILURE);
   }
-  */
+
+  logConfig();
 
   /* Create a new SID for the child process */
   sid = setsid();
@@ -163,7 +163,7 @@ int main(){
   servaddr.sin_port = htons(port);
 
   // Connect the USB Spectrometers
-  connectSpectrometers("USB4F02572","blah");
+  connectSpectrometers(getSerialNumber(0),getSerialNumber(1));
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */
