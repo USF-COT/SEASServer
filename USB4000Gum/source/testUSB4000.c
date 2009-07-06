@@ -13,7 +13,7 @@
 int main(){
 
     int i;
-    spectrometer *USB4000;
+    spectrometer *USB4000 = NULL;
     specSample* sample;
     char* response;
 
@@ -22,7 +22,7 @@ int main(){
     printf("Opening Device\n");
     USB4000 = openUSB4000("USB4F02572");
 
-    if(USB4000){
+    if(USB4000 != NULL){
         printf("Opened.\n");
 
         printf("Initializing Device\n");

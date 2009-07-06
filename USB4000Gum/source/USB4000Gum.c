@@ -6,13 +6,15 @@
 */
 
 #include "USB4000Gum.h"
-#define DEBUG
+
+#define DEBUG 1
 
 spectrometer* allocateSpec(){
     spectrometer* USB4000 = malloc(sizeof(spectrometer));
     USB4000->status = malloc(sizeof(specStatus));
     USB4000->calibration = malloc(sizeof(calibrationCoefficients));
     USB4000->sample = NULL;
+    USB4000->serialNumber = NULL;
 
     return USB4000;
 }
@@ -81,6 +83,9 @@ spectrometer* openUSB4000(const char* serialNumber){
                                 fprintf(stderr,"Found USB4000 with serial number: %s.  Looking for: %s.\n",devNumber+2,serialNumber);
                             #endif
                             deallocateSpec(USB4000);
+                            #ifdef DEBUG
+                                fprintf(stderr,"USB4000 Spectrometer Deallocated.");
+                            #endif
                             free(devNumber);
                         }
 
@@ -202,7 +207,7 @@ void printStatus(spectrometer* USB4000){
     }
     printf("Spectral Acquisition Status: %i\n",USB4000->status->spectralAcquisitionStatus);
     printf("Number of Spectral Packets: %i\n", USB4000->status->numSpectraPackets);
-    printf("Unit On: %s\n", USB4000->status->isOn ? "On" : "Off");
+    printf("Unit On: %s\n", USB4000->status->isOn ? "Off" : "On");
     printf("Number End Point Packets: %i\n", USB4000->status->numPacketsInEnd);
     printf("USB: %s\n", USB4000->status->isHighSpeed ? "High Speed" : "Full Speed (Low Speed)");
 }
@@ -220,7 +225,7 @@ STATUS initDevice(spectrometer* USB4000){
     command[0] = 0x05;
     command[1] = 11;
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
-    usb_bulk_read(USB4000->usbHandle,EP1IN,command,17,1000);
+    usb_bulk_read(USB4000->usbHandle,EP1IN,response,17,1000);
 
     USB4000->saturation_level = ((response[7] & 0x00FF) << 8) | response[6];
 
