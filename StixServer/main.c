@@ -162,8 +162,14 @@ int main(){
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servaddr.sin_port = htons(port);
 
+#ifdef DEBUG
+  syslog(LOG_DAEMON||LOG_INFO,"Opening Spectrometers.");
+#endif
   // Connect the USB Spectrometers
   connectSpectrometers(getSerialNumber(0),getSerialNumber(1));
+#ifdef DEBUG
+  syslog(LOG_DAEMON||LOG_INFO,"Spectrometers Opened.");
+#endif
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */

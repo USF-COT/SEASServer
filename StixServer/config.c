@@ -44,33 +44,33 @@ char readConfig(){
             
             tok = strtok(NULL,"="); 
             if(strcmp(tok,"SERIAL") == 0){
-                tok = strtok(NULL,"\n");
+                tok = strtok(NULL,"\n\d");
                 strncpy(parameters[specIndex].serial,tok,11);
             }
             else if(strcmp(tok,"INTEGRATION_TIME") == 0){
-                tok = strtok(NULL,"\n");
+                tok = strtok(NULL,"\n\d");
                 parameters[specIndex].integrationTime = (short) atoi(tok);
             }
             else if(strcmp(tok,"SCANS_PER_SAMPLE") == 0){
-                tok = strtok(NULL,"\n");
+                tok = strtok(NULL,"\n\d");
                 parameters[specIndex].scansPerSample = (short) atoi(tok);
             }
             else if(strcmp(tok,"BOXCAR") == 0){
-                tok = strtok(NULL,"\n");
+                tok = strtok(NULL,"\n\d");
                 parameters[specIndex].boxcarSmoothing = (short) atoi(tok);
             }
             else if(strcmp(tok,"ABSORBANCE_WAVELENGTHS") == 0){
                 wavelengthCount = 0;
-                tok = strtok(NULL,",\n");
+                tok = strtok(NULL,",\n\d");
                 while(tok != NULL){
                     parameters[specIndex].absorbingWavelengths[wavelengthCount] = atof(tok); 
                     wavelengthCount++;
-                    tok = strtok(NULL,",\n");
+                    tok = strtok(NULL,",\n\d");
                 }
                 parameters[specIndex].absorbingWavelengthCount = wavelengthCount; 
             }
            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
-                tok = strtok(NULL,"\n");
+                tok = strtok(NULL,"\n\d");
                 parameters[specIndex].nonAbsorbingWavelength = atof(tok);
             }
             else{ // Unrecognized spectrometer parameter, skip this line

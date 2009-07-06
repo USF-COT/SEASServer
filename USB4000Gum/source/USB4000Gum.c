@@ -18,10 +18,15 @@ spectrometer* allocateSpec(){
 }
 
 void deallocateSpec(spectrometer* USB4000){
-    free(USB4000->sample);
+    if(USB4000->sample != NULL)
+        free(USB4000->sample);
+
     free(USB4000->calibration);
     free(USB4000->status);
-    free(USB4000->serialNumber);
+
+    if(USB4000->serialNumber != NULL)
+        free(USB4000->serialNumber);
+
     free(USB4000);
 }
 
@@ -217,7 +222,7 @@ STATUS initDevice(spectrometer* USB4000){
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
     usb_bulk_read(USB4000->usbHandle,EP1IN,command,17,1000);
 
-    USB4000->saturation_level = ((response[7] & 0x00FF) << 8) | buffer[6];
+    USB4000->saturation_level = ((response[7] & 0x00FF) << 8) | response[6];
 
     updateWavelengthCalibrationCoefficients(USB4000);
     updateStatus(USB4000);
@@ -360,7 +365,7 @@ specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPix
     specSample* sample;
     sample = malloc(sizeof(specSample));
     sample->numScansForSample = numScansPerSample;
-    sample->pixels = calloc(numPixels,sizeof(short));
+    sample->pixels = calloc(numPixels,sizeof(float));
 
     return sample;
 }
@@ -373,12 +378,11 @@ void deallocateSample(specSample* sample){
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){ // 0x09
     specSample* sample;
     char command[1];
-    char EEPROMCommand[] = {0x05,0x11};
-    char EEPROMResponse[17];
     char response[7681];
     int i,j,k,numRead;
     short newPixel;
-    float satScale = 65535.0/(float)USB4000->saturation_level;
+    float pixel;
+    const float satScale = 65535.0/(float)USB4000->saturation_level;
 
     // Setup variables
     numRead = 0;
@@ -404,13 +408,6 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                 numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
 
-            // Check EEPROM
-            usb_bulk_write(USB4000->usbHandle,0x01,EEPROMCommand,2,1000);
-            usb_bulk_read(USB4000->usbHandle,0x81,EEPROMResponse,17,1000);
-            for(k=0; k < 17; k++){
-                fprintf(stderr,"0x%x ",EEPROMResponse[k]);
-            }
-
             fprintf(stderr,"Read %d Bytes.  Sync byte (0x69) is 0x%x. Any errors?: %s\n",numRead,response[7680],usb_strerror());
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
@@ -421,7 +418,8 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                 // Convert Each Pixel to Short
                 for(j=0; j < USB4000->status->numPixels; j++){
                     newPixel = (unsigned short)UnsignedLEtoInt(response+(2*j),2);
-                    sample->pixels[j] = (sample->pixels[j]*i + newPixel)/(i+1);
+                    pixel = ((float)newPixel) * satScale; 
+                    sample->pixels[j] = (float)((sample->pixels[j]*i + pixel))/(float)(i+1);
                 }
             }
             else{

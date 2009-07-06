@@ -55,7 +55,7 @@ typedef struct CALIBRATIONCOEFFICIENTS{
 
 typedef struct SPECSSAMPLE{
     unsigned short numScansForSample;
-    short* pixels;
+    float* pixels;
 } specSample;
 
 typedef struct SPECTROMETER{
