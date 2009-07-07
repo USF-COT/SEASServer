@@ -20,7 +20,7 @@ int main(){
     printf("Testing USB4000 Driver Library\n"); 
     
     printf("Opening Device\n");
-    USB4000 = openUSB4000("USB4F02572");
+    USB4000 = openUSB4000("USB4F02570");
 
     if(USB4000 != NULL){
         printf("Opened.\n");

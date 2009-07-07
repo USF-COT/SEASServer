@@ -79,6 +79,7 @@ int disconnectSpectrometers(){
     else{
         pthread_mutex_lock(&specsMutex);
         closeUSB4000(spectrometers[0]);
+        closeUSB4000(spectrometers[1]);
         specsConnected = DISCONNECTED;
         pthread_mutex_unlock(&specsMutex);
         return CONNECT_OK;

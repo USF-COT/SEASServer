@@ -54,7 +54,7 @@ GUIresponse* parseGUI(char* command){
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
             sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
-            response->response = sample->pixels;
+            response->response = (void *)sample->pixels;
             response->length = sizeof(float)*3840;
             syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning");
             break;
