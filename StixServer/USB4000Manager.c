@@ -36,17 +36,14 @@ calibrationCoefficients* getCalCos(char specNumber){
     calibrationCoefficients* calCos = NULL;
 
     pthread_mutex_lock(&specsMutex);
-    switch(specNumber){
-        case 0:
-            calCos = spectrometers[0]->calibration;
-            break;
-        case 1:
-            calCos = spectrometers[1]->calibration;
-            break;
-        default:
-            syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
-            calCos = NULL;
-            break;
+    if(specNumber == 0 || specNumber == 1)
+    {
+            calCos = spectrometers[specNumber]->calibration;
+    }
+    else
+    {
+        syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+        calCos = NULL;
     }
     pthread_mutex_unlock(&specsMutex);
 
@@ -56,18 +53,17 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
     specSample* sample = NULL;
 
     pthread_mutex_lock(&specsMutex);
-    switch(specNumber){
-        case 0:
-            sample = getSample(spectrometers[0], numScansPerSample, delayBetweenScansInMicroSeconds);
-            break;
-        case 1:
-            sample = getSample(spectrometers[1], numScansPerSample, delayBetweenScansInMicroSeconds);
-            break;
-        default:
-            syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
-            sample = NULL;
-            break;
+
+    if(specNumber == 0 || specNumber == 1)
+    {
+        sample = getSample(spectrometers[specNumber], numScansPerSample, delayBetweenScansInMicroSeconds);
     }
+    else
+    {
+        syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+        sample = NULL;
+    }
+
     pthread_mutex_unlock(&specsMutex);
 
     return sample;

@@ -10,29 +10,28 @@
 #include <stdio.h>
 #include "USB4000Gum.h"
 
+#define SPECID 1
+
 int main(){
 
     int i;
-    spectrometer *USB4000 = NULL;
+    spectrometer* spectrometers[2];
     specSample* sample;
     char* response;
 
     printf("Testing USB4000 Driver Library\n"); 
     
     printf("Opening Device\n");
-    USB4000 = openUSB4000("USB4F02570");
+    spectrometers[0] = openUSB4000("USB4F02570");
+    spectrometers[1] = openUSB4000("USB4F02572");
 
-    if(USB4000 != NULL){
+    if(spectrometers[SPECID] != NULL){
         printf("Opened.\n");
 
-        printf("Initializing Device\n");
-        initDevice(USB4000);
-        printf("Initialized\n");
-
-        setIntegrationTime(USB4000,7000);
+        setIntegrationTime(spectrometers[SPECID],10);
 
         // Test Query Config
-        response = queryConfig(USB4000,2);
+        response = queryConfig(spectrometers[SPECID],2);
 
         printf("Config Response: ");
         for(i=2; i < 18; i++)
@@ -40,20 +39,20 @@ int main(){
         printf("\n");
 
         // Trigger Mode
-        setTriggerMode(USB4000,NORMAL);
+        setTriggerMode(spectrometers[SPECID],NORMAL);
         
         printf("Getting Sample Over 10 Scans.\n");
-        sample = getSample(USB4000,10,50);
+        sample = getSample(spectrometers[SPECID],10,50);
         printf("Got'em!\n");
         
 
         printf("Spectrometer Status\n");
         printf("-------------------\n");
-        printStatus(USB4000);
+        printStatus(spectrometers[SPECID]);
         printf("-------------------\n");
 
         printf("Closing Device\n");
-        closeUSB4000(USB4000);
+        closeUSB4000(spectrometers[SPECID]);
         printf("Closed.\n");
     }
     else{
