@@ -54,7 +54,7 @@ spectrometer* openUSB4000(const char* serialNumber){
                 usbHandle = usb_open(dev);
                 interface = dev->config->interface->altsetting->bInterfaceNumber;
                 
-                if(usbHandle){ // If the handle is successfully open
+                if(usbHandle != NULL){ // If the handle is successfully open
                     claimRetVal = usb_claim_interface(usbHandle,interface);
 
                     if(claimRetVal == 0){
@@ -95,6 +95,7 @@ spectrometer* openUSB4000(const char* serialNumber){
                             fprintf(stderr,"%s\n",usb_strerror());
                             fprintf(stderr,"Cannot claim USB4000.  Look for other devices...\n");
                         #endif
+                        usb_close(dev);
                     }
                 }
                 else{

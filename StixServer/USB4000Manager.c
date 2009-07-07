@@ -18,10 +18,10 @@ int connectSpectrometers(const char* serialNumber1, const char* serialNumber2){
     else
     {
         pthread_mutex_lock(&specsMutex);
+        syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber1);
         spectrometers[0] = openUSB4000(serialNumber1);
-        initDevice(spectrometers[0]);
+        syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber2);
         spectrometers[1] = openUSB4000(serialNumber2);
-        initDevice(spectrometers[1]);
         specsConnected = CONNECTED;
         pthread_mutex_unlock(&specsMutex);
         return CONNECT_OK;

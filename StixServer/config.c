@@ -1,5 +1,6 @@
 #include "config.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/syslog.h>
@@ -95,18 +96,19 @@ void writeConfigFile(){
 
     for(i=0; i < 2; i++){
         fprintf(configFile,"# Spectrometer %d Parameters\n",i+1);
-        fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i,parameters[i].integrationTime);
-        fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i,parameters[i].scansPerSample);
-        fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i,parameters[i].boxcarSmoothing);
+        fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,parameters[i].serial);
+        fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i+1,parameters[i].integrationTime);
+        fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i+1,parameters[i].scansPerSample);
+        fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i+1,parameters[i].boxcarSmoothing);
         fprintf(configFile,"\n"); 
-        fprintf(configFile,"SPEC%d.ABSORBANCE_WAVELENGTHS=",i);
+        fprintf(configFile,"SPEC%d.ABSORBANCE_WAVELENGTHS=",i+1);
         for(j=0; j < parameters[i].absorbingWavelengthCount; j++){
             if(j==0)
               fprintf(configFile,"%f",parameters[i].absorbingWavelengths[j]);
             else
                 fprintf(configFile,",%f",parameters[i].absorbingWavelengths[j]); 
         }
-        fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i,parameters[i].nonAbsorbingWavelength);
+        fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,parameters[i].nonAbsorbingWavelength);
         fprintf(configFile,"\n");
     }
     fclose(configFile);
@@ -167,7 +169,7 @@ void logConfig(){
         syslog(LOG_DAEMON||LOG_INFO,"Boxcar Smoothing: %d",parameters[i].boxcarSmoothing);
         syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength Count: %d",parameters[i].absorbingWavelengthCount);
         for(j=0; j < parameters[i].absorbingWavelengthCount; j++){
-            syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j,parameters[i].absorbingWavelengths[j]);
+            syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j+1,parameters[i].absorbingWavelengths[j]);
         }
         syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",parameters[i].nonAbsorbingWavelength); 
     }

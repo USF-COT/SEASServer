@@ -53,9 +53,9 @@ GUIresponse* parseGUI(char* command){
         case RFS:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
-            sample = getSpecSample(command[1],1,100);
+            sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
             response->response = sample->pixels;
-            response->length = sizeof(short)*3840;
+            response->length = sizeof(float)*3840;
             syslog(LOG_DAEMON||LOG_INFO,"Retrieved wavelength. Returning");
             break;
 
