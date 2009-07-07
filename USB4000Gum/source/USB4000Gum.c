@@ -82,6 +82,8 @@ spectrometer* openUSB4000(const char* serialNumber){
                             #ifdef DEBUG
                                 fprintf(stderr,"Found USB4000 with serial number: %s.  Looking for: %s.\n",devNumber+2,serialNumber);
                             #endif
+                            usb_release_interface(USB4000->usbHandle,USB4000->interface);
+                            usb_close(USB4000->usbHandle);
                             deallocateSpec(USB4000);
                             #ifdef DEBUG
                                 fprintf(stderr,"USB4000 Spectrometer Deallocated.");
@@ -93,9 +95,9 @@ spectrometer* openUSB4000(const char* serialNumber){
                     else{
                         #ifdef DEBUG
                             fprintf(stderr,"%s\n",usb_strerror());
-                            fprintf(stderr,"Cannot claim USB4000.  Look for other devices...\n");
+                            fprintf(stderr,"Cannot claim USB4000.  Looking for other devices...\n");
                         #endif
-                        usb_close(dev);
+                        usb_close(usbHandle);
                     }
                 }
                 else{
