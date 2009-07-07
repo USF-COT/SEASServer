@@ -25,13 +25,13 @@ typedef struct SPECTROMETERPARAMETERS{
 char readConfig();
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing);
 char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave);
-const char* getSerialNumber(int specIndex);
-const unsigned short getIntegrationTime(int specIndex);
-const unsigned short getScansPerSample(int specIndex);
-const unsigned short getBoxcarSmoothing(int specIndex);
-const unsigned char getAbsorbingWavelengthCount(int specIndex);
-const float* getAbsorbingWavelengths(int specIndex);
-const float getNonAbsorbingWavelength(int specIndex);
+char* getSerialNumber(int specIndex);
+unsigned short getIntegrationTime(int specIndex);
+unsigned short getScansPerSample(int specIndex);
+unsigned short getBoxcarSmoothing(int specIndex);
+unsigned char getAbsorbingWavelengthCount(int specIndex);
+float* getAbsorbingWavelengths(int specIndex);
+float getNonAbsorbingWavelength(int specIndex);
 void logConfig();
 
 #ifdef	__cplusplus

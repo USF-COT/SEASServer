@@ -257,6 +257,12 @@ STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
     char command[5];
     int i;
 
+    if(USB4000 == NULL)
+    {
+        fprintf(stderr,"Invalid Spectrometer Pointer Passed.");
+        return USB4000ERR;
+    }
+
     command[0] = 0x02;
     memcpy(command+1,&time,4);
     swapBytes(command+1,4);

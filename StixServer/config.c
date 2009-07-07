@@ -1,4 +1,5 @@
 #include "config.h"
+#include "USB4000Manager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -45,33 +46,33 @@ char readConfig(){
             
             tok = strtok(NULL,"="); 
             if(strcmp(tok,"SERIAL") == 0){
-                tok = strtok(NULL,"\n\d");
+                tok = strtok(NULL,"\n");
                 strncpy(parameters[specIndex].serial,tok,11);
             }
             else if(strcmp(tok,"INTEGRATION_TIME") == 0){
-                tok = strtok(NULL,"\n\d");
+                tok = strtok(NULL,"\n");
                 parameters[specIndex].integrationTime = (short) atoi(tok);
             }
             else if(strcmp(tok,"SCANS_PER_SAMPLE") == 0){
-                tok = strtok(NULL,"\n\d");
+                tok = strtok(NULL,"\n");
                 parameters[specIndex].scansPerSample = (short) atoi(tok);
             }
             else if(strcmp(tok,"BOXCAR") == 0){
-                tok = strtok(NULL,"\n\d");
+                tok = strtok(NULL,"\n");
                 parameters[specIndex].boxcarSmoothing = (short) atoi(tok);
             }
             else if(strcmp(tok,"ABSORBANCE_WAVELENGTHS") == 0){
                 wavelengthCount = 0;
-                tok = strtok(NULL,",\n\d");
+                tok = strtok(NULL,",\n");
                 while(tok != NULL){
                     parameters[specIndex].absorbingWavelengths[wavelengthCount] = atof(tok); 
                     wavelengthCount++;
-                    tok = strtok(NULL,",\n\d");
+                    tok = strtok(NULL,",\n");
                 }
                 parameters[specIndex].absorbingWavelengthCount = wavelengthCount; 
             }
            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
-                tok = strtok(NULL,"\n\d");
+                tok = strtok(NULL,"\n");
                 parameters[specIndex].nonAbsorbingWavelength = atof(tok);
             }
             else{ // Unrecognized spectrometer parameter, skip this line
@@ -117,6 +118,11 @@ void writeConfigFile(){
 
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing){
     parameters[specIndex].integrationTime = newIntTime;
+
+    // Update Integration Time Immediately
+    setSpecIntegrationTime(specIndex,parameters[specIndex].integrationTime);
+
+    // Store the Other Parameters
     parameters[specIndex].scansPerSample = newScansPerSample;
     parameters[specIndex].boxcarSmoothing = newBoxcarSmoothing;
 
@@ -135,25 +141,25 @@ char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* new
     writeConfigFile();
 }
 
-const char* getSerialNumber(int specIndex){
+char* getSerialNumber(int specIndex){
     return parameters[specIndex].serial;
 }
-const unsigned short getIntegrationTime(int specIndex){
+unsigned short getIntegrationTime(int specIndex){
     return parameters[specIndex].integrationTime;
 }
-const unsigned short getScansPerSample(int specIndex){
+unsigned short getScansPerSample(int specIndex){
     return parameters[specIndex].scansPerSample;
 }
-const unsigned short getBoxcarSmoothing(int specIndex){
+unsigned short getBoxcarSmoothing(int specIndex){
     return parameters[specIndex].boxcarSmoothing;
 }
-const unsigned char getAbsorbingWavelengthCount(int specIndex){
+unsigned char getAbsorbingWavelengthCount(int specIndex){
     return parameters[specIndex].absorbingWavelengthCount;
 }
-const float* getAbsorbingWavelengths(int specIndex){
+float* getAbsorbingWavelengths(int specIndex){
     return parameters[specIndex].absorbingWavelengths;
 }
-const float getNonAbsorbingWavelength(int specIndex){
+float getNonAbsorbingWavelength(int specIndex){
     return parameters[specIndex].nonAbsorbingWavelength;
 }
 
