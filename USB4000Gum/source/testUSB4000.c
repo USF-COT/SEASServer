@@ -42,7 +42,7 @@ int main(){
         setTriggerMode(spectrometers[SPECID],NORMAL);
         
         printf("Getting Sample Over 10 Scans.\n");
-        sample = getSample(spectrometers[SPECID],10,50);
+        sample = getSample(spectrometers[SPECID],10,100);
         printf("Got'em!\n");
         
 

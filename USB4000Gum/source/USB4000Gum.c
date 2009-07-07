@@ -226,7 +226,7 @@ STATUS initDevice(spectrometer* USB4000){
 
     // Get Saturation Level
     command[0] = 0x05;
-    command[1] = 11;
+    command[1] = 0x11;
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
     usb_bulk_read(USB4000->usbHandle,EP1IN,response,17,1000);
 
@@ -255,10 +255,20 @@ void swapBytes(char* bytes, unsigned int numBytes){
 
 STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
     char command[5];
+    int i;
 
     command[0] = 0x02;
     memcpy(command+1,&time,4);
     swapBytes(command+1,4);
+
+#ifdef DEBUG
+    fprintf(stderr,"Integration Time %i Command:",time);
+    for(i = 0; i < 5; i++)
+    {
+        fprintf(stderr," 0x%2X",command[i]);
+    }
+    fprintf(stderr,"\n");
+#endif    
 
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,5,1000);
 
@@ -428,6 +438,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                     newPixel = (unsigned short)UnsignedLEtoInt(response+(2*j),2);
                     pixel = ((float)newPixel) * satScale; 
                     sample->pixels[j] = (float)((sample->pixels[j]*i + pixel))/(float)(i+1);
+                   // fprintf(stdout,"%i,%i,%f,%f\n",j,newPixel,pixel,sample->pixels[j]);
                 }
             }
             else{
