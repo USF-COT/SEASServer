@@ -26,10 +26,10 @@
 #define BYTESPERPIXEL 2
 
 // End Point Definitions
-#define EP1IN 0x81
+#define EP1IN 0x01
 #define EP1OUT 0x01
-#define EP2IN 0x82
-#define EP6IN 0x86
+#define EP2IN 0x02
+#define EP6IN 0x06
 
 typedef enum {NORMAL,SOFTWARE,EXSYNC,EXHARD,QREAL}TRIGGER;
 

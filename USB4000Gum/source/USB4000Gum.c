@@ -435,7 +435,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                 numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
 
-            fprintf(stderr,"Read %d Bytes.  Sync byte (0x69) is 0x%x. Any errors?: %s\n",numRead,response[7680],usb_strerror());
+            fprintf(stderr,"Read %d Bytes.  Sync byte (0x69) is 0x%x.\n",numRead,response[7680]);
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
                 #ifdef DEBUG
@@ -447,7 +447,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                     newPixel = (unsigned short)UnsignedLEtoInt(response+(2*j),2);
                     pixel = ((float)newPixel) * satScale; 
                     sample->pixels[j] = (float)((sample->pixels[j]*i + pixel))/(float)(i+1);
-                   fprintf(stdout,"%i,%i,%f,%f\n",j,newPixel,pixel,sample->pixels[j]);
+                   //fprintf(stdout,"%i,%i,%f,%f\n",j,newPixel,pixel,sample->pixels[j]);
                 }
             }
             else{
