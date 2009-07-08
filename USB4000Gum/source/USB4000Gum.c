@@ -236,9 +236,6 @@ STATUS initDevice(spectrometer* USB4000){
     updateStatus(USB4000);
 
     return USB4000OK;
-
-    // Scan and Clear Junk First Reading
-    //scanUSB(response);
 }
 
 void swapBytes(char* bytes, unsigned int numBytes){
@@ -271,7 +268,7 @@ STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
     fprintf(stderr,"Integration Time %i Command:",time);
     for(i = 0; i < 5; i++)
     {
-        fprintf(stderr," 0x%2X",command[i]);
+        fprintf(stderr," 0x%02X",command[i]);
     }
     fprintf(stderr,"\n");
 #endif    
@@ -279,6 +276,8 @@ STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,5,1000);
 
     updateStatus(USB4000);
+
+    getSample(USB4000,1,100);
 
     return USB4000OK;
 }
@@ -351,6 +350,9 @@ STATUS setTriggerMode(spectrometer* USB4000, TRIGGER triggerMode){
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,3,1000);
 
     updateStatus(USB4000);
+
+    // Reset Array
+    getSample(USB4000,1,100);
     return USB4000OK;
 }
 
@@ -420,7 +422,8 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     for(i=0; i < numScansPerSample; i++){
         if(usb_bulk_write(USB4000->usbHandle,EP1OUT,command,1,1000) > 0){
 
-            usleep(100);
+            // Wait for Pixels to Fill
+            usleep(4000);
             // Handle Response Depending on USB Connection
             if(USB4000->status->isHighSpeed){
                 fprintf(stderr,"Handling High-Speed USB Connection.");
@@ -444,7 +447,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                     newPixel = (unsigned short)UnsignedLEtoInt(response+(2*j),2);
                     pixel = ((float)newPixel) * satScale; 
                     sample->pixels[j] = (float)((sample->pixels[j]*i + pixel))/(float)(i+1);
-                   // fprintf(stdout,"%i,%i,%f,%f\n",j,newPixel,pixel,sample->pixels[j]);
+                   fprintf(stdout,"%i,%i,%f,%f\n",j,newPixel,pixel,sample->pixels[j]);
                 }
             }
             else{

@@ -8,6 +8,7 @@
 #define DEBUG 1
 
 #include <stdio.h>
+#include <unistd.h>
 #include "USB4000Gum.h"
 
 #define SPECID 1
@@ -41,8 +42,10 @@ int main(){
         // Trigger Mode
         setTriggerMode(spectrometers[SPECID],NORMAL);
         
-        printf("Getting Sample Over 10 Scans.\n");
-        sample = getSample(spectrometers[SPECID],10,100);
+        usleep(4000);
+        
+        printf("Getting Sample.\n");
+        sample = getSample(spectrometers[SPECID],1,100);
         printf("Got'em!\n");
         
 
@@ -52,7 +55,8 @@ int main(){
         printf("-------------------\n");
 
         printf("Closing Device\n");
-        closeUSB4000(spectrometers[SPECID]);
+        closeUSB4000(spectrometers[0]);
+        closeUSB4000(spectrometers[1]);
         printf("Closed.\n");
     }
     else{
