@@ -83,7 +83,7 @@ void* handleConnection(void* info){
             freeResponse(response);
         }
         else
-            syslog(LOG_DAEMON||LOG_ERR,"Unknown command sent.  Unable to handle request.  Continuing...");
+            syslog(LOG_DAEMON||LOG_ERR,"No response to send.  Continuing...");
 
         numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     }

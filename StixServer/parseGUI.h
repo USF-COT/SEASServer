@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/syslog.h>
-#include "GUI protocol.h"
+#include "config.h"
+#include "GUIprotocol.h"
 #include "USB4000Manager.h"
 
 #ifndef _PARSEGUI_H

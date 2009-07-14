@@ -20,18 +20,18 @@ int connectSpectrometers(const char* serialNumber1, const char* serialNumber2){
         pthread_mutex_lock(&specsMutex);
         syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber1);
         spectrometers[0] = openUSB4000(serialNumber1);
-        setIntegrationTime(spectrometers[0],getIntegrationTime(0));
+        setSpecIntegrationTimeinMilli(0,getIntegrationTime(0));
         syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber2);
         spectrometers[1] = openUSB4000(serialNumber2);
-        setIntegrationTime(spectrometers[1],getIntegrationTime(1)); 
+        setSpecIntegrationTimeinMilli(1,getIntegrationTime(1)); 
         specsConnected = CONNECTED;
         pthread_mutex_unlock(&specsMutex);
         return CONNECT_OK;
     }
 }
 
-void setSpecIntegrationTime(short specID, unsigned int integrationTime){
-    setIntegrationTime(spectrometers[specID],integrationTime);
+void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime){
+    setIntegrationTime(spectrometers[specID],integrationTime*1000);
 }
 
 calibrationCoefficients* getCalCos(char specNumber){

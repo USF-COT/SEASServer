@@ -18,7 +18,7 @@
 #define CONNECT_ERR 0
 
 int connectSpectrometers(const char* serialNumber1, const char* serialNumber2);
-void setSpecIntegrationTime(short specID, unsigned int integrationTime);
+void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 

@@ -9,7 +9,7 @@
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define MAXCONFIGLINE 128
 
-spectrometerParameters parameters[2];
+specConfig config[2];
 
 char readConfig(){
 
@@ -47,33 +47,33 @@ char readConfig(){
             tok = strtok(NULL,"="); 
             if(strcmp(tok,"SERIAL") == 0){
                 tok = strtok(NULL,"\n");
-                strncpy(parameters[specIndex].serial,tok,11);
+                strncpy(config[specIndex].serial,tok,11);
             }
             else if(strcmp(tok,"INTEGRATION_TIME") == 0){
                 tok = strtok(NULL,"\n");
-                parameters[specIndex].integrationTime = (short) atoi(tok);
+                config[specIndex].specParameters.integrationTime = (short) atoi(tok);
             }
             else if(strcmp(tok,"SCANS_PER_SAMPLE") == 0){
                 tok = strtok(NULL,"\n");
-                parameters[specIndex].scansPerSample = (short) atoi(tok);
+                config[specIndex].specParameters.scansPerSample = (short) atoi(tok);
             }
             else if(strcmp(tok,"BOXCAR") == 0){
                 tok = strtok(NULL,"\n");
-                parameters[specIndex].boxcarSmoothing = (short) atoi(tok);
+                config[specIndex].specParameters.boxcarSmoothing = (short) atoi(tok);
             }
             else if(strcmp(tok,"ABSORBANCE_WAVELENGTHS") == 0){
                 wavelengthCount = 0;
                 tok = strtok(NULL,",\n");
                 while(tok != NULL){
-                    parameters[specIndex].absorbingWavelengths[wavelengthCount] = atof(tok); 
+                    config[specIndex].waveParameters.absorbingWavelengths[wavelengthCount] = atof(tok); 
                     wavelengthCount++;
                     tok = strtok(NULL,",\n");
                 }
-                parameters[specIndex].absorbingWavelengthCount = wavelengthCount; 
+                config[specIndex].waveParameters.absorbingWavelengthCount = wavelengthCount; 
             }
            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
                 tok = strtok(NULL,"\n");
-                parameters[specIndex].nonAbsorbingWavelength = atof(tok);
+                config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
             }
             else{ // Unrecognized spectrometer parameter, skip this line
                 syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
@@ -97,19 +97,19 @@ void writeConfigFile(){
 
     for(i=0; i < 2; i++){
         fprintf(configFile,"# Spectrometer %d Parameters\n",i+1);
-        fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,parameters[i].serial);
-        fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i+1,parameters[i].integrationTime);
-        fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i+1,parameters[i].scansPerSample);
-        fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i+1,parameters[i].boxcarSmoothing);
+        fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,config[i].serial);
+        fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i+1,config[i].specParameters.integrationTime);
+        fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i+1,config[i].specParameters.scansPerSample);
+        fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i+1,config[i].specParameters.boxcarSmoothing);
         fprintf(configFile,"\n"); 
         fprintf(configFile,"SPEC%d.ABSORBANCE_WAVELENGTHS=",i+1);
-        for(j=0; j < parameters[i].absorbingWavelengthCount; j++){
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
             if(j==0)
-              fprintf(configFile,"%f",parameters[i].absorbingWavelengths[j]);
+              fprintf(configFile,"%f",config[i].waveParameters.absorbingWavelengths[j]);
             else
-                fprintf(configFile,",%f",parameters[i].absorbingWavelengths[j]); 
+                fprintf(configFile,",%f",config[i].waveParameters.absorbingWavelengths[j]); 
         }
-        fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,parameters[i].nonAbsorbingWavelength);
+        fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
         fprintf(configFile,"\n");
     }
     fclose(configFile);
@@ -117,50 +117,50 @@ void writeConfigFile(){
 }
 
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing){
-    parameters[specIndex].integrationTime = newIntTime;
-
-    // Update Integration Time Immediately
-    setSpecIntegrationTime(specIndex,parameters[specIndex].integrationTime);
-
-    // Store the Other Parameters
-    parameters[specIndex].scansPerSample = newScansPerSample;
-    parameters[specIndex].boxcarSmoothing = newBoxcarSmoothing;
-
-    writeConfigFile();
+    config[specIndex].specParameters.integrationTime = newIntTime;
+    config[specIndex].specParameters.scansPerSample = newScansPerSample;
+    config[specIndex].specParameters.boxcarSmoothing = newBoxcarSmoothing;
 }
 
 char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave){
     int i;
 
-    parameters[specIndex].absorbingWavelengthCount = newAbsWaveCount;
+    config[specIndex].waveParameters.absorbingWavelengthCount = newAbsWaveCount;
     for(i=0; i < newAbsWaveCount; i++){
-        parameters[specIndex].absorbingWavelengths[i] = newAbsWaves[i];
+        config[specIndex].waveParameters.absorbingWavelengths[i] = newAbsWaves[i];
     }
-    parameters[specIndex].nonAbsorbingWavelength = newNonAbsWave;    
- 
+    config[specIndex].waveParameters.nonAbsorbingWavelength = newNonAbsWave;    
     writeConfigFile();
 }
 
+spectrometerParameters* getSpecParameters(int specIndex){
+    return &(config[specIndex].specParameters);
+}
+
+wavelengthParameters* getWaveParameters(int specIndex){
+    return &(config[specIndex].waveParameters);
+}
+
 char* getSerialNumber(int specIndex){
-    return parameters[specIndex].serial;
+    return config[specIndex].serial;
 }
 unsigned short getIntegrationTime(int specIndex){
-    return parameters[specIndex].integrationTime;
+    return config[specIndex].specParameters.integrationTime;
 }
 unsigned short getScansPerSample(int specIndex){
-    return parameters[specIndex].scansPerSample;
+    return config[specIndex].specParameters.scansPerSample;
 }
 unsigned short getBoxcarSmoothing(int specIndex){
-    return parameters[specIndex].boxcarSmoothing;
+    return config[specIndex].specParameters.boxcarSmoothing;
 }
 unsigned char getAbsorbingWavelengthCount(int specIndex){
-    return parameters[specIndex].absorbingWavelengthCount;
+    return config[specIndex].waveParameters.absorbingWavelengthCount;
 }
 float* getAbsorbingWavelengths(int specIndex){
-    return parameters[specIndex].absorbingWavelengths;
+    return config[specIndex].waveParameters.absorbingWavelengths;
 }
 float getNonAbsorbingWavelength(int specIndex){
-    return parameters[specIndex].nonAbsorbingWavelength;
+    return config[specIndex].waveParameters.nonAbsorbingWavelength;
 }
 
 void logConfig(){
@@ -169,14 +169,14 @@ void logConfig(){
     for(i=0; i < 2; i++){
         syslog(LOG_DAEMON||LOG_INFO,"Spectrometer %i Configuration",i+1);
         syslog(LOG_DAEMON||LOG_INFO,"=============================");
-        syslog(LOG_DAEMON||LOG_INFO,"Serial Number: %s",parameters[i].serial);
-        syslog(LOG_DAEMON||LOG_INFO,"Integration Time: %d",parameters[i].integrationTime);
-        syslog(LOG_DAEMON||LOG_INFO,"Scans Per Sample: %d",parameters[i].scansPerSample);
-        syslog(LOG_DAEMON||LOG_INFO,"Boxcar Smoothing: %d",parameters[i].boxcarSmoothing);
-        syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength Count: %d",parameters[i].absorbingWavelengthCount);
-        for(j=0; j < parameters[i].absorbingWavelengthCount; j++){
-            syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j+1,parameters[i].absorbingWavelengths[j]);
+        syslog(LOG_DAEMON||LOG_INFO,"Serial Number: %s",config[i].serial);
+        syslog(LOG_DAEMON||LOG_INFO,"Integration Time: %d",config[i].specParameters.integrationTime);
+        syslog(LOG_DAEMON||LOG_INFO,"Scans Per Sample: %d",config[i].specParameters.scansPerSample);
+        syslog(LOG_DAEMON||LOG_INFO,"Boxcar Smoothing: %d",config[i].specParameters.boxcarSmoothing);
+        syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength Count: %d",config[i].waveParameters.absorbingWavelengthCount);
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+            syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j+1,config[i].waveParameters.absorbingWavelengths[j]);
         }
-        syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",parameters[i].nonAbsorbingWavelength); 
+        syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
     }
 }

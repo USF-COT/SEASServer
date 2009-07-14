@@ -1,5 +1,20 @@
 #include "parseGUI.h"
 
+void parseWaveSetCommand(char* waveBytes){
+    int specID;
+    unsigned char absWaveCount;
+    float absWaves[9];
+    float nonAbsWave;
+
+    specID = (int)waveBytes[0];
+    absWaveCount = (unsigned char)waveBytes[1];
+    // Add +3 to skip reserved bytes
+    memcpy(absWaves,waveBytes+5,sizeof(float)*9);
+    memcpy(&nonAbsWave,waveBytes+41,sizeof(float));
+    
+    setComputationData(specID,absWaveCount,absWaves,nonAbsWave); 
+}
+
 void parseParameterBytes(char* parameterBytes){
     int specID;
     unsigned short integrationTime;
@@ -12,7 +27,7 @@ void parseParameterBytes(char* parameterBytes){
     memcpy(&boxcarSmoothing,parameterBytes+5,2);
     
     // Set Spectrometer Integration Time Immediately
-    setSpecIntegrationTime(specID, integrationTime);
+    setSpecIntegrationTimeinMilli(specID, integrationTime);
     setSpectrometerParameters(specID,integrationTime,scansPerSample,boxcarSmoothing);
 }
 
@@ -29,8 +44,6 @@ GUIresponse* parseGUI(char* command){
         case RSD:
             break;
         case RSF:
-            break;
-        case DSF:
             break;
         case PMW:
             break;
@@ -53,7 +66,7 @@ GUIresponse* parseGUI(char* command){
         case RFS:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
-            sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
+            sample = getSpecSample(command[1],1,100);
             // Copy the Pointer to the Pixels Array
             response->response = (void *)sample->pixels;
             response->length = sizeof(float)*3840;
@@ -72,6 +85,13 @@ GUIresponse* parseGUI(char* command){
             syslog(LOG_DAEMON||LOG_INFO,"Retrieved calibration coefficients. Returning.");
             break;
 
+        case RSP:
+            syslog(LOG_DAEMON||LOG_INFO,"Sending Spectrometer Parameters.");
+            response = malloc(sizeof(GUIresponse));
+            response->response = malloc(sizeof(spectrometerParameters));
+            memcpy(response->response,(void *)getSpecParameters(command[1]),sizeof(spectrometerParameters));
+            response->length = sizeof(spectrometerParameters); 
+            break;
         case EXM:
             break;
         case TRM:
@@ -84,6 +104,20 @@ GUIresponse* parseGUI(char* command){
             break;
         case SMF:
             break;
+        case SVC:
+            syslog(LOG_DAEMON||LOG_INFO,"Saving Configuration.");
+            writeConfigFile();
+            syslog(LOG_DAEMON||LOG_INFO,"Configuration Saved.");
+            response = malloc(sizeof(GUIresponse));
+            response->response = malloc(sizeof(char));
+            ((char *)response->response)[0] = SVC;
+            response->length = 1;
+            break;
+        case SCP:
+            syslog(LOG_DAEMON||LOG_INFO,"Setting Wavelength Configuration.");
+            parseWaveSetCommand(command+1);
+            syslog(LOG_DAEMON||LOG_INFO,"Wavelength Configuration Set.");
+            break; 
         case SDC:
             break;
         case SDE:
@@ -92,7 +126,11 @@ GUIresponse* parseGUI(char* command){
             break;
         case SFS:
             break;
-        case SWL:
+        case RCP:
+            response = malloc(sizeof(GUIresponse));
+            response->response = malloc(sizeof(wavelengthParameters));
+            memcpy(response->response,(void *)getWaveParameters(command[1]),sizeof(wavelengthParameters)); 
+            response->length = sizeof(wavelengthParameters);
             break;
         case RMW:
             break;
@@ -105,6 +143,9 @@ GUIresponse* parseGUI(char* command){
         case RLS:
             break;
         case RVS:
+            break;
+        default:
+            syslog(LOG_DAEMON||LOG_INFO,"Unknown command sent starting with: %02x",command[0]);
             break;
     }
     return response;
