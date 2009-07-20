@@ -44,6 +44,7 @@ typedef struct THREADINFO{
     int socket_connection;
 }threadInfo;
 
+
 void* handleConnection(void* info){
     int* connection = &((threadInfo*)info)->socket_connection;
     char buffer[MAXBUF+1];
