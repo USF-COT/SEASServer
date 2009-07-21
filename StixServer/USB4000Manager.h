@@ -16,11 +16,15 @@
 #define DISCONNECTED 0
 #define CONNECT_OK 1
 #define CONNECT_ERR 0
+#define NUM_SPECS 2
 
-int connectSpectrometers(const char* serialNumber1, const char* serialNumber2);
+int connectSpectrometers(char* serialNumber[]);
 void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);
+void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
+void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength);
 
 int disconnectSpectrometers();
 

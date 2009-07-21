@@ -1,0 +1,18 @@
+/* Absorbance Calculations Header
+ * - Used to calculate the absorbance from a USB4000 sample
+ *
+ * By: Jim Patten and Michael Lindemuth
+ */
+
+#ifndef _ABSORBANCE_H
+#define _ABSORBANCE_H
+
+float ComputeAbsorbance(spectrometer* USB4000, unsigned int absorbingPixel, unsigned int nonAbsorbingPixel);
+float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned int nonAbsorbingPixel);
+float ComputeDarkValue(spectrometer* USB4000);
+float NonLinearCountCorrection(spectrometer* USB4000, float Counts);
+void  ComputeSpectrometerLambdaValues(spectrometer* USB4000);
+float GetCountsForWavelength(spectrometer* USB4000, double Lambda );
+int   GetPixelForWavelength(spectrometer* USB4000, double Lambda );
+
+#endif

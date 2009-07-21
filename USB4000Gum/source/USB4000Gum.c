@@ -9,19 +9,47 @@
 
 #define DEBUG 1
 
+specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPixels){
+    specSample* sample;
+    sample = malloc(sizeof(specSample));
+    sample->numScansForSample = numScansPerSample;
+    sample->pixels = calloc(numPixels,sizeof(float));
+
+    return sample;
+}
+
+void deallocateSample(specSample* sample){
+    free(sample->pixels);
+    free(sample);
+}
+
+
 spectrometer* allocateSpec(){
     spectrometer* USB4000 = malloc(sizeof(spectrometer));
     USB4000->status = malloc(sizeof(specStatus));
     USB4000->calibration = malloc(sizeof(calibrationCoefficients));
+    USB4000->darkSample = NULL;
+    USB4000->refSample = NULL;
     USB4000->sample = NULL;
+    USB4000->lambdaValues = NULL;
     USB4000->serialNumber = NULL;
 
     return USB4000;
 }
 
 void deallocateSpec(spectrometer* USB4000){
+    
+    if(USB4000->darkSample != NULL)
+        deallocateSample(USB4000->darkSample);
+
+    if(USB4000->refSample != NULL)
+        deallocateSample(USB4000->refSample);
+
     if(USB4000->sample != NULL)
-        free(USB4000->sample);
+        deallocateSample(USB4000->sample);
+
+    if(USB4000->lambdaValues !=NULL)
+        free(USB4000->lambdaValues);
 
     free(USB4000->calibration);
     free(USB4000->status);
@@ -74,6 +102,9 @@ spectrometer* openUSB4000(const char* serialNumber){
                             #ifdef DEBUG
                                 fprintf(stderr,"Found and Opened USB4000 with serial number: %s\n",devNumber+2);
                             #endif
+
+                            // Fill the Lambda Array for Any Future Absorbance Calculations
+                            ComputeSpectrometerLambdaValues(USB4000);
 
                             free(devNumber);
                             return USB4000;
@@ -387,18 +418,35 @@ STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000){
     return USB4000OK;
 }
 
-specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPixels){
-    specSample* sample;
-    sample = malloc(sizeof(specSample));
-    sample->numScansForSample = numScansPerSample;
-    sample->pixels = calloc(numPixels,sizeof(float));
+void copySample(specSample* dest, specSample* source,unsigned int numPixels){
 
-    return sample;
+    if(dest == source)
+        return;
+
+    if(source == NULL)
+    {
+        if(dest != NULL)
+            deallocateSample(dest);
+        return;
+    } 
+
+    if(dest != NULL)
+        deallocateSample(dest);
+
+    dest =  allocateSample(source->numScansForSample,numPixels);
+
+    memcpy(dest->pixels,source->pixels,numPixels*sizeof(float));
+    return;
 }
 
-void deallocateSample(specSample* sample){
-    free(sample->pixels);
-    free(sample);
+void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
+    specSample* sample = getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+    copySample(USB4000->darkSample,sample,USB4000->status->numPixels); 
+}
+
+void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
+    specSample* sample = getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+    copySample(USB4000->refSample,sample,USB4000->status->numPixels);
 }
 
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){ // 0x09

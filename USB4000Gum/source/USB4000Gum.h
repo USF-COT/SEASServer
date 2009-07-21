@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include "absorbanceCalculation.h"
  
 #define STATUS char
 #define USB4000ERR 0
@@ -64,7 +65,10 @@ typedef struct SPECTROMETER{
     int interface;
     specStatus* status;
     calibrationCoefficients* calibration;
+    specSample* darkSample;
+    specSample* refSample;
     specSample* sample;
+    double* lambdaValues;
     int saturation_level;
 }spectrometer;
 
@@ -103,6 +107,8 @@ void printStatus(spectrometer* USB4000);
 
 // Data Read and Calibration Functions
 STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
+void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
 
 #endif

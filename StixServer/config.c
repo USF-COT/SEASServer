@@ -66,6 +66,7 @@ char readConfig(){
                 tok = strtok(NULL,",\n");
                 while(tok != NULL){
                     config[specIndex].waveParameters.absorbingWavelengths[wavelengthCount] = atof(tok); 
+                    config[specIndex].absCalcParameters.absorbingPixels[wavelengthCount] = calcPixelValueForWavelength(specIndex,config[specIndex].waveParameters.absorbingWavelengths[wavelengthCount]);
                     wavelengthCount++;
                     tok = strtok(NULL,",\n");
                 }
@@ -74,6 +75,7 @@ char readConfig(){
            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
+                config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,config[specIndex].waveParameters.nonAbsorbingWavelength);
             }
             else{ // Unrecognized spectrometer parameter, skip this line
                 syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
@@ -128,8 +130,10 @@ char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* new
     config[specIndex].waveParameters.absorbingWavelengthCount = newAbsWaveCount;
     for(i=0; i < newAbsWaveCount; i++){
         config[specIndex].waveParameters.absorbingWavelengths[i] = newAbsWaves[i];
+        config[specIndex].absCalcParameters.absorbingPixels[i] = calcPixelValueForWavelength(specIndex,newAbsWaves[i]);
     }
     config[specIndex].waveParameters.nonAbsorbingWavelength = newNonAbsWave;    
+    config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,newNonAbsWave);
     writeConfigFile();
 }
 
@@ -161,6 +165,14 @@ float* getAbsorbingWavelengths(int specIndex){
 }
 float getNonAbsorbingWavelength(int specIndex){
     return config[specIndex].waveParameters.nonAbsorbingWavelength;
+}
+
+unsigned short* getAbsorbancePixels(int specIndex){
+    return config[specIndex].absCalcParameters.absorbingPixels;
+}
+
+unsigned short getNonAbsorbancePixel(int specIndex){
+    return config[specIndex].nonAbsorbingPixel;
 }
 
 void logConfig(){

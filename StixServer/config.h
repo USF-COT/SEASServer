@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#define MAX_ABS_WAVES 9
+
 typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
     unsigned short scansPerSample;
@@ -21,14 +23,20 @@ typedef struct SPECTROMETERPARAMETERS{
 typedef struct WAVELENGTHPARAMETERS{
     unsigned char absorbingWavelengthCount;
     char reserved[3];
-    float absorbingWavelengths[9];
+    float absorbingWavelengths[MAX_ABS_WAVES];
     float nonAbsorbingWavelength;
 }wavelengthParameters;
+
+typedef struct ABSORBANCECALCPARAMETERS{
+    unsigned short absorbingPixels[MAX_ABS_WAVES];
+    unsigned short nonAbsorbingPixel;
+}absorbanceCalcParameters;
 
 typedef struct SPECCONFIG{
     char serial[12];
     spectrometerParameters specParameters;
     wavelengthParameters waveParameters; 
+    absorbanceCalcParameters absCalcParameters;
 }specConfig;
 
 void writeConfigFile();
@@ -44,6 +52,8 @@ unsigned short getBoxcarSmoothing(int specIndex);
 unsigned char getAbsorbingWavelengthCount(int specIndex);
 float* getAbsorbingWavelengths(int specIndex);
 float getNonAbsorbingWavelength(int specIndex);
+unsigned short* getAbsorbancePixels(int specIndex);
+unsigned short getNonAbsorbancePixel(int specIndex);
 void logConfig();
 
 #ifdef	__cplusplus

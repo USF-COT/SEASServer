@@ -28,8 +28,10 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include "config.h"
 #include "parseGUI.h"
+#include "USB4000Manager.h"
 
 #define NUM_THREADS 10
 #define MAXBUF 512
@@ -43,7 +45,6 @@ typedef struct THREADINFO{
     unsigned short thread_bin_index;
     int socket_connection;
 }threadInfo;
-
 
 void* handleConnection(void* info){
     int* connection = &((threadInfo*)info)->socket_connection;
@@ -167,7 +168,8 @@ int main(){
   syslog(LOG_DAEMON||LOG_INFO,"Opening Spectrometers.");
 #endif
   // Connect the USB Spectrometers
-  connectSpectrometers(getSerialNumber(0),getSerialNumber(1));
+  char *serialNumbers[NUM_SPECS] = {getSerialNumber(0),getSerialNumber(1)};
+  connectSpectrometers(serialNumbers);
 #ifdef DEBUG
   syslog(LOG_DAEMON||LOG_INFO,"Spectrometers Opened.");
 #endif

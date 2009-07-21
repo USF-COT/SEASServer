@@ -66,7 +66,7 @@ GUIresponse* parseGUI(char* command){
         case RFS:
             syslog(LOG_DAEMON||LOG_INFO,"Retrieving wavelength sample from USB4000");
             response = malloc(sizeof(GUIresponse));
-            sample = getSpecSample(command[1],1,100);
+            sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
             // Copy the Pointer to the Pixels Array
             response->response = (void *)sample->pixels;
             response->length = sizeof(float)*3840;
@@ -131,6 +131,32 @@ GUIresponse* parseGUI(char* command){
             response->response = malloc(sizeof(wavelengthParameters));
             memcpy(response->response,(void *)getWaveParameters(command[1]),sizeof(wavelengthParameters)); 
             response->length = sizeof(wavelengthParameters);
+            break;
+        case RAD:
+            break;
+        case RAS:
+            break;
+        case RCC:
+            break;
+        case RDS:
+            syslog(LOG_DAEMON||LOG_INFO,"Recording Dark Sample...");
+            recordDarkSample(command[1],getScansPerSample(command[1]),100);
+            response = malloc(sizeof(GUIresponse));
+            response->response = malloc(sizeof(char));
+            ((char *)response->response)[0] = RDS;
+            response->length = 1;
+            syslog(LOG_DAEMON||LOG_INFO,"Dark Sample Recorded.");
+            break;
+        case RRS:
+            syslog(LOG_DAEMON||LOG_INFO,"Recording Reference Sample...");
+            recordRefSample(command[1],getScansPerSample(command[1]),100);
+            response = malloc(sizeof(GUIresponse));
+            response->response = malloc(sizeof(char));
+            ((char *)response->response)[0] = RRS;
+            response->length = 1;
+            syslog(LOG_DAEMON||LOG_INFO,"Reference Sample Recorded.");
+            break;
+        case RSS:
             break;
         case RMW:
             break;
