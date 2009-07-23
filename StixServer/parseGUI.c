@@ -26,8 +26,6 @@ void parseParameterBytes(char* parameterBytes){
     memcpy(&scansPerSample,parameterBytes+3,2);
     memcpy(&boxcarSmoothing,parameterBytes+5,2);
     
-    // Set Spectrometer Integration Time Immediately
-    setSpecIntegrationTimeinMilli(specID, integrationTime);
     setSpectrometerParameters(specID,integrationTime,scansPerSample,boxcarSmoothing);
 }
 
@@ -133,6 +131,11 @@ GUIresponse* parseGUI(char* command){
             response->length = sizeof(wavelengthParameters);
             break;
         case RAD:
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance for Specified Wavelengths.");
+            response = malloc(sizeof(GUIresponse));
+            response->response = getAbsorbance(command[1]);
+            response->length = sizeof(float) * (MAX_ABS_WAVES+1);
+            syslog(LOG_DAEMON||LOG_INFO,"Absorbance for Specified Wavelengths Retrieved.");
             break;
         case RAS:
             break;

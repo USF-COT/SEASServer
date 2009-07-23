@@ -7,12 +7,17 @@
 #ifndef _ABSORBANCE_H
 #define _ABSORBANCE_H
 
-float ComputeAbsorbance(spectrometer* USB4000, unsigned int absorbingPixel, unsigned int nonAbsorbingPixel);
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "USB4000Gum.h"
+
+float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel);
 float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned int nonAbsorbingPixel);
 float ComputeDarkValue(spectrometer* USB4000);
 float NonLinearCountCorrection(spectrometer* USB4000, float Counts);
 void  ComputeSpectrometerLambdaValues(spectrometer* USB4000);
 float GetCountsForWavelength(spectrometer* USB4000, double Lambda );
-int   GetPixelForWavelength(spectrometer* USB4000, double Lambda );
+unsigned short GetPixelForWavelength(spectrometer* USB4000, double Lambda );
 
 #endif

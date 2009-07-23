@@ -65,6 +65,10 @@ void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned 
     if(specNumber == 0 || specNumber == 1)
     {
         readDarkSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
+        if(spectrometers[specNumber]->darkSample == NULL)
+            syslog(LOG_DAEMON||LOG_INFO,"Dark sample NULL after attempted read.");
+        else
+            syslog(LOG_DAEMON||LOG_INFO,"Dark sample read OK.");
     }
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
@@ -74,6 +78,10 @@ void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned i
     if(specNumber == 0 || specNumber == 1)
     {
         readRefSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
+        if(spectrometers[specNumber]->refSample == NULL)
+            syslog(LOG_DAEMON||LOG_INFO,"Reference sample NULL after attempted read.");
+        else
+            syslog(LOG_DAEMON||LOG_INFO,"Reference sample read OK.");
     }
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
@@ -106,12 +114,38 @@ unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavele
     unsigned short pixel = 0;
     if(specNumber < NUM_SPECS)
     {
-        pthread_mutex_lock(&specsMutex[i]);
-        pixel = GetPixelForWavelength(spectrometers[i],wavelength);
-        pthread_mutex_unlock(&specsMutex[i]);
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        pixel = GetPixelForWavelength(spectrometers[specNumber],wavelength);
+        pthread_mutex_unlock(&specsMutex[specNumber]);
     }
     return pixel;
 }       
+
+float* getAbsorbance(char specNumber)
+{
+    unsigned char i;
+    float* absorbanceValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    unsigned short* absPixels = getAbsorbancePixels(specNumber);
+    unsigned short nonAbsPixel = getNonAbsorbancePixel(specNumber);    
+
+    if(specNumber < NUM_SPECS)
+    {
+        unsigned char i;
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++)
+        {
+            syslog(LOG_DAEMON||LOG_INFO,"Computing absorbance %i for absorbing pixel %i and non-absorbing pixel %i",i,absPixels[i],nonAbsPixel);
+            absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel);
+            syslog(LOG_DAEMON||LOG_INFO,"Absorbance = %i",absorbanceValues[i]);
+        }
+        syslog(LOG_DAEMON||LOG_INFO,"Computing correction absorbance for non-absorbing pixel %i",nonAbsPixel);
+        absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel);
+        syslog(LOG_DAEMON||LOG_INFO,"Correction absorbance = %i",absorbanceValues[MAX_ABS_WAVES]);
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    }
+
+    return absorbanceValues;
+}
 
 int disconnectSpectrometers(){
     int i;

@@ -103,9 +103,6 @@ spectrometer* openUSB4000(const char* serialNumber){
                                 fprintf(stderr,"Found and Opened USB4000 with serial number: %s\n",devNumber+2);
                             #endif
 
-                            // Fill the Lambda Array for Any Future Absorbance Calculations
-                            ComputeSpectrometerLambdaValues(USB4000);
-
                             free(devNumber);
                             return USB4000;
                         }
@@ -418,35 +415,29 @@ STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000){
     return USB4000OK;
 }
 
-void copySample(specSample* dest, specSample* source,unsigned int numPixels){
+specSample* copySample(specSample* source,unsigned short numPixels){
 
-    if(dest == source)
-        return;
+    specSample* newSample;    
 
     if(source == NULL)
     {
-        if(dest != NULL)
-            deallocateSample(dest);
-        return;
-    } 
+        return NULL;
+    }
 
-    if(dest != NULL)
-        deallocateSample(dest);
+    newSample = allocateSample(source->numScansForSample,numPixels);
 
-    dest =  allocateSample(source->numScansForSample,numPixels);
-
-    memcpy(dest->pixels,source->pixels,numPixels*sizeof(float));
+    memcpy(newSample->pixels,source->pixels,numPixels*sizeof(float));
     return;
 }
 
 void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
-    specSample* sample = getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
-    copySample(USB4000->darkSample,sample,USB4000->status->numPixels); 
+    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+    USB4000->darkSample = copySample(USB4000->sample,USB4000->status->numPixels);
 }
 
 void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
-    specSample* sample = getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
-    copySample(USB4000->refSample,sample,USB4000->status->numPixels);
+    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+    USB4000->refSample = copySample(USB4000->sample,USB4000->status->numPixels);
 }
 
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){ // 0x09
@@ -519,5 +510,4 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     USB4000->sample = sample;
     return sample;
 }
-
 

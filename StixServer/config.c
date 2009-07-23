@@ -66,7 +66,6 @@ char readConfig(){
                 tok = strtok(NULL,",\n");
                 while(tok != NULL){
                     config[specIndex].waveParameters.absorbingWavelengths[wavelengthCount] = atof(tok); 
-                    config[specIndex].absCalcParameters.absorbingPixels[wavelengthCount] = calcPixelValueForWavelength(specIndex,config[specIndex].waveParameters.absorbingWavelengths[wavelengthCount]);
                     wavelengthCount++;
                     tok = strtok(NULL,",\n");
                 }
@@ -75,7 +74,6 @@ char readConfig(){
            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
-                config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,config[specIndex].waveParameters.nonAbsorbingWavelength);
             }
             else{ // Unrecognized spectrometer parameter, skip this line
                 syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
@@ -85,6 +83,20 @@ char readConfig(){
     }
     fclose(configFile);
     return 1;
+}
+
+void applyConfig(){
+    int i,j;
+  
+    for(i=0; i < NUM_SPECS; i++)
+    {
+        setSpecIntegrationTimeinMilli(i,getIntegrationTime(i)); 
+        for(j=0; j < getAbsorbingWavelengthCount(i); j++)
+        {
+            config[i].absCalcParameters.absorbingPixels[j] = calcPixelValueForWavelength(i,config[i].waveParameters.absorbingWavelengths[j]);
+        }
+        config[i].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(i,config[i].waveParameters.nonAbsorbingWavelength);
+    }
 }
 
 void writeConfigFile(){
@@ -120,6 +132,7 @@ void writeConfigFile(){
 
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing){
     config[specIndex].specParameters.integrationTime = newIntTime;
+    setSpecIntegrationTimeinMilli(specIndex,config[specIndex].specParameters.integrationTime);
     config[specIndex].specParameters.scansPerSample = newScansPerSample;
     config[specIndex].specParameters.boxcarSmoothing = newBoxcarSmoothing;
 }
@@ -134,6 +147,7 @@ char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* new
     }
     config[specIndex].waveParameters.nonAbsorbingWavelength = newNonAbsWave;    
     config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,newNonAbsWave);
+    applyConfig();
     writeConfigFile();
 }
 
@@ -172,7 +186,7 @@ unsigned short* getAbsorbancePixels(int specIndex){
 }
 
 unsigned short getNonAbsorbancePixel(int specIndex){
-    return config[specIndex].nonAbsorbingPixel;
+    return config[specIndex].absCalcParameters.nonAbsorbingPixel;
 }
 
 void logConfig(){

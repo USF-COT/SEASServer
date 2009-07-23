@@ -39,6 +39,7 @@ typedef struct SPECCONFIG{
     absorbanceCalcParameters absCalcParameters;
 }specConfig;
 
+void applyConfig();
 void writeConfigFile();
 char readConfig();
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing);

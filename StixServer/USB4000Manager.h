@@ -8,6 +8,8 @@
 #include <pthread.h>
 #include <sys/syslog.h>
 #include "USB4000Gum.h"
+#include "config.h"
+#include "absorbanceCalculation.h"
 
 #ifndef _USB4000MANAGER_H
 #define _USB4000MANAGER_H
@@ -24,6 +26,7 @@ calibrationCoefficients* getCalCos(char specNumber);
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+float* getAbsorbance(char specNumber);
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength);
 
 int disconnectSpectrometers();

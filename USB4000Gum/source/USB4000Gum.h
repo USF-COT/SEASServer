@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <usb.h>
-#include "absorbanceCalculation.h"
  
 #define STATUS char
 #define USB4000ERR 0

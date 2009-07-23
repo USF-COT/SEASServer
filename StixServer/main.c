@@ -136,6 +136,7 @@ int main(){
 
   logConfig();
 
+
   /* Create a new SID for the child process */
   sid = setsid();
   if(sid < 0){
@@ -173,6 +174,8 @@ int main(){
 #ifdef DEBUG
   syslog(LOG_DAEMON||LOG_INFO,"Spectrometers Opened.");
 #endif
+
+  applyConfig();
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */

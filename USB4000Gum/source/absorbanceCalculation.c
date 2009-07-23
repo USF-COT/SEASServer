@@ -1,19 +1,16 @@
 /******************************* Absorbance calculation ******************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include "absorbanceCalculation.h"
-#include "USB4000Gum.h"
 
 /*
-   float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned int nonAbsorbingPixel )
+   float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel )
    
    Computes the absorbance for the specified spectrometer.
 */
-float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned int nonAbsorbingPixel)
+float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel)
 {
    float Absorbance;
+   float Fraction;
    float BaselineAbsorbance;
    float Numerator;
    float Denominator;
@@ -22,13 +19,17 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
       return -1;
    
    /* Compute the numerator */
-   Numerator = (float) (USB4000->refSample[absorbingPixel] - USB4000->darkSample[absorbingPixel]);
+   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - USB4000->darkSample->pixels[absorbingPixel]);
    
    /* Compute the denominator */
-   Denominator = (float) (USB4000->sample[absorbingPixel] - USB4000->darkSample[absorbingPixel] );
+   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - USB4000->darkSample->pixels[absorbingPixel] );
    
    /* Compute the absorbance */
-   Absorbance = log10( Numerator / Denominator );
+   Fraction = Numerator/Denominator; 
+   if(Fraction > 0)
+       Absorbance = log10f(Fraction);
+   else
+       return Fraction;
 
    /* Compute baseline absorbance */
    BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel);
@@ -49,19 +50,24 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned int nonAbsorbi
 {
    float Numerator;
    float Denominator;
+   float Fraction;
    float CorrectionAbsorbance;
    
    if(USB4000->refSample == NULL || USB4000->darkSample == NULL || USB4000->sample == NULL)
       return -1;
 
    /* Compute the numerator */
-   Numerator = (float) ( USB4000->refSample[nonAbsorbingPixel] - USB4000->darkSample[nonAbsorbingPixel] );
+   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - USB4000->darkSample->pixels[nonAbsorbingPixel] );
    
    /* Compute the denominator */
-   Denominator = (float) ( USB4000->sample[nonAbsorbingPixel] - USB4000->darkSample[nonAbsorbingPixel] );
+   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - USB4000->darkSample->pixels[nonAbsorbingPixel] );
    
    /* Compute the absorbance */
-   CorrectionAbsorbance = log10( Numerator / Denominator );
+   Fraction = Numerator / Denominator;
+   if(Fraction > 0)
+       CorrectionAbsorbance = log10f( Numerator / Denominator );
+   else
+       return Fraction;
 
    /* Return the absorbance */
    return( CorrectionAbsorbance );
@@ -121,7 +127,7 @@ float NonLinearCountCorrection(spectrometer* USB4000, float Counts)
       {
       /* Compute the polynomial count term */
       PolynomialCountTerm = (double) ( pow( Counts, (double) i ) );
-      PolynomialCountTerm *= USB4000->calibration.nonLinearCorrectionOrder[i];
+      PolynomialCountTerm *= USB4000->calibration->nonLinearCorrectionOrder[i];
       /* Add to the non-linear correction */
       NonLinearCorrection += PolynomialCountTerm; 
       }
@@ -151,18 +157,18 @@ void  ComputeSpectrometerLambdaValues(spectrometer* USB4000)
 
    // Prepare for calculation by allocating a new lambdaValues array if necessary
    if(USB4000->lambdaValues == NULL)
-     USB4000->lambdaValues = malloc(sizeof(double)*USB4000->status.numPixels);
+     USB4000->lambdaValues = malloc(sizeof(double)*USB4000->status->numPixels);
 
    /* Get the coefficients */
-   FirstCoefficient = (double) USB4000->calibration.wavelengthOrder[1];
-   SecondCoefficient = (double) USB4000->calibration.wavelengthOrder[2];
-   ThirdCoefficient = (double) USB4000->calibration.wavelengthOrder[3];
+   FirstCoefficient = (double) USB4000->calibration->wavelengthOrder[1];
+   SecondCoefficient = (double) USB4000->calibration->wavelengthOrder[2];
+   ThirdCoefficient = (double) USB4000->calibration->wavelengthOrder[3];
 
    /* Get the intercept */
-   Intercept = (double)USB4000->calibration.wavelengthOrder[0];
+   Intercept = (double)USB4000->calibration->wavelengthOrder[0];
 
    /* Compute the values for each pixel */
-   for( i = (int) 0; i < (int) USB4000->status.numPixels; i++ )
+   for( i = (int) 0; i < (int) USB4000->status->numPixels; i++ )
       {
       /* Compute the terms */
       Term1 = (double) ( FirstCoefficient * (double) i );
@@ -187,8 +193,12 @@ float GetCountsForWavelength(spectrometer* USB4000, double Lambda )
    double   PreviousLambda;
    double   NextLambda;
 
+   // Make Sure Lambda is Initialized
+   if(USB4000->lambdaValues == NULL)
+      ComputeSpectrometerLambdaValues(USB4000);
+
    /* Search the lambda values array for the spectrometer */
-   for( i = (unsigned short) 1; i < (unsigned short) USB4000->status.numPixels-1; i++ )
+   for( i = (unsigned short) 1; i < (unsigned short) USB4000->status->numPixels-1; i++ )
    {
       /* Get the previous lambda */
       PreviousLambda = USB4000->lambdaValues[ i-1 ];
@@ -217,8 +227,12 @@ unsigned short   GetPixelForWavelength(spectrometer* USB4000, double Lambda )
    double   PreviousLambda;
    double   NextLambda;
 
+   // Make Sure Lambda is Initialized
+   if(USB4000->lambdaValues == NULL)
+      ComputeSpectrometerLambdaValues(USB4000);
+
    /* Search the lambda values array for the spectrometer */
-   for( i = (unsigned short) 1; i < (unsigned short) USB4000->status.numPixels-1; i++ )
+   for( i = (unsigned short) 1; i < (unsigned short) USB4000->status->numPixels-1; i++ )
    {
       /* Get the previous lambda */
       PreviousLambda = USB4000->lambdaValues[ i-1 ];
