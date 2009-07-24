@@ -75,12 +75,23 @@ char readConfig(){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
             }
+
+            else if(strcmp(tok,"ANALYTE") == 0){
+                tok = strtok(NULL,"\n");
+                strncpy(config[specIndex].waveParameters.analyteName,tok,MAX_ANA_NAME-1);
+                config[specIndex].waveParameters.analyteName[MAX_ANA_NAME] = '\0';
+            }
+            else if(strcmp(tok,"UNITS") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.units = (char)atoi(tok);
+            }
             else{ // Unrecognized spectrometer parameter, skip this line
                 syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
                 continue;
             }
         }
     }
+
     fclose(configFile);
     return 1;
 }
@@ -124,6 +135,8 @@ void writeConfigFile(){
                 fprintf(configFile,",%f",config[i].waveParameters.absorbingWavelengths[j]); 
         }
         fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
+        fprintf(configFile,"\nSPEC%d.ANALYTE=%s\n",i+1,config[i].waveParameters.analyteName);
+        fprintf(configFile,"SPEC%d.UNITS=%d\n",i+1,config[i].waveParameters.units);
         fprintf(configFile,"\n");
     }
     fclose(configFile);
@@ -204,5 +217,7 @@ void logConfig(){
             syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j+1,config[i].waveParameters.absorbingWavelengths[j]);
         }
         syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
+        syslog(LOG_DAEMON||LOG_INFO,"Analyte Name: %s",config[i].waveParameters.analyteName);
+        syslog(LOG_DAEMON||LOG_INFO,"Units #: %d",config[i].waveParameters.units);
     }
 }

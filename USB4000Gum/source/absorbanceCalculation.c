@@ -14,22 +14,30 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    float BaselineAbsorbance;
    float Numerator;
    float Denominator;
+   float DarkValue;
 
    if(USB4000->refSample == NULL || USB4000->darkSample == NULL || USB4000->sample == NULL)
       return -1;
    
+   DarkValue = ComputeDarkValue(USB4000);
+
    /* Compute the numerator */
-   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - USB4000->darkSample->pixels[absorbingPixel]);
+   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - DarkValue);
    
    /* Compute the denominator */
-   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - USB4000->darkSample->pixels[absorbingPixel] );
+   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - DarkValue);
+
    
    /* Compute the absorbance */
    Fraction = Numerator/Denominator; 
    if(Fraction > 0)
+   {
        Absorbance = log10f(Fraction);
+   }
    else
+   {
        return Fraction;
+   }
 
    /* Compute baseline absorbance */
    BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel);
@@ -46,21 +54,24 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    
    Computes the correction absorbance for the specified spectrometer.
 */
-float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned int nonAbsorbingPixel)
+float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel)
 {
    float Numerator;
    float Denominator;
    float Fraction;
    float CorrectionAbsorbance;
+   float DarkValue;
    
    if(USB4000->refSample == NULL || USB4000->darkSample == NULL || USB4000->sample == NULL)
       return -1;
 
+   DarkValue = ComputeDarkValue(USB4000);
+
    /* Compute the numerator */
-   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - USB4000->darkSample->pixels[nonAbsorbingPixel] );
+   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - DarkValue);
    
    /* Compute the denominator */
-   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - USB4000->darkSample->pixels[nonAbsorbingPixel] );
+   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - DarkValue);
    
    /* Compute the absorbance */
    Fraction = Numerator / Denominator;

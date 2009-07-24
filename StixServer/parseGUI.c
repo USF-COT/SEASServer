@@ -160,6 +160,9 @@ GUIresponse* parseGUI(char* command){
             syslog(LOG_DAEMON||LOG_INFO,"Reference Sample Recorded.");
             break;
         case RSS:
+            syslog(LOG_DAEMON||LOG_INFO,"Recording Sample.");
+            recordSpecSample(command[1],getScansPerSample(command[1]),100);
+            syslog(LOG_DAEMON||LOG_INFO,"Sample Recorded");
             break;
         case RMW:
             break;

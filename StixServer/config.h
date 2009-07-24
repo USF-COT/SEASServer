@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #define MAX_ABS_WAVES 9
+#define MAX_ANA_NAME 24
 
 typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
@@ -21,8 +22,10 @@ typedef struct SPECTROMETERPARAMETERS{
 }spectrometerParameters;
 
 typedef struct WAVELENGTHPARAMETERS{
+    char analyteName[MAX_ANA_NAME];
+    unsigned char units;
     unsigned char absorbingWavelengthCount;
-    char reserved[3];
+    char reserved[2];
     float absorbingWavelengths[MAX_ABS_WAVES];
     float nonAbsorbingWavelength;
 }wavelengthParameters;

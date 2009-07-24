@@ -13,7 +13,7 @@
 #include "USB4000Gum.h"
 
 float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel);
-float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned int nonAbsorbingPixel);
+float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel);
 float ComputeDarkValue(spectrometer* USB4000);
 float NonLinearCountCorrection(spectrometer* USB4000, float Counts);
 void  ComputeSpectrometerLambdaValues(spectrometer* USB4000);

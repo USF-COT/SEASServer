@@ -108,6 +108,7 @@ void printStatus(spectrometer* USB4000);
 STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
 void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+specSample* copySample(specSample* source,unsigned short numPixels);
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
 
 #endif

@@ -25,6 +25,7 @@ void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
+void recordSpecSampe(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 float* getAbsorbance(char specNumber);
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength);

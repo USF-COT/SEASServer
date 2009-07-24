@@ -417,6 +417,8 @@ STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000){
 
 specSample* copySample(specSample* source,unsigned short numPixels){
 
+    unsigned short i;
+
     specSample* newSample;    
 
     if(source == NULL)
@@ -426,7 +428,9 @@ specSample* copySample(specSample* source,unsigned short numPixels){
 
     newSample = allocateSample(source->numScansForSample,numPixels);
 
-    memcpy(newSample->pixels,source->pixels,numPixels*sizeof(float));
+    for(i=0; i < numPixels; i++)
+        newSample->pixels[i] = source->pixels[i];
+
     return;
 }
 
