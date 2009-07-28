@@ -150,9 +150,11 @@ char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned 
     config[specIndex].specParameters.boxcarSmoothing = newBoxcarSmoothing;
 }
 
-char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave){
+char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUnits, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave){
     int i;
 
+    strncpy(config[specIndex].waveParameters.analyteName,newAnalyteName,MAX_ANA_NAME-1);
+    config[specIndex].waveParameters.units = newUnits;
     config[specIndex].waveParameters.absorbingWavelengthCount = newAbsWaveCount;
     for(i=0; i < newAbsWaveCount; i++){
         config[specIndex].waveParameters.absorbingWavelengths[i] = newAbsWaves[i];
@@ -160,6 +162,12 @@ char setComputationData(int specIndex, unsigned char newAbsWaveCount, float* new
     }
     config[specIndex].waveParameters.nonAbsorbingWavelength = newNonAbsWave;    
     config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,newNonAbsWave);
+    applyConfig();
+    writeConfigFile();
+}
+
+void setComputationDataBytes(int specIndex,unsigned char* bytes){
+    memcpy(&(config[specIndex].waveParameters),bytes,sizeof(wavelengthParameters));
     applyConfig();
     writeConfigFile();
 }

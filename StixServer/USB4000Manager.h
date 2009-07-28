@@ -27,7 +27,8 @@ void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned 
 void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 void recordSpecSampe(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
-float* getAbsorbance(char specNumber);
+float* getAbsorbance(unsigned char specNumber);
+float* getAbsorbanceSpectrum(unsigned char specNumber);
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength);
 
 int disconnectSpectrometers();

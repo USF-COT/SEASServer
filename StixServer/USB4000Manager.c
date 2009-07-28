@@ -131,7 +131,7 @@ unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavele
     return pixel;
 }       
 
-float* getAbsorbance(char specNumber)
+float* getAbsorbance(unsigned char specNumber)
 {
     unsigned char i;
     float* absorbanceValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
@@ -151,6 +151,26 @@ float* getAbsorbance(char specNumber)
     }
 
     return absorbanceValues;
+}
+
+float* getAbsorbanceSpectrum(unsigned char specNumber){
+    int i;
+    float* absValues = NULL;
+    unsigned short nonAbsPixel = getNonAbsorbancePixel(specNumber);
+
+    if(specNumber < NUM_SPECS)
+    {
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        absValues = malloc(sizeof(float) * spectrometers[specNumber]->status->numPixels);
+        getSample(spectrometers[specNumber],getScansPerSample(specNumber),100);
+        for(i=0; i < spectrometers[specNumber]->status->numPixels; i++)
+        {
+            absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel);
+        }
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    }
+    return absValues;
+             
 }
 
 int disconnectSpectrometers(){

@@ -2,17 +2,15 @@
 
 void parseWaveSetCommand(char* waveBytes){
     int specID;
+    char newAnaName[MAX_ANA_NAME];
+    unsigned char newUnits;
     unsigned char absWaveCount;
     float absWaves[9];
     float nonAbsWave;
 
     specID = (int)waveBytes[0];
-    absWaveCount = (unsigned char)waveBytes[1];
-    // Add +3 to skip reserved bytes
-    memcpy(absWaves,waveBytes+5,sizeof(float)*9);
-    memcpy(&nonAbsWave,waveBytes+41,sizeof(float));
     
-    setComputationData(specID,absWaveCount,absWaves,nonAbsWave); 
+    setComputationDataBytes(specID,waveBytes+1);
 }
 
 void parseParameterBytes(char* parameterBytes){
@@ -138,6 +136,11 @@ GUIresponse* parseGUI(char* command){
             syslog(LOG_DAEMON||LOG_INFO,"Absorbance for Specified Wavelengths Retrieved.");
             break;
         case RAS:
+            syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance Spectrum...");
+            response = malloc(sizeof(GUIresponse));
+            response->response = getAbsorbanceSpectrum(command[1]);
+            response->length = sizeof(float) * 3840;
+            syslog(LOG_DAEMON||LOG_INFO,"Absorbance Spectrum Retrieved.");
             break;
         case RCC:
             break;

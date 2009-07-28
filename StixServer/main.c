@@ -58,7 +58,7 @@ void* handleConnection(void* info){
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     while(numBytesReceived > 0){
 #ifdef DEBUG
-	hexString[0] = '\0';
+        hexString[0] = '\0';
 	hexBuf[0] = '\0';
         for(i=0; i<numBytesReceived;i++){
 		snprintf(hexBuf,4,"%02X ",buffer[i]);
@@ -70,6 +70,7 @@ void* handleConnection(void* info){
 	response = parseGUI(buffer);
         if(response){
 #ifdef DEBUG
+            /*
             hexString[0] = '\0';
             hexBuf[0] = '\0';
             for(i=0; i < MAXBUF*3 && i < response->length; i++){
@@ -80,6 +81,8 @@ void* handleConnection(void* info){
                 syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,response->length,hexString);
             else
                 syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s...",((threadInfo*)info)->thread_bin_index,response->length,hexString);
+            */
+            syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes)",((threadInfo*)info)->thread_bin_index,response->length);
 #endif
             send(*connection,response->response,response->length,0);
             freeResponse(response);
