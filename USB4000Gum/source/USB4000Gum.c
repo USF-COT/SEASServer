@@ -7,7 +7,7 @@
 
 #include "USB4000Gum.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPixels){
     specSample* sample;
@@ -91,7 +91,10 @@ spectrometer* openUSB4000(const char* serialNumber){
                         USB4000->usbHandle = usbHandle;
                         USB4000->interface = interface;
 
-                        initDevice(USB4000);
+                        if(initDevice(USB4000) == USB4000ERR){
+                            deallocateSpec(USB4000);
+                            return NULL;
+                        }
                         // Check if the found device matches the requested serial number
                         devNumber = queryConfig(USB4000,0);
                         if(strcmp(devNumber+2,serialNumber) == 0){ // Device found!
@@ -247,16 +250,27 @@ void printStatus(spectrometer* USB4000){
 STATUS initDevice(spectrometer* USB4000){
     char command[2];
     char response[17];
+    int i;
 
     // Send Initialize Command
     command[0] = 0x01;
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,1,1000);
 
+    sleep(1);
+
     // Get Saturation Level
+    i=0;
     command[0] = 0x05;
     command[1] = 0x11;
     usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
-    usb_bulk_read(USB4000->usbHandle,EP1IN,response,17,1000);
+    while(usb_bulk_read(USB4000->usbHandle,EP1IN,response,17,1000) != 17 && i < 4){
+        usb_bulk_write(USB4000->usbHandle,EP1OUT,command,2,1000);
+        sleep(1);
+        i++;
+    }
+
+    if(i == 4)
+       return USB4000ERR; 
 
     USB4000->saturation_level = ((response[7] & 0x00FF) << 8) | response[6];
 

@@ -26,6 +26,8 @@ int connectSpectrometers(char* serialNumber[]){
 	    pthread_mutex_lock(&specsMutex[i]);
 	    syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber[i]);
 	    spectrometers[i] = openUSB4000(serialNumber[i]);
+            if(spectrometers[i] == NULL)
+                return CONNECT_ERR;
 	    setSpecIntegrationTimeinMilli(i,getIntegrationTime(i));
             pthread_mutex_unlock(&specsMutex[i]);
         }
@@ -182,7 +184,6 @@ int disconnectSpectrometers(){
         {
             pthread_mutex_lock(&specsMutex[i]);
             closeUSB4000(spectrometers[i]);
-            pthread_mutex_unlock(&specsMutex[i]);
             pthread_mutex_destroy(&specsMutex[i]);
         }
         specsConnected = DISCONNECTED;

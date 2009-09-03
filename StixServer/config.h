@@ -15,6 +15,17 @@ extern "C" {
 #define MAX_ABS_WAVES 9
 #define MAX_ANA_NAME 24
 
+/* Units */
+enum  CONCENTRATION_UNITS   {
+
+ PICOMOLAR   =  0,
+ NANOMOLAR,
+ MICROMOLAR,
+ MOLAR,
+ MAX_CONCENTRATION_UNITS
+
+};
+
 typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
     unsigned short scansPerSample;
@@ -25,9 +36,16 @@ typedef struct WAVELENGTHPARAMETERS{
     char analyteName[MAX_ANA_NAME];
     unsigned char units;
     unsigned char absorbingWavelengthCount;
-    char reserved[2];
+    unsigned char systemMeasureMode;
+    unsigned char cMeasureMode;
     float absorbingWavelengths[MAX_ABS_WAVES];
     float nonAbsorbingWavelength;
+    float temperature;
+    float CtS1;
+    float pCO2S1;
+    float pCO2S2;
+    float slope[MAX_ABS_WAVES];
+    float intercept[MAX_ABS_WAVES]; 
 }wavelengthParameters;
 
 typedef struct ABSORBANCECALCPARAMETERS{

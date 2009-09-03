@@ -46,6 +46,16 @@ typedef struct THREADINFO{
     int socket_connection;
 }threadInfo;
 
+volatile sig_atomic_t keep_going = 1;
+int list_s = 0;
+
+void catch_term(int sig)
+{
+    syslog(LOG_DAEMON||LOG_INFO,"SIGTERM Caught.");
+    keep_going = 0;
+    close(list_s);
+}
+
 void* handleConnection(void* info){
     int* connection = &((threadInfo*)info)->socket_connection;
     char buffer[MAXBUF+1];
@@ -56,7 +66,7 @@ void* handleConnection(void* info){
     int numBytesReceived;    
 
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
-    while(numBytesReceived > 0){
+    while(numBytesReceived > 0 && keep_going){
 #ifdef DEBUG
         hexString[0] = '\0';
 	hexBuf[0] = '\0';
@@ -127,6 +137,9 @@ int main(){
 
   printf("Daemon started.  Writing all further notices to daemon log: /var/log/messages\n");
 
+  // Enable Signal Handler
+  signal(SIGTERM, catch_term);
+
   /* Open Log File Here */
   openlog("STIXSERVER",LOG_PID,LOG_DAEMON);
   syslog(LOG_DAEMON||LOG_INFO,"Daemon Started.");
@@ -173,7 +186,11 @@ int main(){
 #endif
   // Connect the USB Spectrometers
   char *serialNumbers[NUM_SPECS] = {getSerialNumber(0),getSerialNumber(1)};
-  connectSpectrometers(serialNumbers);
+  if(connectSpectrometers(serialNumbers) == CONNECT_ERR)
+  {
+      syslog(LOG_DAEMON||LOG_ERR,"Spectrometers could not be opened.  Daemon Exiting");
+      exit(EXIT_FAILURE);
+  }
 #ifdef DEBUG
   syslog(LOG_DAEMON||LOG_INFO,"Spectrometers Opened.");
 #endif
@@ -196,12 +213,13 @@ int main(){
   for(i=0; i < NUM_THREADS; i++)
       thread_bin_available[i] = AVAILABLE;
 
-  while(1){
+  while(keep_going){
     syslog(LOG_DAEMON||LOG_INFO,"Listening for connection on port %i", port);
     /* Wait for TCP/IP Connection */
-    if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
-        syslog(LOG_DAEMON||LOG_ERR,"Unable to call accept() on socket. Daemon Terminated.");
-        exit(EXIT_FAILURE);
+    conn_s = accept(list_s, NULL, NULL);
+    if ( conn_s < 0 ) {
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to call accept() on socket.");
+        break;
     }
 
     /* Spawn a POSIX Server Thread to Handle Connected Socket */
@@ -223,9 +241,8 @@ int main(){
     
   }
   
-  // Disconnect Spectrometers
   disconnectSpectrometers();
-  syslog(LOG_DAEMON||LOG_INFO,"Daemon Exited.");
+  syslog(LOG_DAEMON||LOG_INFO,"Daemon Exited Politely.");
   exit(EXIT_SUCCESS);
 
 }

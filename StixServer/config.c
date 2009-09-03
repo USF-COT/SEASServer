@@ -17,6 +17,7 @@ char readConfig(){
     char configLine[MAXCONFIGLINE];
     char* tok;
     int specIndex,wavelengthCount;
+    int i;
 
     if(access(CONFIGPATH,R_OK||W_OK)){
         return 0; // Do not have access to file
@@ -84,6 +85,46 @@ char readConfig(){
             else if(strcmp(tok,"UNITS") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.units = (char)atoi(tok);
+            }
+            else if(strcmp(tok,"TEMP") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.temperature = atof(tok);
+            }
+            else if(strcmp(tok,"CTS1") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.CtS1 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2S1") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2S1 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2S2") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2S2 = atof(tok);
+            }
+            else if(strcmp(tok,"SYSMEASUREMODE") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.systemMeasureMode = (unsigned char)atoi(tok);
+            }
+            else if(strcmp(tok,"CMEASUREMODE") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.cMeasureMode = (unsigned char)atoi(tok);
+            }
+            else if(strcmp(tok,"SLOPE") == 0){
+                tok = strtok(NULL,",\n");
+                i=0;
+                while(tok != NULL && i < MAX_ABS_WAVES){
+                    config[specIndex].waveParameters.slope[wavelengthCount] = atof(tok);
+                    tok = strtok(NULL,",\n");
+                }
+            }
+            else if(strcmp(tok,"INTERCEPT") == 0){
+                tok = strtok(NULL,",\n");
+                i=0;
+                while(tok != NULL && i < MAX_ABS_WAVES){
+                    config[specIndex].waveParameters.intercept[wavelengthCount] = atof(tok);
+                    tok = strtok(NULL,",\n");
+                }
             }
             else{ // Unrecognized spectrometer parameter, skip this line
                 syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
