@@ -178,6 +178,28 @@ void writeConfigFile(){
         fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
         fprintf(configFile,"\nSPEC%d.ANALYTE=%s\n",i+1,config[i].waveParameters.analyteName);
         fprintf(configFile,"SPEC%d.UNITS=%d\n",i+1,config[i].waveParameters.units);
+        fprintf(configFile,"SPEC%d.TEMP=%f\n",i+1,config[i].waveParameters.temperature);
+        fprintf(configFile,"SPEC%d.CTS1=%f\n",i+1,config[i].waveParameters.CtS1);
+        fprintf(configFile,"SPEC%d.PCO2S1=%f\n",i+1,config[i].waveParameters.pCO2S1);
+        fprintf(configFile,"SPEC%d.PCO2S2=%f\n",i+1,config[i].waveParameters.pCO2S2);
+        fprintf(configFile,"SPEC%d.SYSMEASUREMODE=%d\n",i+1,config[i].waveParameters.systemMeasureMode);
+        fprintf(configFile,"SPEC%d.CMEASUREMODE=%d\n",i+1,config[i].waveParameters.cMeasureMode);
+        fprintf(configFile,"SPEC%d.SLOPE=",i+1);
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+            if(j==0)
+              fprintf(configFile,"%f",config[i].waveParameters.slope[j]);
+            else
+                fprintf(configFile,",%f",config[i].waveParameters.slope[j]);
+        } 
+        fprintf(configFile,"\n");
+        fprintf(configFile,"SPEC%d.INTERCEPT=",i+1);
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+            if(j==0)
+              fprintf(configFile,"%f",config[i].waveParameters.intercept[j]);
+            else
+                fprintf(configFile,",%f",config[i].waveParameters.intercept[j]);
+        }
+        fprintf(configFile,"\n");
         fprintf(configFile,"\n");
     }
     fclose(configFile);
@@ -268,5 +290,15 @@ void logConfig(){
         syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
         syslog(LOG_DAEMON||LOG_INFO,"Analyte Name: %s",config[i].waveParameters.analyteName);
         syslog(LOG_DAEMON||LOG_INFO,"Units #: %d",config[i].waveParameters.units);
+        syslog(LOG_DAEMON||LOG_INFO,"System Measure Mode: %d",config[i].waveParameters.systemMeasureMode);
+        syslog(LOG_DAEMON||LOG_INFO,"Carbon Measure Mode: %d",config[i].waveParameters.cMeasureMode);
+        syslog(LOG_DAEMON||LOG_INFO,"Temperature: %f",config[i].waveParameters.temperature);
+        syslog(LOG_DAEMON||LOG_INFO,"CtS1: %f",config[i].waveParameters.CtS1);
+        syslog(LOG_DAEMON||LOG_INFO,"pCO2S1: %f",config[i].waveParameters.pCO2S1);
+        syslog(LOG_DAEMON||LOG_INFO,"pCO2S2: %f",config[i].waveParameters.pCO2S2);
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)
+            syslog(LOG_DAEMON||LOG_INFO,"Slope %i: %f",j+1,config[i].waveParameters.slope[j]);
+        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)
+            syslog(LOG_DAEMON||LOG_INFO,"Intercept %i: %f",j+1,config[i].waveParameters.intercept[j]);
     }
 }
