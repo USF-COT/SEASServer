@@ -15,12 +15,11 @@
 
 %union {
     double doubleVal;
-    int intVal;
     unsigned char charVal;
 }
-%token <doubleVal> DVAL
-%token <intVal> IVAL 
-%token <charVal> DEVICE SWITCH ID
+%token <doubleVal> DVAL ID
+%token <charVal> DEVICE SWITCH 
+%type <charVal> controlExp
 
 /* Grammer Follows */
 %%
@@ -37,9 +36,12 @@ line:  '\n'
 //      | writeExp '\n'
 ;
 
-controlExp:  DEVICE SWITCH IVAL { printf("Sending command: %02x %02x %02x",$1,$2,$3); }
-            | DEVICE SWITCH ID IVAL { printf("Sending command: %02x %02x %02x %i",$1,$2,$3,$4); }
-            | DEVICE SWITCH ID DVAL { printf("Sending command: %02x %02x %02x %g",$1,$2,$3,$4); } 
+controlExp:  DEVICE SWITCH DVAL { printf("Sending command: %02x %02x %g",$1,$2,$3); $$=1}
+            | DEVICE SWITCH ID DVAL { printf("Sending command: %02x %02x %g %g",$1,$2,$3,$4); $$=1}
 
 %%
+
+void yyerror (char const* error){
+    fprintf(stderr,"Error: %s\n",error);
+}
 

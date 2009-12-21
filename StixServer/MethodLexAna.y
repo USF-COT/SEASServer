@@ -1,4 +1,4 @@
-/* MethodLexAna.y
+/*  MethodLexAna.y
  * 
  * Defines the Lexical Analyzer
  * for interpreting Mini-Seas
@@ -16,9 +16,20 @@
     unsigned char getProtocol(char const * name);
 %}
 
+DIGIT [0-9]
+
 %%
 
-pump|lamp|valve|heater { printf("Keyword: %s\n",yytext); yylval=getProtocol(yytext); return DEVICE; }
+pump|lamp|valve|heater { printf("Keyword: %s\n",yytext); yylval.charVal=getProtocol(yytext); return DEVICE; }
+
+on { printf("Switch: %s\n",yytext); yylval.charVal=1; return SWITCH;}
+off { printf("Switch: %s\n",yytext); yylval.charVal=0; return SWITCH;}
+
+{DIGIT}+"."{DIGIT}*|{DIGIT}+ {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
+
+"//"[a-z0-9]*"\n"|"/*"[a-z0-9]*"*/" /* eat up comments */
+
+[ \t\n]+ /* eat up whitespace */
 
 %%
 
@@ -61,6 +72,5 @@ unsigned char getProtocol(char const * name)
 int main()
 {
     yyin = stdin;
-    yylex();
-    return 0;
+    return yyparse();
 }
