@@ -10,6 +10,7 @@
 %{
     #include <stdio.h>
     #include <ctype.h>
+    #include <stdlib.h>
     #include "protocol.h"
     #include "MethodParser.tab.h"
 
@@ -20,12 +21,14 @@ DIGIT [0-9]
 
 %%
 
-pump|lamp|valve|heater { printf("Keyword: %s\n",yytext); yylval.charVal=getProtocol(yytext); return DEVICE; }
+pump|lamp|valve|heater { printf("Device: %s\n",yytext); yylval.charVal=getProtocol(yytext); return DEVICE; }
 
 on { printf("Switch: %s\n",yytext); yylval.charVal=1; return SWITCH;}
 off { printf("Switch: %s\n",yytext); yylval.charVal=0; return SWITCH;}
 
-{DIGIT}+"."{DIGIT}*|{DIGIT}+ {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
+{DIGIT}+"."{DIGIT}* {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
+
+{DIGIT}+ {printf("Int Value: %s\n",yytext); yylval.intVal=atoi(yytext); return IVAL;}
 
 "//"[a-z0-9]*"\n"|"/*"[a-z0-9]*"*/" /* eat up comments */
 
@@ -49,7 +52,7 @@ struct lookupRec const lookups[] =
 };
 
 
-lookupRec* lookupKeywordProtocol(char const* keyword)
+lookupRec const* lookupKeywordProtocol(char const* keyword)
 {
     int i;
 
@@ -62,15 +65,13 @@ lookupRec* lookupKeywordProtocol(char const* keyword)
 
 unsigned char getProtocol(char const * name)
 {
-    lookupRec* record = lookupKeywordProtocol(name);    
+    lookupRec const* record = lookupKeywordProtocol(name);    
     if(record != (lookupRec*) 0)
         return record->protocol;
     else
         return 0;
 }
 
-int main()
-{
-    yyin = stdin;
+int main(void){
     return yyparse();
 }
