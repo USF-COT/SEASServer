@@ -26,13 +26,15 @@ pump|lamp|valve|heater { printf("Device: %s\n",yytext); yylval.charVal=getProtoc
 on { printf("Switch: %s\n",yytext); yylval.charVal=1; return SWITCH;}
 off { printf("Switch: %s\n",yytext); yylval.charVal=0; return SWITCH;}
 
-{DIGIT}+"."{DIGIT}* {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
+[+-]?{DIGIT}+"."{DIGIT}*f? {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
 
-{DIGIT}+ {printf("Int Value: %s\n",yytext); yylval.intVal=atoi(yytext); return IVAL;}
+[+-]?{DIGIT}+i? {printf("Int Value: %s\n",yytext); yylval.intVal=atoi(yytext); return IVAL;}
 
 "//"[a-z0-9]*"\n"|"/*"[a-z0-9]*"*/" /* eat up comments */
 
-[ \t\n]+ /* eat up whitespace */
+\n {return '\n';}
+
+[ \t]+ /* eat up whitespace */
 
 %%
 
