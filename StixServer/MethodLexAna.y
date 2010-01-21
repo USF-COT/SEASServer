@@ -33,9 +33,7 @@ set { printf("SET Command.\n"); return SET;}
 read { printf("READ Command.\n"); return READ;}
 calc|calculate { printf("CALC Command.\n"); return CALC;}
 
-[+-]?{DIGIT}+"."{DIGIT}*f? {printf("Double Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return DVAL; }
-
-[+-]?{DIGIT}+i? {printf("Int Value: %s\n",yytext); yylval.intVal=atoi(yytext); return IVAL;}
+[+-]?{DIGIT}+ | [+-]?{DIGIT}+"."{DIGIT}* {printf("Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return VAL; }
 
 "//"[a-z0-9]*"\n"|"/*"[a-z0-9]*"*/" /* eat up comments */
 

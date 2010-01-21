@@ -15,16 +15,14 @@
 %}
 
 %union {
-    double doubleVal;
+    double Val;
     unsigned char charVal;
-    int intVal;
 }
-%token <doubleVal> DVAL 
-%token <intVal> IVAL
+%token <doubleVal> VAL 
 %token <charVal> PUMP LAMP VALVE HEATER 
 %token <charVal> ON OFF
 %token SET READ CALC  
-%type <charVal> controlExp pumpOnExp lampExp valveOnExp heaterOnExp devOffExp device
+%type <charVal> controlExp pumpOnExp lampExp valveOnExp heaterOnExp devOffExp specParams device absWaveParams
 
 /* Grammer Follows */
 %%
@@ -56,21 +54,21 @@ device:   PUMP {$$=$1}
         | VALVE {$$=$1}
         | HEATER {$$=$1}
 
-devOffExp: device OFF IVAL { printf("Sending command: %02x %02x %02x\n",$1,$2,(unsigned char)$3); $$=1;
+devOffExp: device OFF VAL { printf("Sending command: %02x %02x %02x\n",$1,$2,(unsigned char)$3); $$=1;
 }
 ;
 
-pumpOnExp: PUMP ON IVAL IVAL { printf("Sending command: %02x %02x %02x %d\n",$1,$2,(unsigned char)$3,$4); $$=1;}
+pumpOnExp: PUMP ON VAL VAL { printf("Sending command: %02x %02x %02x %d\n",$1,$2,(unsigned char)$3,$4); $$=1;}
 ;
 
 lampExp:   LAMP ON {printf("Sending command: %02x %02x\n",$1,$2); $$=1;}
          | LAMP OFF {printf("Sending command: %02x %02x\n",$1,$2); $$=1;}
 ;
 
-valveOnExp: VALVE ON IVAL {printf("Sending command: %02x %02x %02x\n",$1,$2,(unsigned char)$3);$$=1;}
+valveOnExp: VALVE ON VAL {printf("Sending command: %02x %02x %02x\n",$1,$2,(unsigned char)$3);$$=1;}
 ;
 
-heaterOnExp: HEATER ON IVAL DVAL {printf("Sending command: %02x %02x %02x %g\n",$1,$2,(unsigned char)$3,$4); $$=1;}
+heaterOnExp: HEATER ON VAL VAL {printf("Sending command: %02x %02x %02x %g\n",$1,$2,(unsigned char)$3,$4); $$=1;}
 ;
 
 /* Setting Expression Grammers Follow */
@@ -78,13 +76,9 @@ setExp:   specParams
         | absWavesParams
         | nonAbsWavesParams
 
-specParams:  SET SPECPARAMS IVAL IVAL IVAL {printf("Setting Spectrometer %d Parameters: %d Integration Time, %d Boxcar Scans.\n",$3,$4,$5); $$=1;}
+specParams:  SET SPECPARAMS VAL VAL VAL {printf("Setting Spectrometer %d Parameters: %d Integration Time, %d Boxcar Scans.\n",$3,$4,$5); $$=1;}
 
-iValSeries: IVAL
-            | iValSeries IVAL
-;
-
-absWaveParams: SET ABSWAVES IVAL iValSeries 
+absWaveParams: SET ABSWAVES VAL  
 
 %%
 
