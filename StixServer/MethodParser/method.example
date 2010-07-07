@@ -1,0 +1,11 @@
+pump on 1 100
+pump off 1
+
+lamp on
+lamp off
+
+valve open 2
+valve close 2
+
+heater on 1 50.5
+heater off 1
