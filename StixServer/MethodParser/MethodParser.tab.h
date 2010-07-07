@@ -39,42 +39,42 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     DVAL = 258,
-     IVAL = 259,
-     PUMP = 260,
-     LAMP = 261,
-     VALVE = 262,
-     HEATER = 263,
-     ON = 264,
-     OFF = 265,
-     SET = 266,
-     READ = 267,
-     CALC = 268
+     PUMP = 258,
+     LAMP = 259,
+     VALVE = 260,
+     HEATER = 261,
+     ON = 262,
+     OFF = 263,
+     SET = 264,
+     READ = 265,
+     CALC = 266,
+     RECORD = 267,
+     WRITE = 268,
+     VAL = 269
    };
 #endif
 /* Tokens.  */
-#define DVAL 258
-#define IVAL 259
-#define PUMP 260
-#define LAMP 261
-#define VALVE 262
-#define HEATER 263
-#define ON 264
-#define OFF 265
-#define SET 266
-#define READ 267
-#define CALC 268
+#define PUMP 258
+#define LAMP 259
+#define VALVE 260
+#define HEATER 261
+#define ON 262
+#define OFF 263
+#define SET 264
+#define READ 265
+#define CALC 266
+#define RECORD 267
+#define WRITE 268
+#define VAL 269
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 17 "MethodParser.y"
+#line 20 "MethodParser.y"
 {
     double doubleVal;
-    unsigned char charVal;
-    int intVal;
 }
 /* Line 1489 of yacc.c.  */
 #line 81 "MethodParser.tab.h"

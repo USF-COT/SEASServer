@@ -2,7 +2,7 @@
 # By: Michael Lindemuth
 
 PARSER: MethodParser.tab.c lex.yy.c
-	gcc MethodParser.tab.c lex.yy.c -lfl -o parser
+	gcc -I../ MethodParser.tab.c lex.yy.c -lfl -o parser
 
 lex.yy.c: MethodParser.tab.c MethodLexAna.y
 	flex -i MethodLexAna.y
