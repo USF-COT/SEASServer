@@ -45,12 +45,33 @@
      HEATER = 261,
      ON = 262,
      OFF = 263,
-     SET = 264,
-     READ = 265,
-     CALC = 266,
-     RECORD = 267,
-     WRITE = 268,
-     VAL = 269
+     READ = 264,
+     CALC = 265,
+     RECORD = 266,
+     WRITE = 267,
+     VAL = 268,
+     SET = 269,
+     DWELL = 270,
+     SPECM = 271,
+     PARAMS = 272,
+     SAMP = 273,
+     WAVE = 274,
+     CORR = 275,
+     REF = 276,
+     ABSO = 277,
+     FULL = 278,
+     SPEC = 279,
+     CONC = 280,
+     PCO2 = 281,
+     PH = 282,
+     OPEN = 283,
+     CLOSE = 284,
+     DATA = 285,
+     DELAY = 286,
+     BEG = 287,
+     EN = 288,
+     LOOP = 289,
+     FIL = 290
    };
 #endif
 /* Tokens.  */
@@ -60,12 +81,33 @@
 #define HEATER 261
 #define ON 262
 #define OFF 263
-#define SET 264
-#define READ 265
-#define CALC 266
-#define RECORD 267
-#define WRITE 268
-#define VAL 269
+#define READ 264
+#define CALC 265
+#define RECORD 266
+#define WRITE 267
+#define VAL 268
+#define SET 269
+#define DWELL 270
+#define SPECM 271
+#define PARAMS 272
+#define SAMP 273
+#define WAVE 274
+#define CORR 275
+#define REF 276
+#define ABSO 277
+#define FULL 278
+#define SPEC 279
+#define CONC 280
+#define PCO2 281
+#define PH 282
+#define OPEN 283
+#define CLOSE 284
+#define DATA 285
+#define DELAY 286
+#define BEG 287
+#define EN 288
+#define LOOP 289
+#define FIL 290
 
 
 
@@ -77,7 +119,7 @@ typedef union YYSTYPE
     double doubleVal;
 }
 /* Line 1489 of yacc.c.  */
-#line 81 "MethodParser.tab.h"
+#line 123 "MethodParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
