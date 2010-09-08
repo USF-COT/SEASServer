@@ -67,6 +67,8 @@ void* handleConnection(void* info){
 
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     while(numBytesReceived > 0 && keep_going){
+        // Terminate buffer
+        buffer[MAXBUF] = '\0';
 #ifdef DEBUG
         hexString[0] = '\0';
 	hexBuf[0] = '\0';

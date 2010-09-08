@@ -45,7 +45,7 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL
+controlExp:   PUMP ON VAL VAL 
             | PUMP OFF VAL
             | LAMP ON
             | LAMP OFF

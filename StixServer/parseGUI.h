@@ -11,6 +11,7 @@
 #include "config.h"
 #include "GUIprotocol.h"
 #include "USB4000Manager.h"
+#include "methodFileManager.h"
 
 #ifndef _PARSEGUI_H
 #define	_PARSEGUI_H
@@ -25,6 +26,7 @@ extern "C" {
     }GUIresponse;
 
     GUIresponse* parseGUI(char* command);
+    GUIresponse* createResponse(unsigned int length, void* response);
     void freeResponse(GUIresponse* response);
 
 #ifdef	__cplusplus

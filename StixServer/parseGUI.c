@@ -1,5 +1,7 @@
 #include "parseGUI.h"
 
+static unsigned short multiBufferCommand = 0;
+
 void parseWaveSetCommand(char* waveBytes){
     int specID;
     char newAnaName[MAX_ANA_NAME];
@@ -31,8 +33,15 @@ GUIresponse* parseGUI(char* command){
     GUIresponse* response = NULL;
     specSample* sample = NULL;
     int i;
+    unsigned short switchVar;
 
-    switch(command[0]){
+    if(multiBufferCommand){
+        switchVar = multiBufferCommand;
+    }else{
+        switchVar = command[0];
+    }
+
+    switch(switchVar){
         case STM:
             break;
         case RTM:
@@ -93,6 +102,14 @@ GUIresponse* parseGUI(char* command){
         case TRM:
             break;
         case LDM:
+            syslog(LOG_DAEMON||LOG_INFO,"Loading Method.");
+            response = receiveMethodFile(command);
+            // If you have received the whole file, response will not be null.  Else, make a note that there are still more buffers expected.
+            if(response){
+                multiBufferCommand = 0;
+            }else{
+                multiBufferCommand = LDM;
+            }
             break;
         case RDM:
             break;
@@ -183,6 +200,13 @@ GUIresponse* parseGUI(char* command){
             syslog(LOG_DAEMON||LOG_INFO,"Unknown command sent starting with: %02x",command[0]);
             break;
     }
+    return response;
+}
+
+GUIresponse* createResponse(unsigned int length, void* data){
+    GUIresponse* response = malloc(sizeof(GUIresponse));
+    response->length = length;
+    response->response = data;
     return response;
 }
 
