@@ -49,6 +49,7 @@
 #define     LMT         0x1B     // List Method Files
 #define     RMF         0x1C     // Read Method File
 #define         SMF     0x1D            // Set Current Method File
+#define     DLM      0x1E     // Delete Method
 
 
 /* Mini SEAS to GUI commands */
