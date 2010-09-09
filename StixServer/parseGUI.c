@@ -101,7 +101,7 @@ GUIresponse* parseGUI(char* command){
             break;
         case TRM:
             break;
-        case LDM:
+        case LRM:
             syslog(LOG_DAEMON||LOG_INFO,"Loading Method.");
             response = receiveMethodFile(command);
             // If you have received the whole file, response will not be null.  Else, make a note that there are still more buffers expected.
@@ -111,6 +111,10 @@ GUIresponse* parseGUI(char* command){
                 multiBufferCommand = LDM;
             }
             break;
+        case LMT:
+            syslog(LOG_DAEMON||LOG_INFO,"Loading Method List.");
+            response = getMethodFileList();
+            break; 
         case RDM:
             break;
         case SMR:
@@ -207,6 +211,14 @@ GUIresponse* createResponse(unsigned int length, void* data){
     GUIresponse* response = malloc(sizeof(GUIresponse));
     response->length = length;
     response->response = data;
+    return response;
+}
+
+GUIresponse* createResponseString(char* string){
+    GUIresponse* response = malloc(sizeof(GUIresponse));
+    response->length = strlen(string);
+    response->response = malloc(sizeof(char)*(response->length+1));
+    strcpy((char *)response->response,string);
     return response;
 }
 

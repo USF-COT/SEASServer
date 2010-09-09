@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <sys/syslog.h>
 #include "config.h"
-#include "GUIprotocol.h"
+#include "GUI protocol.h"
 #include "USB4000Manager.h"
 #include "methodFileManager.h"
 
@@ -27,6 +27,7 @@ extern "C" {
 
     GUIresponse* parseGUI(char* command);
     GUIresponse* createResponse(unsigned int length, void* response);
+    GUIresponse* createResponseString(char* string);
     void freeResponse(GUIresponse* response);
 
 #ifdef	__cplusplus
