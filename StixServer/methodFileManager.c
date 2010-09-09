@@ -45,7 +45,7 @@ GUIresponse* receiveMethodFile(char* contentBuffer){
     // Parse filename from first line
     char *tokenBuffer = NULL;
     char defaultFilename[24] = {'\0'}; 
-    char endOfTransChar[2] = {LDM,'\0'};
+    char endOfTransChar[2] = {LRM,'\0'};
     GUIresponse* response = NULL;
 
     int i,offset = 0;
@@ -64,10 +64,10 @@ GUIresponse* receiveMethodFile(char* contentBuffer){
     }
 
     // If a method file exists, output the remaining characters in the buffer to the file.
-    // When an LDM character is found, close the file and return an LDM as a response.
+    // When an LRM character is found, close the file and return an LRM as a response.
     if(methodFile){
         for(i=0+offset; i < strlen(contentBuffer); i++){
-            if(contentBuffer[i] == LDM){
+            if(contentBuffer[i] == LRM){
                 // Close the file
                 fclose(methodFile);
                 methodFile = NULL;
@@ -76,7 +76,7 @@ GUIresponse* receiveMethodFile(char* contentBuffer){
                 response = malloc(sizeof(GUIresponse));
                 response->length = 1;
                 response->response = malloc(sizeof(char));
-                ((char*)response->response)[0] = LDM;
+                ((char*)response->response)[0] = LRM;
                 return response;
             } else {
                 fputc(contentBuffer[i],methodFile);
@@ -100,7 +100,7 @@ GUIresponse* getMethodFileList(){
     if(n < 0){
         syslog(LOG_DAEMON||LOG_ERR,"Unable to scan storage directory.");
         nlDelimFilenames = malloc(sizeof(char)*2);
-        nlDelimFilenames[0] = LDM;
+        nlDelimFilenames[0] = LMT;
         nlDelimFilenames[1] = '\0';
     } else {
         // Max filename length in dirent structure is 256, so plan on that plus a newline for each entry the + 2 is for the LMT end of stream token and '\0'
@@ -115,7 +115,7 @@ GUIresponse* getMethodFileList(){
 
         // Reuse n as an index to add the LMT char and null terminator '\0'
         n = strlen(nlDelimFilenames);
-        nlDelimFilenames[n] = LDM;
+        nlDelimFilenames[n] = LMT;
         nlDelimFilenames[n+1] = '\0';
     }
     response = createResponseString(nlDelimFilenames);

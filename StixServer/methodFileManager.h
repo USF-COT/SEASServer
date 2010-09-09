@@ -11,7 +11,7 @@
 #include <time.h>
 #include <sys/syslog.h>
 #include "parseGUI.h"
-#include "GUI protocol.h"
+#include "GUIprotocol.h"
 
 /* ReceiveMethodFile - Responsible for parsing filename and contents from a character buffer
  * in a specified format.  Lines are denoted by the reserved '\n' character.

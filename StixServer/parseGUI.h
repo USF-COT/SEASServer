@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <sys/syslog.h>
 #include "config.h"
-#include "GUI protocol.h"
+#include "GUIprotocol.h"
 #include "USB4000Manager.h"
 #include "methodFileManager.h"
 

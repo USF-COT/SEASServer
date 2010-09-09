@@ -108,18 +108,18 @@ GUIresponse* parseGUI(char* command){
             if(response){
                 multiBufferCommand = 0;
             }else{
-                multiBufferCommand = LDM;
+                multiBufferCommand = LRM;
             }
             break;
         case LMT:
             syslog(LOG_DAEMON||LOG_INFO,"Loading Method List.");
             response = getMethodFileList();
             break; 
-        case RDM:
-            break;
-        case SMR:
+        case RMF:
             break;
         case SMF:
+            break;
+        case DLM:
             break;
         case SVC:
             syslog(LOG_DAEMON||LOG_INFO,"Saving Configuration.");
