@@ -116,8 +116,12 @@ GUIresponse* parseGUI(char* command){
             response = getMethodFileList();
             break; 
         case RMF:
+            syslog(LOG_DAEMON||LOG_INFO,"Reading Method File.");
+            response = readMethodFile(command); 
             break;
         case SMF:
+            syslog(LOG_DAEMON||LOG_INFO,"Setting Active Method File.");
+            response = NULL;
             break;
         case DLM:
             break;

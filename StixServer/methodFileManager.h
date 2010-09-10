@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/syslog.h>
+#include <fcntl.h>
 #include "parseGUI.h"
 #include "GUIprotocol.h"
 
@@ -22,5 +23,6 @@
  */
 GUIresponse* receiveMethodFile(char* contentBuffer);
 GUIresponse* getMethodFileList();
+GUIresponse* readMethodFile(char* contentBuffer);
 
 #endif

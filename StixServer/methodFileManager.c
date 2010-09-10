@@ -2,9 +2,25 @@
 
 #define MAXMETHODPATHLENGTH 512
 #define STORAGEDIRECTORY "/media/card/methods/"
+#define ACTIVESCRIPTCONFIGFILE ".active.config"
 
 static FILE* methodFile;
 static char* methodBuffer;
+
+int checkStorageDirectory(){
+    struct stat* statResult;
+
+    if(stat(STORAGEDIRECTORY,statResult) == -1){
+       if(errno == ENOENT){
+           syslog(LOG_DAEMON||LOG_INFO,"Creating Directory: %s",STORAGEDIRECTORY);
+           if(mkdir(STORAGEDIRECTORY,S_IRWXU|S_IRWXG|S_IRWXO) == -1){
+               syslog(LOG_DAEMON||LOG_INFO,"Error Creating Directory");
+               return -1;
+           }
+       }
+    }
+    return 1;
+}
 
 int createMethodFile(char* filename){
     struct stat statResult;
@@ -16,14 +32,8 @@ int createMethodFile(char* filename){
         sprintf(fullPath,"%s",STORAGEDIRECTORY);
         length += strlen(filename)+1;
         // Check if the path is ok
-        if(stat(fullPath,&statResult) == -1){
-            if(errno == ENOENT){
-                syslog(LOG_DAEMON||LOG_INFO,"Creating Directory: %s",fullPath);
-                if(mkdir(fullPath,S_IRWXU|S_IRWXG|S_IRWXO) == -1){
-                    syslog(LOG_DAEMON||LOG_INFO,"Error Creating Directory");
-                    return -1;
-                }
-            }
+        if(checkStorageDirectory() == -1){
+            return -1;
         }
 
         if(length < MAXMETHODPATHLENGTH){
@@ -89,6 +99,14 @@ GUIresponse* receiveMethodFile(char* contentBuffer){
     return response;
 }
 
+int filterHidden(const struct dirent *entry){
+    if(entry->d_name[0] == '.'){
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 GUIresponse* getMethodFileList(){
     struct dirent **namelist;
     int n;
@@ -96,7 +114,7 @@ GUIresponse* getMethodFileList(){
     char* nlDelimFilenames;
     GUIresponse* response;    
 
-    n = scandir(STORAGEDIRECTORY, &namelist, 0, alphasort);
+    n = scandir(STORAGEDIRECTORY, &namelist, filterHidden, alphasort);
     if(n < 0){
         syslog(LOG_DAEMON||LOG_ERR,"Unable to scan storage directory.");
         nlDelimFilenames = malloc(sizeof(char)*2);
@@ -123,4 +141,54 @@ GUIresponse* getMethodFileList(){
     return response;
 }
 
+GUIresponse* readMethodFile(char* contentBuffer){
+    char* fileContents = NULL;
+    char* filename;
+    char* fullPath;
+    int fd, nBytes;
+    struct stat *fileStats;
+    GUIresponse* response;
+
+    filename = strtok(contentBuffer+1,"\n");
+    syslog(LOG_DAEMON||LOG_INFO,"Read filename as %s",filename);
+
+    //if(checkStorageDirectory() != -1){
+        syslog(LOG_DAEMON||LOG_INFO,"Allocating memory.");
+        fullPath = (char *)malloc(sizeof(char)*(strlen(STORAGEDIRECTORY)+strlen(filename)+1));
+        syslog(LOG_DAEMON||LOG_INFO,"Memory allocated.");
+        fullPath[0] = '\0';
+        strcat(fullPath,STORAGEDIRECTORY);
+        strcat(fullPath,filename);
+        syslog(LOG_DAEMON||LOG_INFO,"Reading lines in file at path: %s",fullPath);
+        fd = open(fullPath,O_RDONLY);
+        if(fd != -1){
+          if(fstat(fd,fileStats) == 0){
+              fileContents = malloc(sizeof(char) * (fileStats->st_size+2));
+              if(read(fd,(void*)fileContents,fileStats->st_size) != -1){
+                  fileContents[fileStats->st_size] = RMF;
+                  fileContents[fileStats->st_size] = '\0';
+               } else {
+                   free(fileContents);
+                   fileContents = NULL;
+               }
+           }
+           close(fd);
+        }
+        free(fullPath);
+    //}
+    
+    if(fileContents == NULL){
+        syslog(LOG_DAEMON||LOG_ERR,"Error reading data from file: %s.  Returning empty string.", filename);
+        fileContents = malloc(sizeof(char)*2);
+        fileContents[0] = RMF;
+        fileContents[1] = '\0';
+    } 
+    
+    response = createResponseString(fileContents);
+    free(fileContents);
+    return response;        
+}
+
+GUIresponse* setActiveMethod(char* contentBuffer){
+}
 
