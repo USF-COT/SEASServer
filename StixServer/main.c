@@ -61,7 +61,6 @@ void* handleConnection(void* info){
     char buffer[MAXBUF+1];
     char hexString[3*MAXBUF+10];
     char hexBuf[4];
-    GUIresponse* response;
     int i,j;
     int numBytesReceived;    
 
@@ -79,29 +78,7 @@ void* handleConnection(void* info){
         syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
 #endif
 
-	response = parseGUI(buffer);
-        if(response){
-#ifdef DEBUG
-            /*
-            hexString[0] = '\0';
-            hexBuf[0] = '\0';
-            for(i=0; i < MAXBUF*3 && i < response->length; i++){
-                snprintf(hexBuf,4,"%02X ",((char*)response->response)[i]);
-                strncat(hexString,hexBuf,4);
-            }
-            if(response->length < MAXBUF)
-                syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s",((threadInfo*)info)->thread_bin_index,response->length,hexString);
-            else
-                syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes): %s...",((threadInfo*)info)->thread_bin_index,response->length,hexString);
-            */
-            syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Sending(%i bytes)",((threadInfo*)info)->thread_bin_index,response->length);
-#endif
-            send(*connection,response->response,response->length,0);
-            freeResponse(response);
-        }
-        else
-            syslog(LOG_DAEMON||LOG_ERR,"No response to send.  Continuing...");
-
+        parseGUI(*connection,buffer);
         numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     }
 

@@ -12,6 +12,14 @@
 extern "C" {
 #endif
 
+#include "config.h"
+#include "USB4000Manager.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/syslog.h>
+
 #define MAX_ABS_WAVES 9
 #define MAX_ANA_NAME 24
 

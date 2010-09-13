@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -21,8 +22,12 @@
  * Line 1: Filename
  * Line 2-EOF: Contents
  */
-GUIresponse* receiveMethodFile(char* contentBuffer);
-GUIresponse* getMethodFileList();
-GUIresponse* readMethodFile(char* contentBuffer);
+void receiveMethodFile(int connection, char* command);
+void sendMethodFileList(int connection, char* command);
+void sendMethodFile(int connection, char* command);
+void receiveSetCurrentMethodFile(int connection, char* command);
+void receiveDeleteMethodFile(int connection, char* command);
+char* getActiveMethodFilename();
+void sendActiveMethodFile(int connection, char* command);
 
 #endif

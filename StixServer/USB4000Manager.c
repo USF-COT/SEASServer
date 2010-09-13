@@ -62,6 +62,18 @@ calibrationCoefficients* getCalCos(char specNumber){
     return calCos;
 }
 
+void sendCalCos(int connection, char* command){
+    syslog(LOG_DAEMON||LOG_INFO,"Retrieving calibration coefficients from USB4000");
+    calibrationCoefficients* calCos;
+
+    calCos = getCalCos(command[1]);
+    if(calCos){
+        send(connection,(void*) calCos,sizeof(calibrationCoefficients),0);
+        free(calCos);
+    }
+    syslog(LOG_DAEMON||LOG_INFO,"Retrieved calibration coefficients. Returning.");
+}
+
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
     pthread_mutex_lock(&specsMutex[specNumber]);
     if(specNumber == 0 || specNumber == 1)
@@ -173,6 +185,64 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
     }
     return absValues;
              
+}
+
+void sendSpecSample(int connection, char* command){
+    specSample* sample;
+
+    syslog(LOG_DAEMON||LOG_INFO,"Sending wavelength sample from USB4000");
+    sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
+    send(connection,(void*)sample->pixels,sizeof(float)*3840,0);
+    free(sample);
+    syslog(LOG_DAEMON||LOG_INFO,"Sent wavelength.");
+}
+
+void sendAbsorbance(int connection, char* command){
+    float* absorbance = NULL;
+
+    syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance for Specified Wavelengths.");
+    absorbance = getAbsorbance(command[1]);
+    if(absorbance){
+        send(connection,(void*)absorbance,sizeof(float)*(MAX_ABS_WAVES+1),0);
+        free(absorbance);
+    }
+    syslog(LOG_DAEMON||LOG_INFO,"Absorbance for Specified Wavelengths Retrieved.");
+}
+
+void sendAbsorbanceSpectrum(int connection, char* command){
+    float* absSpec = NULL;
+
+    syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance Spectrum...");
+    absSpec = getAbsorbanceSpectrum(command[1]);
+    if(absSpec){
+        send(connection,(void*)absSpec,sizeof(float)*3840,0);
+        free(absSpec);
+    }
+    syslog(LOG_DAEMON||LOG_INFO,"Absorbance Spectrum Retrieved.");
+}
+
+void receiveRecordDarkSample(int connection, char* command){
+    char response[1] = {RDS};
+
+    syslog(LOG_DAEMON||LOG_INFO,"Recording Dark Sample...");
+    recordDarkSample(command[1],getScansPerSample(command[1]),100);
+    send(connection,(void*)response,1,0);    
+    syslog(LOG_DAEMON||LOG_INFO,"Dark Sample Recorded.");
+}
+
+void receiveRecordRefSample(int connection, char* command){
+    char response[1] = {RRS};
+    
+    syslog(LOG_DAEMON||LOG_INFO,"Recording Reference Sample...");
+    recordRefSample(command[1],getScansPerSample(command[1]),100);
+    send(connection,(void*)response,1,0);
+    syslog(LOG_DAEMON||LOG_INFO,"Reference Sample Recorded.");
+}
+
+void receiveRecordSpecSample(int connection, char* command){
+    syslog(LOG_DAEMON||LOG_INFO,"Recording Sample.");
+    recordSpecSample(command[1],getScansPerSample(command[1]),100);
+    syslog(LOG_DAEMON||LOG_INFO,"Sample Recorded");
 }
 
 int disconnectSpectrometers(){

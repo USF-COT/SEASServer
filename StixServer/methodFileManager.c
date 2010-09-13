@@ -3,14 +3,12 @@
 #define MAXMETHODPATHLENGTH 512
 #define STORAGEDIRECTORY "/media/card/methods/"
 #define ACTIVESCRIPTCONFIGFILE ".active.config"
-
-static FILE* methodFile;
-static char* methodBuffer;
+#define MAXMETHRECVBUF 512
 
 int checkStorageDirectory(){
-    struct stat* statResult;
+    struct stat statResult;
 
-    if(stat(STORAGEDIRECTORY,statResult) == -1){
+    if(stat(STORAGEDIRECTORY,&statResult) == -1){
        if(errno == ENOENT){
            syslog(LOG_DAEMON||LOG_INFO,"Creating Directory: %s",STORAGEDIRECTORY);
            if(mkdir(STORAGEDIRECTORY,S_IRWXU|S_IRWXG|S_IRWXO) == -1){
@@ -22,10 +20,11 @@ int checkStorageDirectory(){
     return 1;
 }
 
-int createMethodFile(char* filename){
+FILE* createMethodFile(char* filename){
     struct stat statResult;
     char fullPath[MAXMETHODPATHLENGTH];
     unsigned short length = 0;
+    FILE* methodFile = NULL;
 
     length += strlen(STORAGEDIRECTORY);
     if(length < MAXMETHODPATHLENGTH){
@@ -33,7 +32,7 @@ int createMethodFile(char* filename){
         length += strlen(filename)+1;
         // Check if the path is ok
         if(checkStorageDirectory() == -1){
-            return -1;
+            return NULL;
         }
 
         if(length < MAXMETHODPATHLENGTH){
@@ -42,61 +41,78 @@ int createMethodFile(char* filename){
             methodFile = fopen(fullPath,"w+");
             if(methodFile == NULL){
                 syslog(LOG_DAEMON||LOG_INFO,"Error Creating File");
-                return -1;
             }
         }
-    } else {
-        return -1;
     }
-    return 0;
+
+    return methodFile;
 }
 
-GUIresponse* receiveMethodFile(char* contentBuffer){
+void receiveMethodFile(int connection, char* command){
     // Parse filename from first line
-    char *tokenBuffer = NULL;
-    char defaultFilename[24] = {'\0'}; 
-    char endOfTransChar[2] = {LRM,'\0'};
-    GUIresponse* response = NULL;
+    char *filename = NULL;
+    char defaultFilename[48] = {'\0'}; 
+    char response[1] = {LRM};
+    FILE* methodFile = NULL;
+    
+    char receiveBuffer[MAXMETHRECVBUF+1];
 
-    int i,offset = 0;
+    int i,offset = 0,nBytesReceived = 0;
 
-    // If no method file is initialized yet, create it according to a specified file name.
-    // Set an offset so that the filename is not store in the file
-    if(!methodFile){
-        tokenBuffer = strtok(contentBuffer,"\n");
-        if(tokenBuffer){
-            createMethodFile(tokenBuffer+1);
-            offset = strlen(tokenBuffer);
-        } else {
-            sprintf(defaultFilename,"%u",time(NULL));
-            createMethodFile(defaultFilename);
-        }
+    syslog(LOG_DAEMON||LOG_INFO,"Opening method file.");
+    filename = strtok(command+1,"\n");
+    if(filename){
+        createMethodFile(filename);
+        offset = strlen(filename+1);
+    } else {
+        sprintf(defaultFilename,"%u.m",time(NULL));
+        createMethodFile(defaultFilename);
     }
 
+    syslog(LOG_DAEMON||LOG_INFO,"Storing contents in method file: %s", filename);
     // If a method file exists, output the remaining characters in the buffer to the file.
     // When an LRM character is found, close the file and return an LRM as a response.
     if(methodFile){
-        for(i=0+offset; i < strlen(contentBuffer); i++){
-            if(contentBuffer[i] == LRM){
+        // Write out remainder of command buffer
+        for(i=offset; i < strlen(command); i++){
+            if(command[i] == LRM){
                 // Close the file
                 fclose(methodFile);
                 methodFile = NULL;
 
                 // Create a response
-                response = malloc(sizeof(GUIresponse));
-                response->length = 1;
-                response->response = malloc(sizeof(char));
-                ((char*)response->response)[0] = LRM;
-                return response;
+                send(connection,(void*)response,1,0);
+                syslog(LOG_DAEMON||LOG_INFO,"Successfully stored method file %s", filename);
+                return;
             } else {
-                fputc(contentBuffer[i],methodFile);
+                fputc(command[i],methodFile);
+            } 
+        }
+
+        // Retrieve the rest of the file stream from the socket
+        nBytesReceived = recv(connection,receiveBuffer,MAXMETHRECVBUF,0);
+        while(nBytesReceived > 0){
+            receiveBuffer[nBytesReceived] = '\0';
+            for(i=0; i < strlen(receiveBuffer); i++){
+                if(receiveBuffer[i] == LRM){
+                    // Close the file
+                    fclose(methodFile);
+                    methodFile = NULL;
+
+                    // Create a response
+                    send(connection,(void*)response,1,0);
+                    syslog(LOG_DAEMON||LOG_INFO,"Successfully stored method file %s", filename);
+                    return;
+                } else {
+                    fputc(receiveBuffer[i],methodFile);
+                }
             }
+            nBytesReceived = recv(connection,receiveBuffer,MAXMETHRECVBUF,0);
         }
     } else {  // If a file was never created, return an error code.  This one is just a placeholder.
-        return createResponse(6,"Error");
+        syslog(LOG_DAEMON||LOG_ERR,"Never was able to create method file names: %s", filename);
     }
 
-    return response;
 }
 
 int filterHidden(const struct dirent *entry){
@@ -107,88 +123,172 @@ int filterHidden(const struct dirent *entry){
     }
 }
 
-GUIresponse* getMethodFileList(){
+void sendMethodFileList(int connection, char* command){
     struct dirent **namelist;
     int n;
+    char response[1] = {LMT};
 
-    char* nlDelimFilenames;
-    GUIresponse* response;    
-
+    syslog(LOG_DAEMON||LOG_INFO,"Sending method file list...");
     n = scandir(STORAGEDIRECTORY, &namelist, filterHidden, alphasort);
     if(n < 0){
         syslog(LOG_DAEMON||LOG_ERR,"Unable to scan storage directory.");
-        nlDelimFilenames = malloc(sizeof(char)*2);
-        nlDelimFilenames[0] = LMT;
-        nlDelimFilenames[1] = '\0';
     } else {
-        // Max filename length in dirent structure is 256, so plan on that plus a newline for each entry the + 2 is for the LMT end of stream token and '\0'
-        nlDelimFilenames = malloc(sizeof(char)*(257*n+2));
-        nlDelimFilenames[0] = '\0';
         while(n--){
-            strcat(nlDelimFilenames,namelist[n]->d_name);
-            strcat(nlDelimFilenames,"\n");
+            send(connection,(void*)namelist[n]->d_name,strlen(namelist[n]->d_name),0);
+            send(connection,(void*)"\n",1,0);
             free(namelist[n]);
         }
         free(namelist);
-
-        // Reuse n as an index to add the LMT char and null terminator '\0'
-        n = strlen(nlDelimFilenames);
-        nlDelimFilenames[n] = LMT;
-        nlDelimFilenames[n+1] = '\0';
     }
-    response = createResponseString(nlDelimFilenames);
-    free(nlDelimFilenames);
-    return response;
+    send(connection,(void*)response,1,0);
+    syslog(LOG_DAEMON||LOG_INFO,"Method file list sent.");
 }
 
-GUIresponse* readMethodFile(char* contentBuffer){
-    char* fileContents = NULL;
+char* createFullPath(char* filename){
+    char* fullPath;
+
+    fullPath = malloc(sizeof(char)*(strlen(STORAGEDIRECTORY)+strlen(filename)+1));
+    fullPath[0] = '\0';
+    strcat(fullPath,STORAGEDIRECTORY);
+    strcat(fullPath,filename);
+    return fullPath;
+}
+
+void sendMethodFile(int connection, char* command){
     char* filename;
     char* fullPath;
-    int fd, nBytes;
-    struct stat *fileStats;
-    GUIresponse* response;
+    
+    FILE* fileStream;
+    char contentsBuffer[MAXMETHRECVBUF+1];
+    int nBytes;
 
-    filename = strtok(contentBuffer+1,"\n");
+    char response[1] = {RMF};
+
+    filename = strtok(command+1,"\n");
     syslog(LOG_DAEMON||LOG_INFO,"Read filename as %s",filename);
 
-    //if(checkStorageDirectory() != -1){
-        syslog(LOG_DAEMON||LOG_INFO,"Allocating memory.");
-        fullPath = (char *)malloc(sizeof(char)*(strlen(STORAGEDIRECTORY)+strlen(filename)+1));
-        syslog(LOG_DAEMON||LOG_INFO,"Memory allocated.");
-        fullPath[0] = '\0';
-        strcat(fullPath,STORAGEDIRECTORY);
-        strcat(fullPath,filename);
+    syslog(LOG_DAEMON||LOG_INFO,"Sending file.");
+    if(checkStorageDirectory() != -1){
+        fullPath = createFullPath(filename);
         syslog(LOG_DAEMON||LOG_INFO,"Reading lines in file at path: %s",fullPath);
-        fd = open(fullPath,O_RDONLY);
-        if(fd != -1){
-          if(fstat(fd,fileStats) == 0){
-              fileContents = malloc(sizeof(char) * (fileStats->st_size+2));
-              if(read(fd,(void*)fileContents,fileStats->st_size) != -1){
-                  fileContents[fileStats->st_size] = RMF;
-                  fileContents[fileStats->st_size] = '\0';
-               } else {
-                   free(fileContents);
-                   fileContents = NULL;
-               }
-           }
-           close(fd);
+        fileStream = fopen(fullPath,"r");
+        if(fileStream){
+            nBytes = fread(contentsBuffer,sizeof(char),MAXMETHRECVBUF,fileStream);
+            while(nBytes > 0){
+                send(connection,(void*)contentsBuffer,nBytes,0);
+                nBytes = fread(contentsBuffer,sizeof(char),MAXMETHRECVBUF,fileStream);
+            }
+            fclose(fileStream);
+        } else {
+            syslog(LOG_DAEMON||LOG_ERR,"Error reading data from file: %s.  Returning empty string.", filename);
         }
         free(fullPath);
-    //}
+    } else {
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to find or create method script storage directory.");
+    }
     
-    if(fileContents == NULL){
-        syslog(LOG_DAEMON||LOG_ERR,"Error reading data from file: %s.  Returning empty string.", filename);
-        fileContents = malloc(sizeof(char)*2);
-        fileContents[0] = RMF;
-        fileContents[1] = '\0';
-    } 
-    
-    response = createResponseString(fileContents);
-    free(fileContents);
-    return response;        
+    send(connection,(void*)response,1,0);    
+    syslog(LOG_DAEMON||LOG_INFO,"File sent.");
 }
 
-GUIresponse* setActiveMethod(char* contentBuffer){
+void receiveSetCurrentMethodFile(int connection, char* command){
+    char* filename;
+    char* activeConfigPath;
+
+    FILE* activeConfigFile;
+
+    filename = strtok(command+1,"\n");
+    syslog(LOG_DAEMON||LOG_INFO,"Setting %s as current method file.",filename);
+    
+    if(checkStorageDirectory() != -1){
+        activeConfigPath = createFullPath(ACTIVESCRIPTCONFIGFILE);
+        activeConfigFile = fopen(activeConfigPath,"w+");
+        if(activeConfigFile){
+            if(fwrite(filename,sizeof(char),strlen(filename),activeConfigFile) < strlen(filename)){
+                syslog(LOG_DAEMON||LOG_ERR,"Not all bytes were written to active config file @: %s.  Check file to see what was cut off.", activeConfigPath);
+            }
+            fclose(activeConfigFile); 
+        } else {
+            syslog(LOG_DAEMON||LOG_ERR,"Unable to open active script configuration file @: %s",activeConfigPath);
+        } 
+        free(activeConfigPath);
+    } else {
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to find or create method script storage directory.");
+    }
 }
 
+void receiveDeleteMethodFile(int connection, char* command){
+    char* filename;
+    char* fullPath;
+
+    int removeStatus = -1;
+
+    filename = strtok(command+1,"\n");
+    syslog(LOG_DAEMON||LOG_INFO,"Deleting file: %s", filename);
+
+    if(checkStorageDirectory() != -1){
+        fullPath = createFullPath(filename);
+        removeStatus = remove(fullPath);
+        if(removeStatus == 0){
+            syslog(LOG_DAEMON||LOG_INFO,"Deleted file @: %s",fullPath);
+        } else {
+            syslog(LOG_DAEMON||LOG_ERR,"Unable to remove file @: %s",fullPath);
+        }
+        free(fullPath);
+    } else {
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to find or create method script storage directory.");
+    }
+}
+
+char* getActiveMethodFilename(){
+    char* fullPath;
+    char* filename = NULL;
+
+    FILE* activeConfigFile;
+
+    if(checkStorageDirectory() != -1){
+        fullPath = createFullPath(ACTIVESCRIPTCONFIGFILE);
+        activeConfigFile = fopen(fullPath,"r");
+        if(activeConfigFile){
+            filename = (char *)calloc(257,sizeof(char)); // 256 is the max size of a filename on a standard fs + 1 for the null terminator
+            if(fread(filename,sizeof(char),256,activeConfigFile) == 0){
+                if(ferror(activeConfigFile)){
+                    free(filename);
+                    filename = NULL;
+                }
+            }
+            fclose(activeConfigFile);
+        }
+        free(fullPath);
+    }
+    return filename;
+}
+
+void sendActiveMethodFile(int connection, char* command){
+    char* fullPath;
+    char* filename;
+    char response[258]; // 256 for filename + 1 for command + 1 for terminal
+    char commandTerminal[2] = {'\n','\0'};
+
+    FILE* activeConfigFile;
+
+    // Initialize response
+    response[0] = '\0';
+
+    syslog(LOG_DAEMON||LOG_INFO,"Sending active filename.");
+
+    filename = getActiveMethodFilename();
+    if(filename){
+        if(strlen(filename) == 0){
+            syslog(LOG_DAEMON||LOG_INFO,"No method file active.  Sending empty string.");
+        }
+        strcat(response,filename);
+        free(filename);
+    } else {
+        syslog(LOG_DAEMON||LOG_ERR,"Unable to read filename from active config file. Returning empty string.");
+    }   
+
+    strcat(response,commandTerminal);
+    send(connection,(void*)response,strlen(response),0);
+    syslog(LOG_DAEMON||LOG_INFO,"Sent active filename: %s",response);
+}

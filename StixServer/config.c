@@ -1,10 +1,4 @@
 #include "config.h"
-#include "USB4000Manager.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/syslog.h>
 
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define MAXCONFIGLINE 128
