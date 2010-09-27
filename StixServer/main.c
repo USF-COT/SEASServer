@@ -32,6 +32,9 @@
 #include "config.h"
 #include "parseGUI.h"
 #include "USB4000Manager.h"
+#include "LONDispatch.h"
+
+#define LONPORT "/dev/ttyS0"
 
 #define NUM_THREADS 10
 #define MAXBUF 512
@@ -175,6 +178,14 @@ int main(){
 #endif
 
   applyConfig();
+
+  // Start LON Dispatch
+  syslog(LOG_DAEMON||LOG_INFO,"Starting LON Connection.");
+  if(startDispatch(LONPORT) == -1){
+      syslog(LOG_DAEMON||LOG_ERR,"LON Not Connected!  Check serial port.");
+  } else {
+    syslog(LOG_DAEMON||LOG_INFO,"LON Connection Started.");
+  }
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */

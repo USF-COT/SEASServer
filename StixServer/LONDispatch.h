@@ -1,8 +1,6 @@
 /* 
- * File:   LONDispatch.h
- * Author: seraph
+ * LONDispatch.h
  *
- * Created on June 4, 2009, 1:01 PM
  */
 
 #ifndef _LONDISPATCH_H
@@ -12,7 +10,17 @@
 extern "C" {
 #endif
 
-char sendLONCommand(char device, char command, char* data);
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+
+#define DEFAULTLONPORT "/dev/ttyS0"
+
+void startDispatch(char* port);
+void stopDispatch();
+void sendLONCommand(int port,char device, char command, unsigned int dataLength, unsigned char* data);
 
 
 #ifdef	__cplusplus

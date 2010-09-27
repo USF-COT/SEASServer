@@ -17,7 +17,7 @@ s_node* current = NULL;
 #define MAXCONTROLFLOWDEPTH 20
 stack* openControlStack = NULL;
 
-s_node* buildCommandNode(int argc, void* argv, void (*command)(int,void*))
+s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*))
 {
     s_node* node = malloc(sizeof(s_node));
     node->argc = argc;
