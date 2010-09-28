@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <syslog.h>
+#include <stdlib.h>
 #include "LONprotocol.h"
 #include "LONDispatch.h"
 

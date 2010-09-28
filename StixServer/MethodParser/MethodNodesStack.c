@@ -44,7 +44,7 @@ BOOL stackIsEmpty(s_stack* stack)
 
 BOOL stackIsFull(s_stack* stack)
 {
-    if(top >= (maxSize - 1))
+    if(stack->top >= (stack->maxSize - 1))
         return TRUE;
     else
         return FALSE;

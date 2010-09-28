@@ -6,6 +6,7 @@
  */
 
 #include "../USB4000Gum/source/USB4000Gum.h"
+#include "globalIncludes.h"
 
 #ifndef _SEASSTATUS_H
 #define	_SEASSTATUS_H
@@ -15,15 +16,14 @@ extern "C" {
 #endif
 
     typedef enum{MANUAL,PROGRAM}SEASMODE;
-    typedef enum{ON,OFF}SWITCH;
 
     typedef struct PUMP{
-        SWITCH power;
+        TOGGLE power;
         unsigned short pumpRPM;
     }pump;
 
     typedef struct HEATER{
-        SWITCH power;
+        TOGGLE power;
         float temperature;
     }heater;
 

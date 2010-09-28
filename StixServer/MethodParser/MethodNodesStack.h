@@ -7,13 +7,14 @@
  */
 
 #ifndef METHODNODESSTACK_H
-#define METHODNODESTACK_H
+#define METHODNODESSTACK_H
 
 #include "MethodNodesTable.h" // Used for s_node struct and BOOL array
+#include "../globalIncludes.h"
 
 typedef struct stack
 {
-    s_node** contents;
+    struct node** contents;
     int top;
     int maxSize;
 }s_stack;
@@ -22,6 +23,8 @@ s_stack* initStack(int maxSize);
 void destroyStack(s_stack* stack);
 BOOL stackIsEmpty(s_stack* stack);
 BOOL stackIsFull(s_stack* stack);
-void stackPush(s_stack* stack, s_node* node);
-s_node* stackPop(s_stack* stack);
+void stackPush(s_stack* stack, struct node* node);
+struct node* stackPop(s_stack* stack);
+
+#endif
 

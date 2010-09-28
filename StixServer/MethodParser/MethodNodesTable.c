@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthreads.h>
+#include <pthread.h>
 #include "MethodNodesTable.h"
 #include "MethodNodesStack.h"
+
+#define MAXCONTROLFLOWDEPTH 20
 
 // Private members and methods
 
@@ -14,8 +16,7 @@ s_node* head = NULL;
 s_node* current = NULL;
 
 // Open Control Stack Parameters 
-#define MAXCONTROLFLOWDEPTH 20
-stack* openControlStack = NULL;
+s_stack* openControlStack = NULL;
 
 s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*))
 {
@@ -81,13 +82,13 @@ s_node* freeNode(s_node* node)
     // If this is the first time hitting a proper loop
     if(node->branch != NULL && node->closed == TRUE)
     {
-        node->closed = FALSE
+        node->closed = FALSE;
         next = node->branch;
     }
     else
         next = node->next;
 
-    free(argv);
+    free(node->argv);
     free(node);
 
     return next;
@@ -132,7 +133,7 @@ void traverseNodes(s_node* (*nodeFunction)(s_node*))
     running = FALSE;
 }
 
-void *ProcessNodes(void* blah)
+void *processNodes(void* blah)
 {
     pthread_mutex_lock(&nodesMutex);
 
@@ -145,10 +146,10 @@ void *ProcessNodes(void* blah)
 
 // Public methods
 
-void addCommandNode(unsigned long argc, void* argv, void (*command)(int,void*))
+void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*))
 {
     pthread_mutex_lock(&nodesMutex);
-    s_node* node = buildCommandNode(argc, argv, function);
+    s_node* node = buildCommandNode(argc, argv, command);
     linkNode(node);
     pthread_mutex_unlock(&nodesMutex);
 }

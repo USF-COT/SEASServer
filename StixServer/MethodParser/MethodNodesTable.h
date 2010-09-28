@@ -4,13 +4,13 @@
  */
 
 #ifndef METHODNODESTABLE_H
-#define METHODNODESTABLE 
+#define METHODNODESTABLE_H 
 
-typdef enum type{COMMAND,CONTROL}e_type;
+#include <stdlib.h>
+#include "MethodNodesStack.h"
+#include "../globalIncludes.h"
 
-#ifndef BOOL
-typedef enum bool{FALSE, TRUE}BOOL;
-#endif
+typedef enum type{COMMAND,CONTROL}e_type;
 
 typedef struct node{
     e_type type;
@@ -21,8 +21,8 @@ typedef struct node{
         void (*command)(unsigned long,void*);
         BOOL (*conditional)(unsigned long);
     } function;
-    s_node* next;
-    s_node* branch;
+    struct node* next;
+    struct node* branch;
     BOOL closed;
 }s_node;
 

@@ -9,7 +9,8 @@
 %{
     #include <stdio.h>
     #include <string.h>
-    #include "SEASPeripheralCommands.h"
+    #include "../SEASPeripheralCommands.h"
+    #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
 
     int yylex(void);
@@ -46,12 +47,12 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL { double pumpArgs[2] = {$1,$2}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
-            | PUMP OFF VAL { double pumpArgs[1] = {$1}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
+controlExp:   PUMP ON VAL VAL { double pumpArgs[2] = {$3,$4}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
+            | PUMP OFF VAL { double pumpArgs[1] = {$3}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
             | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
             | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
-            | HEATER ON VAL VAL { double heaterArgs[2] = {$1,$2}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
-            | HEATER OFF VAL { double heaterArgs[1] = {$1}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
+            | HEATER ON VAL VAL { double heaterArgs[2] = {$3,$4}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
+            | HEATER OFF VAL { double heaterArgs[1] = {$3}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
 ;
 
 /* Set Expression Grammers Follow */

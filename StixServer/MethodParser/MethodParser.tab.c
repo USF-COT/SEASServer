@@ -144,6 +144,8 @@
 
     #include <stdio.h>
     #include <string.h>
+    #include "../SEASPeripheralCommands.h"
+    #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
 
     int yylex(void);
@@ -172,12 +174,12 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 20 "MethodParser.y"
+#line 22 "MethodParser.y"
 {
     double doubleVal;
 }
 /* Line 187 of yacc.c.  */
-#line 181 "MethodParser.tab.c"
+#line 183 "MethodParser.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -190,7 +192,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 194 "MethodParser.tab.c"
+#line 196 "MethodParser.tab.c"
 
 #ifdef short
 # undef short
@@ -493,11 +495,11 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    30,    30,    31,    32,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    48,    49,    50,    51,    52,
-      53,    57,    58,    61,    62,    63,    67,    70,    71,    72,
-      76,    80,    83,    84,    85,    90,    91,    96,    97,   102,
-     107,   108
+       0,    32,    32,    33,    34,    37,    38,    39,    40,    41,
+      42,    43,    44,    45,    46,    50,    51,    52,    53,    54,
+      55,    59,    60,    63,    64,    65,    69,    72,    73,    74,
+      78,    82,    85,    86,    87,    92,    93,    98,    99,   104,
+     109,   110
 };
 #endif
 
@@ -1454,14 +1456,39 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 20:
+        case 15:
+#line 50 "MethodParser.y"
+    { double pumpArgs[2] = {(yyvsp[(3) - (4)].doubleVal),(yyvsp[(4) - (4)].doubleVal)}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); ;}
+    break;
+
+  case 16:
+#line 51 "MethodParser.y"
+    { double pumpArgs[1] = {(yyvsp[(3) - (3)].doubleVal)}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); ;}
+    break;
+
+  case 17:
+#line 52 "MethodParser.y"
+    { addCommandNode(0,NULL,methodLampOn); ;}
+    break;
+
+  case 18:
 #line 53 "MethodParser.y"
-    {printf("Control expression recognized!");;}
+    { addCommandNode(0,NULL,methodLampOff); ;}
+    break;
+
+  case 19:
+#line 54 "MethodParser.y"
+    { double heaterArgs[2] = {(yyvsp[(3) - (4)].doubleVal),(yyvsp[(4) - (4)].doubleVal)}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); ;}
+    break;
+
+  case 20:
+#line 55 "MethodParser.y"
+    { double heaterArgs[1] = {(yyvsp[(3) - (3)].doubleVal)}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1465 "MethodParser.tab.c"
+#line 1492 "MethodParser.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1675,7 +1702,7 @@ yyreturn:
 }
 
 
-#line 111 "MethodParser.y"
+#line 113 "MethodParser.y"
 
 
 void yyerror (char const* error){

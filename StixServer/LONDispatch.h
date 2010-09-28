@@ -16,11 +16,13 @@ extern "C" {
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
 #include "LONprotocol.h"
 
 #define DEFAULTLONPORT "/dev/ttyS0"
 
-void startDispatch(char* port);
+int startDispatch(char* port);
 void stopDispatch();
 unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data);
 

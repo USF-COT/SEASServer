@@ -35,3 +35,6 @@
 #define     OPN      0x32     // Open
 #define     CLS      0x33     // Close
 
+/* LON -> Gumstix */
+#define    ACK    0x51
+#define    NAK    0x52

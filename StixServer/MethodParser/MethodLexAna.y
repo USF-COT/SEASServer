@@ -11,7 +11,6 @@
     #include <stdio.h>
     #include <ctype.h>
     #include <stdlib.h>
-    #include "protocol.h"
     #include "MethodParser.tab.h"
     #define DEBUGANA 1
 
@@ -72,46 +71,6 @@ loop { debug("Loop keyword.\n"); return LOOP;}
 [ \t]+ /* eat up whitespace */
 
 %%
-
-typedef struct lookupRec lookupRec;
-struct lookupRec{
-    char const *name;
-    unsigned char protocol;
-};
-
-struct lookupRec const lookups[] =
-{
-    "pump",PMP,
-    "lamp",LTE,
-    "valve",VLV,
-    "heater",HTR,
-    "0",0
-};
-
-
-lookupRec const* lookupKeywordProtocol(char * keyword)
-{
-    int i;
-
-    // Convert Keyword to Lower Case
-    for(i=0; i < strlen(keyword); i++)
-        keyword[i] = tolower(keyword[i]);
-
-    for(i=0; lookups[i].protocol != 0; i++){
-        if(strcmp(lookups[i].name,keyword) == 0)
-            return &lookups[i];
-    }
-    return (lookupRec*)0;
-}
-
-unsigned char getProtocol(char * name)
-{
-    lookupRec const* record = lookupKeywordProtocol(name);    
-    if(record != (lookupRec*) 0)
-        return record->protocol;
-    else
-        return 0;
-}
 
 int main(void){
     return yyparse();

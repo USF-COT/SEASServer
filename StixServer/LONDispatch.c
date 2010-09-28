@@ -17,7 +17,7 @@ void *dispatcher(void* blah){
         if(readLength > 0){
             // Handle LON Commands Here.  None yet, but planning for future.
         }
-        phthread_mutex_unlock(&LONportMutex);
+        pthread_mutex_unlock(&LONportMutex);
 
         // Sleep this thread for a second so that the main thread can send commands.
         sleep(1);
@@ -213,7 +213,7 @@ unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsig
     pthread_mutex_lock(&LONportMutex);
     write(portID,commBuffer,length);
     free(commBuffer);
-    commBuffer = readResponse();
+    commBuffer = readLONResponse();
     pthread_mutex_unlock(&LONportMutex);
 
     return commBuffer;

@@ -122,9 +122,78 @@ void setHeaterTemp(unsigned char heaterID, float temperature){
 // GUI Protocol Wrappers
 
 // Method Wrappers
-void methodPumpOn(unsigned long argc, void* argv);
-void methodPumpOff(unsigned long argc, void* argv);
-void methodLampOn(unsigned long argc, void* argv);
-void methodLampOff(unsigned long argc, void* argv);
-void methodHeaterOn(unsigned long argc, void* argv);
-void methodHeaterOff(unsigned long argc, void* argv);
+void methodPumpOn(unsigned long argc, void* argv){
+    unsigned char pumpID;
+    unsigned int RPM;
+    double* arguments = (double*) argv;
+
+    if(argc != 2){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to methodPumpOn function.");
+        return;
+    }
+
+    pumpID = (unsigned char) arguments[0];
+    RPM = (unsigned int) arguments[1];
+
+    pumpOn(pumpID);
+    setPumpRPM(pumpID,RPM);
+}
+
+void methodPumpOff(unsigned long argc, void* argv){
+    unsigned char pumpID;
+    double* arguments = (double*) argv;
+
+    if(argc != 1){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to methodPumpOff function.");
+        return;
+    }
+
+    pumpID = (unsigned char) arguments[0];
+    pumpOff(pumpID);
+}
+
+void methodLampOn(unsigned long argc, void* argv){
+    if(argc != 0){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to lampOn function.");
+        return;
+    }
+    lampOn();
+}
+
+void methodLampOff(unsigned long argc, void* argv){
+    if(argc != 0){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to lampOff function.");
+        return;
+    }
+    lampOff();
+}
+
+void methodHeaterOn(unsigned long argc, void* argv){
+    unsigned char heaterID;
+    float temperature;
+    double* arguments = (double*)argv;
+
+    if(argc != 2){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to heaterOn function.");
+        return;
+    }
+
+    heaterID = (unsigned char)arguments[0];
+    temperature = (float)arguments[1];
+    heaterOn(heaterID);
+    setHeaterTemp(heaterID,temperature);
+}
+
+void methodHeaterOff(unsigned long argc, void* argv){
+    unsigned char heaterID;
+    double* arguments = (double*)argv;
+
+    if(argc != 1){
+        syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to heaterOff function.");
+        return;
+    }
+
+    heaterID = (unsigned char)arguments[0];
+    heaterOff(heaterID);
+}
+
