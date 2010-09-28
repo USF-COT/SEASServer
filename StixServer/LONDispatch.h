@@ -16,7 +16,7 @@ extern "C" {
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
-#include "LONProtocol.h"
+#include "LONprotocol.h"
 
 #define DEFAULTLONPORT "/dev/ttyS0"
 

@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <syslog.h>
-#include "LONProtocol.h"
+#include "LONprotocol.h"
 #include "LONDispatch.h"
 
 // Base Functions
