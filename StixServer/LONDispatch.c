@@ -80,7 +80,7 @@ void stopDispatch(){
 }
 
 // Returns 1 if a byte is able to be read, or returns -1
-short readByte(char* buffer){
+short readByte(unsigned char* buffer){
     int bytesRead,tries=0;
     const int MAX_TRIES=3;
 
@@ -99,8 +99,8 @@ short readByte(char* buffer){
     }
 }
 
-char* NAKresponse(){
-    char* response = malloc(sizeof(char)*2);
+unsigned char* NAKresponse(){
+    unsigned char* response = malloc(sizeof(unsigned char)*2);
 
     response[0] = NAK;
     response[1] = '\0';
@@ -108,19 +108,19 @@ char* NAKresponse(){
 }
 
 // Private method meant to clean up code a bit
-char* readLONResponse(){
+unsigned char* readLONResponse(){
     int i,totalBytesRead,bytesRead,tries=0;
     unsigned int responseLength,dataLength;
-    char* response;
-    char responseHeader[3];
-    char readBuffer[3];
+    unsigned char* response;
+    unsigned char responseHeader[3];
+    unsigned char readBuffer[3];
 
     const int MAX_TRIES = 3;
 
     // Read Device ID
     if(readByte(readBuffer) == 1){
         if(readBuffer[0] == ACK){
-            response = malloc(sizeof(char)*2);
+            response = malloc(sizeof(unsigned char)*2);
             response[0] = ACK;
             response[1] = '\0';
             return response;
@@ -149,7 +149,7 @@ char* readLONResponse(){
     // Response Length = Header(3 Bytes) + Command ID + Data Length + Checksum + '\0' at the end for good measure
     dataLength = (responseHeader[1] << 8) + responseHeader[2];
     responseLength = 3 + 1 + dataLength + 1 + 1;
-    response = malloc(sizeof(char)*responseLength);
+    response = malloc(sizeof(unsigned char)*responseLength);
 
     // Copy Header
     for(i=0; i < 3; i++){
@@ -187,12 +187,12 @@ char* readLONResponse(){
     return response;
 }
 
-char* sendLONCommand(char device, char command, unsigned int dataLength, unsigned char* data){
+unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){
     
     // The length of a LON command is determined by:
     // [DEV ID] [TOT #BYTES MSB] [TOT #BYTES LSB] [COMMAND ID] [DATA] [BCC]
     unsigned int i,check,length = 1 + 1 + 1 + 1 + dataLength + 1;
-    unsigned char* commBuffer = malloc(sizeof(char)*length);
+    unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
     unsigned char responseHeader[3];
 
     commBuffer[0] = device;

@@ -11,6 +11,7 @@
 #include "config.h"
 #include "GUIprotocol.h"
 #include "USB4000Manager.h"
+#include "methodFileRunner.h"
 #include "methodFileManager.h"
 #include "configManager.h"
 

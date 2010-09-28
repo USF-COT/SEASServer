@@ -10,17 +10,19 @@
 extern "C" {
 #endif
 
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include "LONProtocol.h"
 
 #define DEFAULTLONPORT "/dev/ttyS0"
 
 void startDispatch(char* port);
 void stopDispatch();
-void sendLONCommand(int port,char device, char command, unsigned int dataLength, unsigned char* data);
+unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data);
 
 
 #ifdef	__cplusplus

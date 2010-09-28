@@ -9,6 +9,7 @@
 %{
     #include <stdio.h>
     #include <string.h>
+    #include "SEASPeripheralCommands.h"
     #define DEBUGPARSER 1
 
     int yylex(void);
@@ -45,12 +46,12 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL 
-            | PUMP OFF VAL
-            | LAMP ON
-            | LAMP OFF
-            | HEATER ON VAL VAL
-            | HEATER OFF VAL {printf("Control expression recognized!");}             
+controlExp:   PUMP ON VAL VAL { double pumpArgs[2] = {$1,$2}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
+            | PUMP OFF VAL { double pumpArgs[1] = {$1}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
+            | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
+            | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
+            | HEATER ON VAL VAL { double heaterArgs[2] = {$1,$2}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
+            | HEATER OFF VAL { double heaterArgs[1] = {$1}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
 ;
 
 /* Set Expression Grammers Follow */

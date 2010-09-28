@@ -25,8 +25,8 @@ GUIHandler const handlers[] = {
         receiveRecordDarkSample, // 0x15 RDS
         receiveRecordRefSample, // 0x16 RRS
         receiveRecordSpecSample, // 0x17 RSS
-        NULL, // 0x18 EXM
-        NULL, // 0x19 TRM
+        receiveExecuteMethod, // 0x18 EXM
+        receiveTerminateMethod, // 0x19 TRM
         receiveMethodFile, // 0x1A LRM
         sendMethodFileList, // 0x1B LMT
         sendMethodFile, // 0x1C RMF

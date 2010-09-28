@@ -123,14 +123,13 @@ void traverseNodes(s_node* (*nodeFunction)(s_node*))
         return;
     }
 
-    pthread_mutex_lock(&nodesMutex);
     s_node* node = head;
     running = TRUE;
     while(node != NULL && running)
     {
         node = (*nodeFunction)(node);
     }
-    pthread_mutex_unlock(&nodesMutex);
+    running = FALSE;
 }
 
 void *ProcessNodes(void* blah)
