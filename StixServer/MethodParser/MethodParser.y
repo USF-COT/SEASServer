@@ -9,6 +9,7 @@
 %{
     #include <stdio.h>
     #include <string.h>
+    #include <stdlib.h>
     #include "../SEASPeripheralCommands.h"
     #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
@@ -47,12 +48,12 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL { double pumpArgs[2] = {$3,$4}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
-            | PUMP OFF VAL { double pumpArgs[1] = {$3}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
+controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
+            | PUMP OFF VAL { double* pumpArgs = malloc(sizeof(double)); pumpArgs[0] = $3; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
             | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
             | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
-            | HEATER ON VAL VAL { double heaterArgs[2] = {$3,$4}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
-            | HEATER OFF VAL { double heaterArgs[1] = {$3}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
+            | HEATER ON VAL VAL { double* heaterArgs = malloc(sizeof(double)*2); heaterArgs[0]=$3; heaterArgs[1]=$4; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
+            | HEATER OFF VAL { double* heaterArgs = malloc(sizeof(double)); heaterArgs[0]=$3; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
 ;
 
 /* Set Expression Grammers Follow */

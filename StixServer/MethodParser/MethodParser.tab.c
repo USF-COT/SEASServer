@@ -144,6 +144,7 @@
 
     #include <stdio.h>
     #include <string.h>
+    #include <stdlib.h>
     #include "../SEASPeripheralCommands.h"
     #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
@@ -174,12 +175,12 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 22 "MethodParser.y"
+#line 23 "MethodParser.y"
 {
     double doubleVal;
 }
 /* Line 187 of yacc.c.  */
-#line 183 "MethodParser.tab.c"
+#line 184 "MethodParser.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -192,7 +193,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 196 "MethodParser.tab.c"
+#line 197 "MethodParser.tab.c"
 
 #ifdef short
 # undef short
@@ -495,11 +496,11 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    32,    32,    33,    34,    37,    38,    39,    40,    41,
-      42,    43,    44,    45,    46,    50,    51,    52,    53,    54,
-      55,    59,    60,    63,    64,    65,    69,    72,    73,    74,
-      78,    82,    85,    86,    87,    92,    93,    98,    99,   104,
-     109,   110
+       0,    33,    33,    34,    35,    38,    39,    40,    41,    42,
+      43,    44,    45,    46,    47,    51,    52,    53,    54,    55,
+      56,    60,    61,    64,    65,    66,    70,    73,    74,    75,
+      79,    83,    86,    87,    88,    93,    94,    99,   100,   105,
+     110,   111
 };
 #endif
 
@@ -1457,38 +1458,38 @@ yyreduce:
   switch (yyn)
     {
         case 15:
-#line 50 "MethodParser.y"
-    { double pumpArgs[2] = {(yyvsp[(3) - (4)].doubleVal),(yyvsp[(4) - (4)].doubleVal)}; addCommandNode(2,(void*)pumpArgs, methodPumpOn); ;}
+#line 51 "MethodParser.y"
+    { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = (yyvsp[(3) - (4)].doubleVal); pumpArgs[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)pumpArgs, methodPumpOn); ;}
     break;
 
   case 16:
-#line 51 "MethodParser.y"
-    { double pumpArgs[1] = {(yyvsp[(3) - (3)].doubleVal)}; addCommandNode(1,(void*)pumpArgs, methodPumpOff); ;}
+#line 52 "MethodParser.y"
+    { double* pumpArgs = malloc(sizeof(double)); pumpArgs[0] = (yyvsp[(3) - (3)].doubleVal); addCommandNode(1,(void*)pumpArgs, methodPumpOff); ;}
     break;
 
   case 17:
-#line 52 "MethodParser.y"
+#line 53 "MethodParser.y"
     { addCommandNode(0,NULL,methodLampOn); ;}
     break;
 
   case 18:
-#line 53 "MethodParser.y"
+#line 54 "MethodParser.y"
     { addCommandNode(0,NULL,methodLampOff); ;}
     break;
 
   case 19:
-#line 54 "MethodParser.y"
-    { double heaterArgs[2] = {(yyvsp[(3) - (4)].doubleVal),(yyvsp[(4) - (4)].doubleVal)}; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); ;}
+#line 55 "MethodParser.y"
+    { double* heaterArgs = malloc(sizeof(double)*2); heaterArgs[0]=(yyvsp[(3) - (4)].doubleVal); heaterArgs[1]=(yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)heaterArgs,methodHeaterOn); ;}
     break;
 
   case 20:
-#line 55 "MethodParser.y"
-    { double heaterArgs[1] = {(yyvsp[(3) - (3)].doubleVal)}; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); ;}
+#line 56 "MethodParser.y"
+    { double* heaterArgs = malloc(sizeof(double)); heaterArgs[0]=(yyvsp[(3) - (3)].doubleVal); addCommandNode(1,(void*)heaterArgs,methodHeaterOff); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1492 "MethodParser.tab.c"
+#line 1493 "MethodParser.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1702,7 +1703,7 @@ yyreturn:
 }
 
 
-#line 113 "MethodParser.y"
+#line 114 "MethodParser.y"
 
 
 void yyerror (char const* error){

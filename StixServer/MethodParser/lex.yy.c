@@ -622,12 +622,13 @@ char *yytext;
     #include <stdio.h>
     #include <ctype.h>
     #include <stdlib.h>
+    #include "MethodNodesTable.h"
     #include "MethodParser.tab.h"
     #define DEBUGANA 1
 
     void debug(char* message);
     unsigned char getProtocol(char * name);
-#line 631 "lex.yy.c"
+#line 632 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -814,10 +815,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 23 "MethodLexAna.y"
+#line 24 "MethodLexAna.y"
 
 
-#line 821 "lex.yy.c"
+#line 822 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -902,187 +903,187 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 25 "MethodLexAna.y"
+#line 26 "MethodLexAna.y"
 {debug("Pump command.\n"); return PUMP;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 26 "MethodLexAna.y"
+#line 27 "MethodLexAna.y"
 {debug("Lamp command.\n"); return LAMP;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 27 "MethodLexAna.y"
+#line 28 "MethodLexAna.y"
 {debug("Valve command.\n"); return VALVE;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 28 "MethodLexAna.y"
+#line 29 "MethodLexAna.y"
 {debug("Heater command.\n"); return HEATER;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 30 "MethodLexAna.y"
+#line 31 "MethodLexAna.y"
 { debug("On parameter.\n"); return ON;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 31 "MethodLexAna.y"
+#line 32 "MethodLexAna.y"
 { debug("Off parameter.\n"); return OFF;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 33 "MethodLexAna.y"
+#line 34 "MethodLexAna.y"
 { debug("Set command.\n"); return SET;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 34 "MethodLexAna.y"
+#line 35 "MethodLexAna.y"
 { debug("Spectrometer keyword.\n"); return SPECM;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 35 "MethodLexAna.y"
+#line 36 "MethodLexAna.y"
 { debug("Parameters keyword.\n"); return PARAMS;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 36 "MethodLexAna.y"
+#line 37 "MethodLexAna.y"
 { debug("Sample keyword.\n"); return SAMP;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 37 "MethodLexAna.y"
+#line 38 "MethodLexAna.y"
 { debug("Wavelength keyword.\n"); return WAVE;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 38 "MethodLexAna.y"
+#line 39 "MethodLexAna.y"
 { debug("Correction keyword.\n"); return CORR;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 39 "MethodLexAna.y"
+#line 40 "MethodLexAna.y"
 { debug("Dwell keyword.\n"); return DWELL;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 41 "MethodLexAna.y"
+#line 42 "MethodLexAna.y"
 { debug("Read keyword.\n"); return READ;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 42 "MethodLexAna.y"
+#line 43 "MethodLexAna.y"
 { debug("Reference keyword.\n"); return REF;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 43 "MethodLexAna.y"
+#line 44 "MethodLexAna.y"
 { debug("Absorbance keyword.\n"); return ABSO;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 44 "MethodLexAna.y"
+#line 45 "MethodLexAna.y"
 { debug("Full keyword.\n"); return FULL;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 45 "MethodLexAna.y"
+#line 46 "MethodLexAna.y"
 { debug("Spectrum keyword.\n"); return SPEC;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 47 "MethodLexAna.y"
+#line 48 "MethodLexAna.y"
 { debug("Calculate keyword.\n"); return CALC;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 48 "MethodLexAna.y"
+#line 49 "MethodLexAna.y"
 { debug("Concentration keyword.\n"); return CONC;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 49 "MethodLexAna.y"
+#line 50 "MethodLexAna.y"
 { debug("pCO2 keyword.\n"); return PCO2;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 50 "MethodLexAna.y"
+#line 51 "MethodLexAna.y"
 { debug("pH keyword.\n"); return PH;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 52 "MethodLexAna.y"
+#line 53 "MethodLexAna.y"
 { debug("Open keyword.\n"); return OPEN;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 53 "MethodLexAna.y"
+#line 54 "MethodLexAna.y"
 { debug("Close keyword.\n"); return CLOSE;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 54 "MethodLexAna.y"
+#line 55 "MethodLexAna.y"
 { debug("Data keyword.\n"); return DATA;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 55 "MethodLexAna.y"
+#line 56 "MethodLexAna.y"
 { debug("File keyword.\n"); return FIL;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 57 "MethodLexAna.y"
+#line 58 "MethodLexAna.y"
 { debug("Write keyword.\n"); return WRITE;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 59 "MethodLexAna.y"
+#line 60 "MethodLexAna.y"
 { debug("Debug keyword.\n"); return DELAY;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 61 "MethodLexAna.y"
+#line 62 "MethodLexAna.y"
 { debug("Begin keyword.\n"); return BEG;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 62 "MethodLexAna.y"
+#line 63 "MethodLexAna.y"
 { debug("End keyword.\n"); return EN;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 63 "MethodLexAna.y"
+#line 64 "MethodLexAna.y"
 { debug("Loop keyword.\n"); return LOOP;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 65 "MethodLexAna.y"
+#line 66 "MethodLexAna.y"
 {printf("Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return VAL; }
 	YY_BREAK
 case 33:
 /* rule 33 can match eol */
 YY_RULE_SETUP
-#line 67 "MethodLexAna.y"
+#line 68 "MethodLexAna.y"
 /* eat up comments */
 	YY_BREAK
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 69 "MethodLexAna.y"
+#line 70 "MethodLexAna.y"
 {return '\n';}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 71 "MethodLexAna.y"
+#line 72 "MethodLexAna.y"
 /* eat up whitespace */
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 73 "MethodLexAna.y"
+#line 74 "MethodLexAna.y"
 ECHO;
 	YY_BREAK
-#line 1086 "lex.yy.c"
+#line 1087 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2080,11 +2081,18 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 73 "MethodLexAna.y"
+#line 74 "MethodLexAna.y"
 
 
 
 int main(void){
-    return yyparse();
+    int retVal;
+    yyparse();
+    runNodes();
+    sleep(2);
+    clearNodes();
+    sleep(2);
+    runNodes();
+    while(1){};
 }
 

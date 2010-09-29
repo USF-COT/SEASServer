@@ -11,6 +11,7 @@
     #include <stdio.h>
     #include <ctype.h>
     #include <stdlib.h>
+    #include "MethodNodesTable.h"
     #include "MethodParser.tab.h"
     #define DEBUGANA 1
 
@@ -73,5 +74,12 @@ loop { debug("Loop keyword.\n"); return LOOP;}
 %%
 
 int main(void){
-    return yyparse();
+    int retVal;
+    yyparse();
+    runNodes();
+    sleep(2);
+    clearNodes();
+    sleep(2);
+    runNodes();
+    while(1){};
 }

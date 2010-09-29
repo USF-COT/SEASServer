@@ -118,6 +118,7 @@ s_node* evaluateNode(s_node* node)
 // NOTE: This function will not traverse a node list that has an incomplete control flow.
 void traverseNodes(s_node* (*nodeFunction)(s_node*))
 {
+    int i=0;
     if(openControlStack != NULL)
     {
         fprintf(stderr, "Cannot traverse a node tree without a complete control flow.");
@@ -126,20 +127,18 @@ void traverseNodes(s_node* (*nodeFunction)(s_node*))
 
     s_node* node = head;
     running = TRUE;
+    pthread_mutex_lock(&nodesMutex);
     while(node != NULL && running)
     {
         node = (*nodeFunction)(node);
     }
+    pthread_mutex_unlock(&nodesMutex);
     running = FALSE;
 }
 
 void *processNodes(void* blah)
 {
-    pthread_mutex_lock(&nodesMutex);
-
     traverseNodes(evaluateNode);
-
-    pthread_mutex_unlock(&nodesMutex);
 
     pthread_exit(NULL);
 }
@@ -194,14 +193,19 @@ void closeControlNode()
 void runNodes()
 {
     int rc;
+    pthread_attr_t attr;
+
     if(!running)
     {
-        rc = pthread_create(&runnerThread,NULL,processNodes,NULL);
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+        rc = pthread_create(&runnerThread,&attr,processNodes,NULL);
         if(rc)
         {
             fprintf(stderr,"ERROR: Unable to create runner thread.\n");
             return;
         }
+        pthread_attr_destroy(&attr);
     }
 }
 
@@ -213,6 +217,7 @@ void stopNodes()
 void clearNodes()
 {
     traverseNodes(freeNode);
+    head = NULL;
 }
 
 
