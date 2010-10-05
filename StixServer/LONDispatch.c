@@ -1,9 +1,9 @@
 #include "LONDispatch.h"
 
-int portID;
-volatile sig_atomic_t dispatching = 0;
-pthread_mutex_t LONportMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_t LONdispatchThread;
+static int portID = -1;
+static volatile sig_atomic_t dispatching = 0;
+static pthread_mutex_t LONportMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_t LONdispatchThread;
 
 void *dispatcher(void* blah){
     int readLength=0;
@@ -29,7 +29,7 @@ int connect(char* port){
     int fd;
     struct termios settings;
 
-    fd = open(port,O_ASYNC);
+    fd = open(port,O_RDWR|O_ASYNC);
     if(fd != -1){
         // Get default port settings
         if(tcgetattr(fd,&settings)==0){
@@ -187,13 +187,18 @@ unsigned char* readLONResponse(){
     return response;
 }
 
-unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){
-    
+unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){    
+
     // The length of a LON command is determined by:
     // [DEV ID] [TOT #BYTES MSB] [TOT #BYTES LSB] [COMMAND ID] [DATA] [BCC]
     unsigned int i,check,length = 1 + 1 + 1 + 1 + dataLength + 1;
     unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
     unsigned char responseHeader[3];
+
+    if(portID == -1){
+        free(commBuffer);
+        return NAKresponse(); 
+    }
 
     commBuffer[0] = device;
     commBuffer[1] = (unsigned char)(length >> 8) & 0xFF;

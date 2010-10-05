@@ -292,3 +292,11 @@ void sendActiveMethodFile(int connection, char* command){
     send(connection,(void*)response,strlen(response),0);
     syslog(LOG_DAEMON||LOG_INFO,"Sent active filename: %s",response);
 }
+
+void receiveExecuteMethod(int connection, char* command){
+
+}
+
+void receiveTerminateMethod(int connection, char* command){
+
+}

@@ -14,6 +14,9 @@
     #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
 
+    extern int yylineno;
+    extern char* yytext;
+
     int yylex(void);
     void yyerror (char const *);
     int yywrap(void);
@@ -48,7 +51,7 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn); }
+controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn); printf("Pump ON!");}
             | PUMP OFF VAL { double* pumpArgs = malloc(sizeof(double)); pumpArgs[0] = $3; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
             | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
             | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
@@ -114,7 +117,7 @@ loopExp:   BEG LOOP VAL VAL
 %%
 
 void yyerror (char const* error){
-    fprintf(stderr,"Error: %s\n",error);
+    fprintf(stderr,"Error on line %d: %s\n",yylineno,error);
 }
 
 void debug(char* message)

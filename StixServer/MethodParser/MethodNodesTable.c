@@ -1,19 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
 #include "MethodNodesTable.h"
-#include "MethodNodesStack.h"
 
 #define MAXCONTROLFLOWDEPTH 20
 
 // Private members and methods
 
-BOOL running = FALSE;
-pthread_t runnerThread;
-pthread_mutex_t nodesMutex = PTHREAD_MUTEX_INITIALIZER;
+static volatile sig_atomic_t traversingNodes = 0;
+static pthread_attr_t attr;
+static pthread_t runnerThread;
+static pthread_mutex_t nodesMutex = PTHREAD_MUTEX_INITIALIZER;
 
-s_node* head = NULL;
-s_node* current = NULL;
+static s_node* head = NULL;
+static s_node* current = NULL;
 
 // Open Control Stack Parameters 
 s_stack* openControlStack = NULL;
@@ -99,6 +96,7 @@ s_node* evaluateNode(s_node* node)
     switch(node->type)
     {
         case COMMAND:
+            printf("Evaluating command node.\n");
             (*(node->function.command))(node->argc,node->argv);
             return node->next;
             break;
@@ -126,14 +124,17 @@ void traverseNodes(s_node* (*nodeFunction)(s_node*))
     }
 
     s_node* node = head;
-    running = TRUE;
+    traversingNodes = 1;
     pthread_mutex_lock(&nodesMutex);
-    while(node != NULL && running)
+    printf("Start nodes.\n");
+    while(node != NULL && traversingNodes)
     {
+        printf("Running node %d.\n",i++);
         node = (*nodeFunction)(node);
     }
+    printf("No more nodes.\n");
     pthread_mutex_unlock(&nodesMutex);
-    running = FALSE;
+    traversingNodes = 0;
 }
 
 void *processNodes(void* blah)
@@ -193,10 +194,10 @@ void closeControlNode()
 void runNodes()
 {
     int rc;
-    pthread_attr_t attr;
 
-    if(!running)
+    if(!traversingNodes)
     {
+        printf("Creating thread.\n");
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
         rc = pthread_create(&runnerThread,&attr,processNodes,NULL);
@@ -205,13 +206,12 @@ void runNodes()
             fprintf(stderr,"ERROR: Unable to create runner thread.\n");
             return;
         }
-        pthread_attr_destroy(&attr);
     }
 }
 
 void stopNodes()
 {
-    running = FALSE;
+    traversingNodes = 0;
 }
 
 void clearNodes()

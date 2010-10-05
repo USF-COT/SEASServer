@@ -7,16 +7,20 @@
  * By: Michael Lindemuth
  */
 
+%option yylineno
+%option batch
+%option noyywrap
+
 %{
     #include <stdio.h>
     #include <ctype.h>
     #include <stdlib.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
     #include "MethodNodesTable.h"
     #include "MethodParser.tab.h"
     #define DEBUGANA 1
-
-    void debug(char* message);
-    unsigned char getProtocol(char * name);
 %}
 
 DIGIT [0-9]
@@ -73,13 +77,24 @@ loop { debug("Loop keyword.\n"); return LOOP;}
 
 %%
 
+/*
 int main(void){
-    int retVal;
-    yyparse();
+    yyin = fopen("test.m","r");
+    printf("Starting to parse.\n");
+    int retVal = yyparse();
+    printf("Parsing finished.\n");
+    fclose(yyin);
+    printf("Running nodes.\n");
     runNodes();
+    printf("Finished running nodes.\n");
     sleep(2);
+    printf("Clearing nodes.\n");
     clearNodes();
+    printf("Finished clearing nodes.\n");
     sleep(2);
+    printf("Running nodes.\n");
     runNodes();
+    printf("Finished running nodes.\n");
     while(1){};
 }
+*/

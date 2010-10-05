@@ -114,7 +114,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 23 "MethodParser.y"
+#line 26 "MethodParser.y"
 {
     double doubleVal;
 }

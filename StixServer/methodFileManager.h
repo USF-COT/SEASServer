@@ -29,5 +29,6 @@ void receiveSetCurrentMethodFile(int connection, char* command);
 void receiveDeleteMethodFile(int connection, char* command);
 char* getActiveMethodFilename();
 void sendActiveMethodFile(int connection, char* command);
-
+void receiveExecuteMethod(int connection, char* command);
+void receiveTerminateMethod(int connection, char* command);
 #endif

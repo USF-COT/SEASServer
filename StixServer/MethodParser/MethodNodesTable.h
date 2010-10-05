@@ -6,7 +6,10 @@
 #ifndef METHODNODESTABLE_H
 #define METHODNODESTABLE_H 
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <signal.h>
 #include "MethodNodesStack.h"
 #include "../globalIncludes.h"
 
