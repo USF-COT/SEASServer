@@ -57,6 +57,7 @@ void catch_term(int sig)
     syslog(LOG_DAEMON||LOG_INFO,"SIGTERM Caught.");
     keep_going = 0;
     close(list_s);
+    stopDispatch();
 }
 
 void* handleConnection(void* info){
