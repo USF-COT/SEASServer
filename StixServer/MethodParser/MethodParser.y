@@ -10,7 +10,7 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdlib.h>
-    #include "../SEASPeripheralCommands.h"
+    #include "SEASPeripheralCommands.h"
     #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
 

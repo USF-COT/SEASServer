@@ -6,6 +6,8 @@
 #ifndef GLOBALINCLUDES_H
 #define GLOBALINCLUDES_H
 
+#ifndef BOOL
 typedef enum bool{FALSE=0,TRUE=1}BOOL;
+#endif
 
 #endif

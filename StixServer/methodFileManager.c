@@ -294,9 +294,17 @@ void sendActiveMethodFile(int connection, char* command){
 }
 
 void receiveExecuteMethod(int connection, char* command){
-
+    char* filename;
+    
+    filename = getActiveMethodFilename();
+    if(filename){
+        yyin = fopen(filename,"r");
+        yyparse();
+        runNodes();
+    }
 }
 
 void receiveTerminateMethod(int connection, char* command){
-
+    stopNodes();
+    clearNodes();
 }

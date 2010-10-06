@@ -2,7 +2,7 @@
 # By: Michael Lindemuth
 
 testMethod: MethodParser.tab.c MethodLexAna.lex.c testMethod.c MethodNodesStack.c MethodNodesTable.c ../LONDispatch.c ../SEASPeripheralCommands.c 
-	gcc -lpthread ../LONDispatch.c ../SEASPeripheralCommands.c MethodNodesStack.c MethodNodesTable.c MethodParser.tab.c MethodLexAna.lex.c testMethod.c -o testMethod
+	gcc -lpthread -I../ ../LONDispatch.c ../SEASPeripheralCommands.c MethodNodesStack.c MethodNodesTable.c MethodParser.tab.c MethodLexAna.lex.c testMethod.c -o testMethod
 
 PARSER: MethodParser.tab.c MethodLexAna.lex.c
 	gcc -I../ -L../ ../LONDispatch.c MethodNodesStack.c MethodNodesTable.c ../SEASPeripheralCommands.c MethodParser.tab.c MethodLexAna.lex.c -lfl -lpthread -o parser

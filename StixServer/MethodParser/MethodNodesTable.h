@@ -11,7 +11,6 @@
 #include <pthread.h>
 #include <signal.h>
 #include "MethodNodesStack.h"
-#include "../globalIncludes.h"
 
 typedef enum type{COMMAND,CONTROL}e_type;
 

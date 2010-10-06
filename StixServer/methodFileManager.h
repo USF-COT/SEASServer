@@ -14,6 +14,10 @@
 #include <fcntl.h>
 #include "parseGUI.h"
 #include "GUIprotocol.h"
+#include "MethodParser.tab.h"
+#include "MethodNodesTable.h"
+
+extern FILE* yyin;
 
 /* ReceiveMethodFile - Responsible for parsing filename and contents from a character buffer
  * in a specified format.  Lines are denoted by the reserved '\n' character.
