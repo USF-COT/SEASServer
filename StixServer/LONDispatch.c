@@ -187,17 +187,47 @@ unsigned char* readLONResponse(){
     return response;
 }
 
-unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){    
+LONresponse_s* createLONResponse(unsigned char* buffer){
+    LONresponse_s* retVal = NULL;
+    unsigned int dataLength;
+
+    if(buffer){
+        retVal = malloc(sizeof(LONresponse_s));
+        if(buffer[0] == ACK || buffer[0] == NAK){
+            retVal->deviceID = buffer[0];
+            retVal->numBytes = 4;
+            retVal->commandID = buffer[0];
+            retVal->data = NULL;
+            retVal->checkSum = (unsigned char)((buffer[0]*2)+4) & 0xFF;
+        } else {
+            retVal->deviceID = buffer[0];
+            retVal->numBytes = (buffer[1] << 8) + buffer[2];
+            retVal->commandID = buffer[3];
+            dataLength = retVal->numBytes - 5; // dataLength = numBytes - deviceIDByte - numByteMSB - numByteLSB - commandIDByte - checkSumByte
+            retVal->data = malloc(sizeof(unsigned char)*dataLength);
+            memcpy(retVal->data,buffer+4,dataLength);
+            retVal->checkSum = buffer[dataLength+4];
+        }
+    }
+    return retVal;
+}
+
+LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){    
 
     // The length of a LON command is determined by:
     // [DEV ID] [TOT #BYTES MSB] [TOT #BYTES LSB] [COMMAND ID] [DATA] [BCC]
     unsigned int i,check,length = 1 + 1 + 1 + 1 + dataLength + 1;
     unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
     unsigned char responseHeader[3];
+    LONresponse_s* response = NULL;
 
     if(portID == -1){
+        // Kludgy, but this should be a rare case.
         free(commBuffer);
-        return NAKresponse(); 
+        commBuffer = NAKresponse();
+        response = createLONResponse(commBuffer);
+        free(commBuffer);
+        return response; 
     }
 
     commBuffer[0] = device;
@@ -221,6 +251,18 @@ unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsig
     commBuffer = readLONResponse();
     pthread_mutex_unlock(&LONportMutex);
 
-    return commBuffer;
+    response = createLONResponse(commBuffer);
+    free(commBuffer);
+
+    return response;
+}
+
+void freeLONResponse(LONresponse_s* response){
+    if(response){
+        if(response->data){
+            free(response->data);
+        }
+        free(response);
+    }
 }
 

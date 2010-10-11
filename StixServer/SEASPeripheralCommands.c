@@ -2,34 +2,34 @@
 
 // Base Functions
 void pumpOn(unsigned char pumpID){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[2] = {pumpID,ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
     response = sendLONCommand(PMP,PWR,2,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d enabled.  LON sent ACK.",pumpID);
     } else {
         syslog(LOG_DAEMON|LOG_ERR, "ERROR: Pump %d not enabled.  LON sent NAK.",pumpID);
     }
-    free(response);
+    freeLONResponse(response);
 }
 void pumpOff(unsigned char pumpID){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[2] = {pumpID,DIS};
 
     syslog(LOG_DAEMON|LOG_INFO,"Disabling pump %d.",pumpID);
     response = sendLONCommand(PMP,PWR,2,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d disabled.  LON sent ACK.",pumpID);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d not diabled.  LON sent NAK.",pumpID);
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void setPumpRPM(unsigned char pumpID,unsigned int RPM){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[3];
 
     data[0] = pumpID;
@@ -38,72 +38,72 @@ void setPumpRPM(unsigned char pumpID,unsigned int RPM){
 
     syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d RPM to: %d.",pumpID,RPM);
     response = sendLONCommand(PMP,PWL,3,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d RPM set to: %d.",pumpID,RPM);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d RPM NOT set to: %d.",pumpID,RPM);
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void lampOn(){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[1] = {ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Setting lamp on.");    
     response = sendLONCommand(LTE,PWR,1,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Lamp turned on.");
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Lamp not turned on.");
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void lampOff(){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[1] = {DIS};
 
     syslog(LOG_DAEMON|LOG_INFO,"Setting lamp off.");
     response = sendLONCommand(LTE,PWR,1,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Lamp turned off.");
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Lamp not turned off.");
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void heaterOn(unsigned char heaterID){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[2] = {heaterID,ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning on Heater %d.",heaterID);
     response = sendLONCommand(HTR,PWR,2,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned on.",heaterID); 
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d not turned on.",heaterID);
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void heaterOff(unsigned char heaterID){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[2] = {heaterID,DIS};
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning off Heater %d.",heaterID);
     response = sendLONCommand(HTR,PWR,2,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned off.",heaterID);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d not turned off.",heaterID);
     }
-    free(response);
+    freeLONResponse(response);
 }
 
 void setHeaterTemp(unsigned char heaterID, float temperature){
-    unsigned char* response;
+    LONresponse_s* response;
     unsigned char data[5];
 
     data[0] = heaterID;
@@ -111,12 +111,124 @@ void setHeaterTemp(unsigned char heaterID, float temperature){
     
     syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to: %f.",heaterID,temperature);
     response = sendLONCommand(HTR,TMP,5,data);
-    if(response[0] == ACK){
+    if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d temperature set to: %f.",heaterID,temperature);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d temperature NOT set to: %f.",heaterID,temperature);
     }
-    free(response);
+    freeLONResponse(response);
+}
+
+// Status Functions
+
+pumpStatus_s* getPumpStatus(unsigned char pumpID){
+    pumpStatus_s* status = NULL;
+    unsigned char sendData[1] = {pumpID};
+    LONresponse_s* response = sendLONCommand(PMP,STS,1,sendData);
+    if(response){
+        if(response->data && response->deviceID == PMP){
+            status = malloc(sizeof(pumpStatus_s));
+            status->pumpID = response->data[0];
+            status->power = response->data[1];
+            memcpy(&(status->RPM),response->data+2,4);        
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve pump %d status.",pumpID);
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Did not receive a response from LON for pump %d status command.",pumpID);
+    }
+    return status;
+}
+
+float getHeaterCurrentTemperature(unsigned char heaterID){
+    float currentTemp = -1;
+    unsigned char sendData[1] = {heaterID};
+    LONresponse_s* response = sendLONCommand(HTR,RCT,1,sendData);
+    if(response){
+        if(response->data && response->deviceID == HTR && response->data[0] == heaterID){
+            memcpy(&currentTemp,response->data+1,4);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve current temperature from heater %d.",heaterID);
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for current temperature from heater %d.",heaterID);
+    }
+    return currentTemp;
+}
+
+heaterStatus_s* getHeaterStatus(unsigned char heaterID){
+    heaterStatus_s* status = NULL;
+    unsigned char sendData[1] = {heaterID};
+    LONresponse_s* response = sendLONCommand(HTR,STS,1,sendData);
+    if(response){
+        if(response->data && response->deviceID == HTR && response->data[0] == heaterID){
+            status = malloc(sizeof(heaterStatus_s));
+            status->heaterID = heaterID;
+            status->power = response->data[1];
+            memcpy(&(status->setTemperature),response->data+2,4);
+            memcpy(&(status->currentTemperature),response->data+4,4);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of heater %d.",heaterID);
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for status from heater %d",heaterID);
+    }
+    return status;
+}
+
+unsigned char getLampStatus(){
+    unsigned char status = DIS;
+    LONresponse_s* response = sendLONCommand(LTE,STS,0,NULL);
+    if(response){
+        if(response->data && response->deviceID == LTE){
+            status = response->data[0];
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of lamp.");
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for status of lamp.");
+    }
+    return status;
+}
+
+float getBatteryVoltage(){
+    float voltage = 0;
+    LONresponse_s* response = sendLONCommand(BAT,BVR,0,NULL);
+    if(response){
+        if(response->data && response->deviceID == BAT){
+            memcpy(&voltage,response->data,4);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for battery voltage.");
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for battery voltage.");
+    }
+    return voltage;
+}
+
+CTDreadings_s* getCTDValues(){
+    CTDreadings_s* readings = NULL;
+    LONresponse_s* response = sendLONCommand(CTD,CTR,0,NULL);
+    if(response){
+        if(response->data && response->deviceID == CTD){
+            readings = malloc(sizeof(CTDreadings_s));
+            memcpy(&(readings->conductivity),response->data,4);
+            memcpy(&(readings->temperature),response->data+4,4);
+            memcpy(&(readings->pressure),response->data+8,4);
+            memcpy(&(readings->soundVelocity),response->data+12,4);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for CTD readings.");
+        }
+        freeLONResponse(response);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for battery voltage.");
+    }
+    return readings;
 }
 
 // GUI Protocol Wrappers

@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+#include <string.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,9 +23,18 @@ extern "C" {
 
 #define DEFAULTLONPORT "/dev/ttyS0"
 
+typedef struct LONRESPONSE{
+    unsigned char deviceID;
+    unsigned int numBytes;
+    unsigned char commandID;
+    unsigned char* data;
+    unsigned char checkSum;
+}LONresponse_s;
+
 int startDispatch(char* port);
 void stopDispatch();
-unsigned char* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data);
+LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data);
+void freeLONResponse(LONresponse_s* response);
 
 
 #ifdef	__cplusplus

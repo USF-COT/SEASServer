@@ -12,6 +12,27 @@
 #include "LONprotocol.h"
 #include "LONDispatch.h"
 
+typedef struct PUMPSTATUS{
+    unsigned char pumpID;
+    unsigned char power;
+    unsigned int RPM;
+}pumpStatus_s;
+
+typedef struct HEATERSTATUS{
+    unsigned char heaterID;
+    unsigned char power;
+    float setTemperature;
+    float currentTemperature;
+}heaterStatus_s;
+
+typedef struct CTDREADINGS{
+    float conductivity;
+    float temperature;
+    float pressure;
+    float soundVelocity;
+}CTDreadings_s;
+
+
 // Base Functions
 void pumpOn(unsigned char pumpID);
 void pumpOff(unsigned char pumpID);
@@ -21,6 +42,14 @@ void lampOff();
 void heaterOn(unsigned char heaterID);
 void heaterOff(unsigned char heaterID);
 void setHeaterTemp(unsigned char heaterID,float temperature);
+
+// Status Functions
+pumpStatus_s* getPumpStatus(unsigned char pumpID);
+float getHeaterCurrentTemperature(unsigned char heaterID);
+heaterStatus_s* getHeaterStatus(unsigned char heaterID);
+unsigned char getLampStatus();
+float getBatteryVoltage();
+CTDreadings_s* getCTDValues();
 
 // GUI Protocol Wrappers
 
