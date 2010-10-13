@@ -77,5 +77,5 @@
 #define     RTP                 0x6C     // Report Heater Temperature
 #define     RHS         0x6D     // Report Heater State
 #define     RLS         0x6E     // Report Light Source State
-#define     RVS         0x6F     // Report Valve State
-
+#define     RBS		0x6F     // Report Battery Voltage
+#define	    RCT         0x70     // Report CTD Values 
