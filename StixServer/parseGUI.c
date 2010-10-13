@@ -33,7 +33,12 @@ GUIHandler const handlers[] = {
         receiveSetCurrentMethodFile, // 0x1D SMF
         receiveDeleteMethodFile, // 0x1E DLM
         sendAbsorbanceSpectrum, // 0x1F RAS
-        sendActiveMethodFile // 0x20 SAM
+        sendActiveMethodFile, // 0x20 SAM
+        receiveGetPumpStatus, // 0x21 RPS
+        receiveGetHeaterStatus, // 0x22 RHS
+        receiveGetLampStatus, // 0x23 RLS
+        receiveGetBatteryVoltage, // 0x24 RBS
+        receiveGetCTDValues // 0x25 RTD
     };
 
 static const int numHandlers = 33;

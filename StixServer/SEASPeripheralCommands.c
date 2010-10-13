@@ -232,6 +232,113 @@ CTDreadings_s* getCTDValues(){
 }
 
 // GUI Protocol Wrappers
+void receiveGetPumpStatus(int connection, char* command){
+    pumpStatus_s* status = NULL;
+    unsigned char sendBuffer[9];
+    syslog(LOG_DAEMON|LOG_INFO,"Getting pump %d status.",command[3]);
+
+    if(command[0] == RPS){
+        status = getPumpStatus(command[3]);
+        if(status){
+            syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM is %f.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->RPM);
+            sendBuffer[0] = RPS;
+            sendBuffer[1] = 0;
+            sendBuffer[2] = 7;
+            sendBuffer[3] = status->pumpID;
+            sendBuffer[4] = status->power == ENA;
+            memcpy(sendBuffer+5,&(status->RPM),4);
+            send(connection,sendBuffer,9,0);
+            free(status);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d status not retrieved.",command[3]);
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetPumpStatus method.");
+    }
+}
+
+void receiveGetHeaterStatus(int connection, char* command){
+    heaterStatus_s* status = NULL;
+    unsigned char sendBuffer[13];
+    syslog(LOG_DAEMON|LOG_INFO,"Getting heater %d status.",command[3]);
+    
+    if(command[0] == RHS){
+        status = getHeaterStatus(command[3]);
+        if(status){
+            syslog(LOG_DAEMON|LOG_INFO,"Heater %d status retrieved.  Heater is %s.  Set temperature is %f.  Current temperature is %f.",status->heaterID,status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
+            sendBuffer[0] = RHS;
+            sendBuffer[1] = 0;
+            sendBuffer[2] = 13;
+            sendBuffer[3] = status->heaterID;
+            sendBuffer[4] = status->power == ENA;
+            memcpy(sendBuffer+5,&(status->setTemperature),4);
+            memcpy(sendBuffer+9,&(status->currentTemperature),4);
+            send(connection,sendBuffer,13,0);
+            free(status);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d status not retrieved from LON.",command[3]);
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetHeaterStatus method.");
+    }
+}
+
+void receiveGetLampStatus(int connection, char* command){
+    unsigned char sendBuffer[4];
+
+    syslog(LOG_DAEMON|LOG_INFO,"Getting light status.");
+    if(command[0] == RLS){
+        sendBuffer[0] = RLS;
+        sendBuffer[1] = 0;
+        sendBuffer[2] = 4;
+        sendBuffer[3] = getLampStatus() == ENA;
+        send(connection,sendBuffer,4,0);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetLampStatus method.");
+    }
+}
+
+void receiveGetBatteryVoltage(int connection, char* command){
+    unsigned char sendBuffer[7];
+    float batteryVoltage;
+
+    syslog(LOG_DAEMON|LOG_INFO,"Getting battery voltage.");
+    if(command[0] == RBS){
+        batteryVoltage = getBatteryVoltage();
+        syslog(LOG_DAEMON|LOG_INFO,"Retrieved battery voltage as: %f.",batteryVoltage);
+        sendBuffer[0] = RBS;
+        sendBuffer[1] = 0;
+        sendBuffer[2] = 7;
+        memcpy(sendBuffer+3,&batteryVoltage,4);
+        send(connection,sendBuffer,4,0);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveBatteryVoltage method.");
+    }
+}
+
+void receiveGetCTDValues(int connection, char* command){
+    unsigned char sendBuffer[19];
+    CTDreadings_s* readings = NULL;
+
+    if(command[0] == RTD){
+        readings = getCTDValues();
+        if(readings){
+            syslog(LOG_DAEMON|LOG_INFO,"CTD Readings - Cond: %f, Temp: %f, Pres: %f, Sound: %f.",readings->conductivity,readings->temperature,readings->pressure,readings->soundVelocity);
+            sendBuffer[0] = RTD;
+            sendBuffer[1] = 0;
+            sendBuffer[2] = 19;
+            memcpy(sendBuffer+3,&(readings->conductivity),4);
+            memcpy(sendBuffer+7,&(readings->temperature),4);
+            memcpy(sendBuffer+11,&(readings->pressure),4);
+            memcpy(sendBuffer+15,&(readings->soundVelocity),4);
+            send(connection,sendBuffer,19,0);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Could not read CTD readings from LON.");
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetCTDValues method.");
+    }
+}
 
 // Method Wrappers
 void methodPumpOn(unsigned long argc, void* argv){

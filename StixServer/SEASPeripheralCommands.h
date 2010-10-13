@@ -9,6 +9,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include "GUIprotocol.h"
 #include "LONprotocol.h"
 #include "LONDispatch.h"
 
@@ -52,6 +53,11 @@ float getBatteryVoltage();
 CTDreadings_s* getCTDValues();
 
 // GUI Protocol Wrappers
+void receiveGetPumpStatus(int connection, char* command);
+void receiveGetHeaterStatus(int connection, char* command);
+void receiveGetLampStatus(int connection, char* command);
+void receiveGetBatteryVoltage(int connection, char* command);
+void receiveGetCTDValues(int connection, char* command);
 
 // Method Wrappers
 void methodPumpOn(unsigned long argc, void* argv);

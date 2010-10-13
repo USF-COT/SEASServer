@@ -54,6 +54,13 @@
 
 #define     SAM      0x20     // Send active filename
 
+/* Status Report Command Mnemonics */
+#define     RPS         0x21     // Report Pump State
+#define     RHS         0x22     // Report Heater State
+#define     RLS         0x23     // Report Light Source State
+#define     RBS         0x24     // Report Battery Voltage
+#define     RTD         0x25     // Report CTD Values
+
 
 /* Mini SEAS to GUI commands */
 
@@ -71,11 +78,3 @@
 #define     RSR      0x68     // Reference Spectra Recorded
 #define     SSR      0x69     // Sample Spectra Recorded
 
-/* Program mode command identifier mnemonics */
-#define     RMW         0x6A     // Report Pump RPM
-#define     RPS         0x6B     // Report Pump State
-#define     RTP                 0x6C     // Report Heater Temperature
-#define     RHS         0x6D     // Report Heater State
-#define     RLS         0x6E     // Report Light Source State
-#define     RBS		0x6F     // Report Battery Voltage
-#define	    RCT         0x70     // Report CTD Values 
