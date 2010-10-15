@@ -25,6 +25,7 @@ extern "C" {
     typedef void (*GUIHandler)(int,char*);
 
     void parseGUI(int connection,char* command);
+    void sendErrorMessageBack(int connection, char* message);
 
 #ifdef	__cplusplus
 }

@@ -232,6 +232,77 @@ CTDreadings_s* getCTDValues(){
 }
 
 // GUI Protocol Wrappers
+void receiveSetPumpControl(int connection, char* command){
+    if(command[0] == PMC){
+        syslog(LOG_DAEMON|LOG_INFO,"Switching pump %d %s.",command[3],command[4] == 1 ? "ON" : "OFF");
+        if(command[4] == 1){
+            pumpOn(command[3]);
+        } else {
+            pumpOff(command[3]);
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetPumpControl method.");
+    }
+}
+
+void receiveSetPumpRPM(int connection, char* command){
+    unsigned char pumpID;
+    unsigned int RPM;
+
+    if(command[0] == PMW){
+        pumpID = command[3];
+        RPM = (command[4] << 8) + command[5];
+        syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d Power to: %d",pumpID,RPM);
+        setPumpRPM(pumpID,RPM);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetPumpRPM method.");
+    }
+}
+
+void receiveSetLampControl(int connection, char* command){
+    if(command[0] == LTC){
+        syslog(LOG_DAEMON|LOG_INFO,"Turning lamp %s.",command[3] == 1 ? "ON" : "OFF");
+        if(command[3] == 1){
+            lampOn();
+        } else {
+            lampOff();
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetLampControl method.");
+    }
+}
+
+void receiveSetHeaterControl(int connection, char* command){
+    unsigned char heaterID;
+
+    if(command[0] == HTC){
+        heaterID = command[3];
+        syslog(LOG_DAEMON|LOG_INFO,"Turning heater %d %s.",heaterID,command[4] == 1 ? "ON" : "OFF");
+        if(command[4] == 1){
+            heaterOn(heaterID);
+        } else {
+            heaterOff(heaterID);
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetHeaterControl method.");
+    }
+}
+
+void receiveSetHeaterTemp(int connection, char* command){
+    unsigned char heaterID;
+    float temperature;
+
+    if(command[0] == HTP){
+        heaterID = command[3];
+        memcpy(&temperature,command+4,4);
+        syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to %f.",heaterID,temperature);
+        setHeaterTemp(heaterID,temperature);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetHeaterControl method.");
+    }
+}
+
+
 void receiveGetPumpStatus(int connection, char* command){
     pumpStatus_s* status = NULL;
     unsigned char sendBuffer[9];
@@ -240,7 +311,7 @@ void receiveGetPumpStatus(int connection, char* command){
     if(command[0] == RPS){
         status = getPumpStatus(command[3]);
         if(status){
-            syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM is %f.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->RPM);
+            syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM is %d.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->RPM);
             sendBuffer[0] = RPS;
             sendBuffer[1] = 0;
             sendBuffer[2] = 7;
@@ -250,7 +321,8 @@ void receiveGetPumpStatus(int connection, char* command){
             send(connection,sendBuffer,9,0);
             free(status);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d status not retrieved.",command[3]);
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d status not retrieved from LON.",command[3]);
+            sendErrorMessageBack(connection,"ERROR: Pump status not retrieved from LON.");
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetPumpStatus method.");
@@ -277,6 +349,7 @@ void receiveGetHeaterStatus(int connection, char* command){
             free(status);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d status not retrieved from LON.",command[3]);
+            sendErrorMessageBack(connection,"ERROR: Heater status not retrieved from LON.");
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetHeaterStatus method.");
@@ -334,6 +407,7 @@ void receiveGetCTDValues(int connection, char* command){
             send(connection,sendBuffer,19,0);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Could not read CTD readings from LON.");
+            sendErrorMessageBack(connection,"ERROR: Could not read CTD readings from LON.");
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetCTDValues method.");

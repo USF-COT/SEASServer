@@ -12,6 +12,7 @@
 #include "GUIprotocol.h"
 #include "LONprotocol.h"
 #include "LONDispatch.h"
+#include "parseGUI.h"
 
 typedef struct PUMPSTATUS{
     unsigned char pumpID;
@@ -53,6 +54,12 @@ float getBatteryVoltage();
 CTDreadings_s* getCTDValues();
 
 // GUI Protocol Wrappers
+void receiveSetPumpControl(int connection, char* command);
+void receiveSetPumpRPM(int connection, char* command);
+void receiveSetLampControl(int connection, char* command);
+void receiveSetHeaterControl(int connection, char* command);
+void receiveSetHeaterTemp(int connection, char* command);
+
 void receiveGetPumpStatus(int connection, char* command);
 void receiveGetHeaterStatus(int connection, char* command);
 void receiveGetLampStatus(int connection, char* command);

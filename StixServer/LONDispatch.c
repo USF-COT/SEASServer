@@ -29,7 +29,7 @@ int connect(char* port){
     int fd;
     struct termios settings;
 
-    fd = open(port,O_RDWR|O_ASYNC);
+    fd = open(port,O_RDWR|O_ASYNC|O_NONBLOCK);
     if(fd != -1){
         // Get default port settings
         if(tcgetattr(fd,&settings)==0){
@@ -68,6 +68,7 @@ int startDispatch(char* port){
         } else {
             return -1;
         }
+        return 1;
     } else {
         return 1;
     }
@@ -128,6 +129,7 @@ unsigned char* readLONResponse(){
             responseHeader[0] = readBuffer[0];
         }
     } else { // Unable to read the device character from the LON Port, return error code NAK
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
         return NAKresponse();
     }
 
@@ -135,6 +137,7 @@ unsigned char* readLONResponse(){
     if(readByte(readBuffer) == 1){
         responseHeader[1] = readBuffer[0];
     } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
         return NAKresponse();
     }
 
@@ -142,6 +145,7 @@ unsigned char* readLONResponse(){
     if(readByte(readBuffer) == 1){
         responseHeader[2] = readBuffer[0];
     } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
         return NAKresponse();
     }
 
@@ -160,6 +164,7 @@ unsigned char* readLONResponse(){
     if(readByte(readBuffer) == 1){
         response[4] = readBuffer[0];
     } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
         free(response);
         return NAKresponse();
     }
@@ -169,6 +174,7 @@ unsigned char* readLONResponse(){
         if(readByte(readBuffer) == 1){
             response[i] = readBuffer[0];
         } else {
+            syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
             free(response);
             return NAKresponse();
         }
@@ -178,6 +184,7 @@ unsigned char* readLONResponse(){
     if(readByte(readBuffer)){
         response[responseLength-2] = readBuffer[0];
     } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
         free(response);
         return NAKresponse();
     }
@@ -199,19 +206,50 @@ LONresponse_s* createLONResponse(unsigned char* buffer){
             retVal->commandID = buffer[0];
             retVal->data = NULL;
             retVal->checkSum = (unsigned char)((buffer[0]*2)+4) & 0xFF;
+            syslog(LOG_DAEMON|LOG_ERR,"ACK command received.");
         } else {
             retVal->deviceID = buffer[0];
             retVal->numBytes = (buffer[1] << 8) + buffer[2];
             retVal->commandID = buffer[3];
             dataLength = retVal->numBytes - 5; // dataLength = numBytes - deviceIDByte - numByteMSB - numByteLSB - commandIDByte - checkSumByte
+            syslog(LOG_DAEMON|LOG_INFO,"LON Device ID: %02X, Num Bytes: %d, Command ID: %02X, Data Length: %d.",retVal->deviceID,retVal->numBytes,retVal->commandID);
             retVal->data = malloc(sizeof(unsigned char)*dataLength);
             memcpy(retVal->data,buffer+4,dataLength);
             retVal->checkSum = buffer[dataLength+4];
         }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"No LON Response Received!");
     }
     return retVal;
 }
+/*
+void logLONResponse(LONresponse_s* response){
+    unsigned char* LONbytes;
+    unsigned char dataByteTemp[4];
+    unsigned int dataLength;
+    unsigned int i;
 
+    if(response){
+        dataLength = response->numBytes - 5;
+        LONbytes = malloc(sizeof(unsigned char)*(response->numBytes*4));
+        LONbytes[0] = '\0';
+        // Print the header
+        sprintf(LONbytes,"%02X %02X %02X %02X",response->deviceID,(unsigned char)(response->numBytes&0xFF00)>>8,(unsigned char)(response->numBytes&0xFF),response->commandID);
+        // Concatenate the data bytes
+        for(i=0; i < dataLength; i++){
+            sprintf(dataByteTemp,"%02X ",response->data[i]);
+            strcat(LONbytes,dataByteTemp);
+        }
+        // Concatenate the checksum
+        sprintf(dataByteTemp,"%02X ",response->checkSum);
+        strcat(LONbytes,dataByteTemp);
+        // Log the LONbytes string
+        syslog(LOG_DAEMON|LOG_INFO,"LON Response: %s", LONbytes); 
+    } else {
+        syslog(LOG_DAEMON|LOG_INFO,"Trying to log null response.");
+    }
+}
+*/
 LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsigned int dataLength, unsigned char* data){    
 
     // The length of a LON command is determined by:
@@ -220,6 +258,10 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
     unsigned char responseHeader[3];
     LONresponse_s* response = NULL;
+
+    char hexChar[4];
+    char debugLine[1025];
+    debugLine[0] = '\0';
 
     if(portID == -1){
         // Kludgy, but this should be a rare case.
@@ -246,6 +288,11 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     commBuffer[length-1] = (unsigned char)check & 0xFF;    
  
     pthread_mutex_lock(&LONportMutex);
+    for(i=0; i < length && i < 341 ; i++){
+        sprintf(hexChar,"%02X ",commBuffer[i]);
+        strcat(debugLine,hexChar);
+    }
+    syslog(LOG_DAEMON|LOG_INFO,"Sending LON %d bytes: %s.",length,debugLine);
     write(portID,commBuffer,length);
     free(commBuffer);
     commBuffer = readLONResponse();

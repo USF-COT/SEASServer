@@ -11,6 +11,8 @@
 
 /* GUI to Mini SEAS commands */
 
+#define		ERR	0x00 // Error, may be followed by \0 terminated string
+
 /* System command identifier mnemonics */
 #define         STM     0x01            // Set Time
 #define         RTM     0x02     // Read Time

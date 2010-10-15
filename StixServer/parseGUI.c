@@ -7,11 +7,11 @@ GUIHandler const handlers[] = {
         NULL, // 0x03 RSD
         NULL, // 0x04 RSF
         NULL, // 0x05 DSF
-        NULL, // 0x06 PMW
-        NULL, // 0x07 PMC
-        NULL, // 0x08 HTP
-        NULL, // 0x09 HTC
-        NULL, // 0x0A LTC
+        receiveSetPumpRPM, // 0x06 PMW
+        receiveSetPumpControl, // 0x07 PMC
+        receiveSetHeaterTemp, // 0x08 HTP
+        receiveSetHeaterControl, // 0x09 HTC
+        receiveSetLampControl, // 0x0A LTC
         NULL, // 0x0B SVS
         receiveParameterBytes, // 0x0C SSP
         receiveWaveSetCommand, // 0x0D SCP
@@ -41,7 +41,7 @@ GUIHandler const handlers[] = {
         receiveGetCTDValues // 0x25 RTD
     };
 
-static const int numHandlers = 33;
+static const int numHandlers = 38;
 
 void parseGUI(int connection,char* command){
     if(command[0] < numHandlers && command[0] > 0){
@@ -55,3 +55,14 @@ void parseGUI(int connection,char* command){
     }
 }
 
+void sendErrorMessageBack(int connection, char* message){
+    char* completeMessage;
+    unsigned int messageLength = strlen(message) + 2;
+
+    completeMessage = malloc(sizeof(char)*messageLength);
+    completeMessage[0] = ERR;
+    completeMessage[1] = '\0';
+    strcat(completeMessage+1,message);
+    send(connection,completeMessage,messageLength,0);
+    free(completeMessage);
+}

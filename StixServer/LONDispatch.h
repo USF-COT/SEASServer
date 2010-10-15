@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -19,6 +20,7 @@ extern "C" {
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include "LONprotocol.h"
 
 #define DEFAULTLONPORT "/dev/ttyS0"
