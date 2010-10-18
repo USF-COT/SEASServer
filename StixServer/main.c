@@ -34,7 +34,7 @@
 #include "USB4000Manager.h"
 #include "LONDispatch.h"
 
-#define LONPORT "/dev/ttyS0"
+#define LONPORT "/dev/ttyS2"
 
 #define NUM_THREADS 10
 #define MAXBUF 512

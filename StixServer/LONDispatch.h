@@ -23,7 +23,7 @@ extern "C" {
 #include <syslog.h>
 #include "LONprotocol.h"
 
-#define DEFAULTLONPORT "/dev/ttyS0"
+#define DEFAULTLONPORT "/dev/ttyS2"
 
 typedef struct LONRESPONSE{
     unsigned char deviceID;

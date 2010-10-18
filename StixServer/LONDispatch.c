@@ -1,5 +1,7 @@
 #include "LONDispatch.h"
 
+#define LONREADBUFFERSIZE 128
+
 static int portID = -1;
 static volatile sig_atomic_t dispatching = 0;
 static pthread_mutex_t LONportMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -25,21 +27,22 @@ void *dispatcher(void* blah){
     pthread_exit(NULL);
 }
 
+// clags and c_cc lines derived from: http://en.wikibooks.org/wiki/Serial_Programming/termios
 int connect(char* port){
     int fd;
     struct termios settings;
 
-    fd = open(port,O_RDWR|O_ASYNC|O_NONBLOCK);
+    fd = open(port,O_RDWR|O_NOCTTY|O_NDELAY);
     if(fd != -1){
         // Get default port settings
         if(tcgetattr(fd,&settings)==0){
+            // Set the terminal to raw so that it does not process special characters
+            cfmakeraw(&settings);
             // Set speed
-            cfsetispeed(&settings,B19200);
-            cfsetospeed(&settings,B19200);
-            // Set 8 Data Bits
-            settings.c_cflag |= CS8;
-            // Ignore Parity (No Parity)
-            settings.c_iflag |= IGNPAR;
+            cfsetspeed(&settings,B19200);
+            settings.c_cflag |= (CS8|CREAD|CLOCAL); // 8 bits, enable receiver, ignore modem control lines
+            settings.c_cc[VMIN]=1;
+            settings.c_cc[VTIME]=10;
             // Commit settings to open port
             if(tcsetattr(fd,TCSANOW,&settings) == 0){
                 return fd;
@@ -114,84 +117,19 @@ unsigned char* readLONResponse(){
     unsigned int responseLength,dataLength;
     unsigned char* response;
     unsigned char responseHeader[3];
-    unsigned char readBuffer[3];
 
     const int MAX_TRIES = 3;
 
-    // Read Device ID
-    if(readByte(readBuffer) == 1){
-        if(readBuffer[0] == ACK){
-            response = malloc(sizeof(unsigned char)*2);
-            response[0] = ACK;
-            response[1] = '\0';
-            return response;
-        } else {
-            responseHeader[0] = readBuffer[0];
-        }
-    } else { // Unable to read the device character from the LON Port, return error code NAK
-        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
-        return NAKresponse();
-    }
-
-    // Read the MSB of the number of bytes
-    if(readByte(readBuffer) == 1){
-        responseHeader[1] = readBuffer[0];
+    response = calloc(LONREADBUFFERSIZE,sizeof(unsigned char));
+    bytesRead = read(portID,response,LONREADBUFFERSIZE);
+    if(bytesRead > 0){
+        syslog(LOG_DAEMON|LOG_INFO,"Read %d bytes from LON.",bytesRead);
+        return response;
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
-        return NAKresponse();
-    }
-
-    // Read the LSB of the number of bytes
-    if(readByte(readBuffer) == 1){
-        responseHeader[2] = readBuffer[0];
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
-        return NAKresponse();
-    }
-
-    // Calculate the response length and allocate response string
-    // Response Length = Header(3 Bytes) + Command ID + Data Length + Checksum + '\0' at the end for good measure
-    dataLength = (responseHeader[1] << 8) + responseHeader[2];
-    responseLength = 3 + 1 + dataLength + 1 + 1;
-    response = malloc(sizeof(unsigned char)*responseLength);
-
-    // Copy Header
-    for(i=0; i < 3; i++){
-        response[i] = responseHeader[i];
-    }
-
-    // Read Command ID
-    if(readByte(readBuffer) == 1){
-        response[4] = readBuffer[0];
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
+        syslog(LOG_DAEMON|LOG_INFO,"Unable to read from LON.  Returning NAK by default.");
         free(response);
         return NAKresponse();
     }
-
-    // Read Data
-    for(i=5; i < responseLength - 2; i++){
-        if(readByte(readBuffer) == 1){
-            response[i] = readBuffer[0];
-        } else {
-            syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
-            free(response);
-            return NAKresponse();
-        }
-    }
-    
-    // Read Checksum
-    if(readByte(readBuffer)){
-        response[responseLength-2] = readBuffer[0];
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Unable to read character from LON.");
-        free(response);
-        return NAKresponse();
-    }
-
-    // Add '\0' at the end for good measure
-    response[responseLength-1] = '\0';
-    return response;
 }
 
 LONresponse_s* createLONResponse(unsigned char* buffer){
@@ -294,7 +232,9 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     }
     syslog(LOG_DAEMON|LOG_INFO,"Sending LON %d bytes: %s.",length,debugLine);
     write(portID,commBuffer,length);
+    tcdrain(portID);
     free(commBuffer);
+    sleep(1);
     commBuffer = readLONResponse();
     pthread_mutex_unlock(&LONportMutex);
 
