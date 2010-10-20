@@ -163,12 +163,12 @@ heaterStatus_s* getHeaterStatus(unsigned char heaterID){
     unsigned char sendData[1] = {heaterID};
     LONresponse_s* response = sendLONCommand(HTR,STS,1,sendData);
     if(response){
-        if(response->data && response->deviceID == HTR && response->data[0] == heaterID){
+        if(response->deviceID == HTR && response->data && response->data[0] == heaterID){
             status = malloc(sizeof(heaterStatus_s));
             status->heaterID = heaterID;
             status->power = response->data[1];
             memcpy(&(status->setTemperature),response->data+2,4);
-            memcpy(&(status->currentTemperature),response->data+4,4);
+            memcpy(&(status->currentTemperature),response->data+6,4);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of heater %d.",heaterID);
         }
@@ -314,7 +314,7 @@ void receiveGetPumpStatus(int connection, char* command){
             syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM is %d.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->RPM);
             sendBuffer[0] = RPS;
             sendBuffer[1] = 0;
-            sendBuffer[2] = 7;
+            sendBuffer[2] = 9;
             sendBuffer[3] = status->pumpID;
             sendBuffer[4] = status->power == ENA;
             memcpy(sendBuffer+5,&(status->RPM),4);
@@ -383,7 +383,7 @@ void receiveGetBatteryVoltage(int connection, char* command){
         sendBuffer[1] = 0;
         sendBuffer[2] = 7;
         memcpy(sendBuffer+3,&batteryVoltage,4);
-        send(connection,sendBuffer,4,0);
+        send(connection,sendBuffer,7,0);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveBatteryVoltage method.");
     }

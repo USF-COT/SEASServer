@@ -21,14 +21,15 @@ extern "C" {
 #include <signal.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <sys/timeb.h>
 #include "LONprotocol.h"
-
-#define DEFAULTLONPORT "/dev/ttyS2"
+#include "globalIncludes.h"
 
 typedef struct LONRESPONSE{
     unsigned char deviceID;
     unsigned int numBytes;
     unsigned char commandID;
+    unsigned char dataLength;
     unsigned char* data;
     unsigned char checkSum;
 }LONresponse_s;

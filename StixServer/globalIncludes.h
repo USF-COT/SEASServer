@@ -6,8 +6,17 @@
 #ifndef GLOBALINCLUDES_H
 #define GLOBALINCLUDES_H
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include "usleep-drv.h"
+#include <fcntl.h>
+#include <syslog.h>
+
 #ifndef BOOL
 typedef enum bool{FALSE=0,TRUE=1}BOOL;
 #endif
+
+int milliSleep(unsigned int millisecondsToSleep);
 
 #endif
