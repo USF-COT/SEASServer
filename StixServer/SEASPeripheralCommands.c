@@ -33,8 +33,8 @@ void setPumpRPM(unsigned char pumpID,unsigned int RPM){
     unsigned char data[3];
 
     data[0] = pumpID;
-    data[1] = (unsigned char)((RPM & 0xFF00) >> 8);
-    data[2] = (unsigned char)(RPM & 0xFF);
+    data[1] = (unsigned char)(RPM & 0xFF);
+    data[2] = (unsigned char)((RPM & 0xFF00) >> 8);
 
     syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d RPM to: %d.",pumpID,RPM);
     response = sendLONCommand(PMP,PWL,3,data);
@@ -107,7 +107,7 @@ void setHeaterTemp(unsigned char heaterID, float temperature){
     unsigned char data[5];
 
     data[0] = heaterID;
-    memcpy(data+1,&temperature,4);
+    copyReverseBytes(data+1,(void*)&temperature,4);
     
     syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to: %f.",heaterID,temperature);
     response = sendLONCommand(HTR,TMP,5,data);
@@ -130,7 +130,7 @@ pumpStatus_s* getPumpStatus(unsigned char pumpID){
             status = malloc(sizeof(pumpStatus_s));
             status->pumpID = response->data[0];
             status->power = response->data[1];
-            memcpy(&(status->RPM),response->data+2,4);        
+            copyReverseBytes(&(status->RPM),response->data+2,4);        
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve pump %d status.",pumpID);
         }
@@ -147,7 +147,7 @@ float getHeaterCurrentTemperature(unsigned char heaterID){
     LONresponse_s* response = sendLONCommand(HTR,RCT,1,sendData);
     if(response){
         if(response->data && response->deviceID == HTR && response->data[0] == heaterID){
-            memcpy(&currentTemp,response->data+1,4);
+            copyReverseBytes(&currentTemp,response->data+1,4);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve current temperature from heater %d.",heaterID);
         }
@@ -167,8 +167,8 @@ heaterStatus_s* getHeaterStatus(unsigned char heaterID){
             status = malloc(sizeof(heaterStatus_s));
             status->heaterID = heaterID;
             status->power = response->data[1];
-            memcpy(&(status->setTemperature),response->data+2,4);
-            memcpy(&(status->currentTemperature),response->data+6,4);
+            copyReverseBytes(&(status->setTemperature),response->data+2,4);
+            copyReverseBytes(&(status->currentTemperature),response->data+6,4);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of heater %d.",heaterID);
         }
@@ -200,7 +200,7 @@ float getBatteryVoltage(){
     LONresponse_s* response = sendLONCommand(BAT,BVR,0,NULL);
     if(response){
         if(response->data && response->deviceID == BAT){
-            memcpy(&voltage,response->data,4);
+            copyReverseBytes(&voltage,response->data,4);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for battery voltage.");
         }
@@ -217,10 +217,10 @@ CTDreadings_s* getCTDValues(){
     if(response){
         if(response->data && response->deviceID == CTD){
             readings = malloc(sizeof(CTDreadings_s));
-            memcpy(&(readings->conductivity),response->data,4);
-            memcpy(&(readings->temperature),response->data+4,4);
-            memcpy(&(readings->pressure),response->data+8,4);
-            memcpy(&(readings->soundVelocity),response->data+12,4);
+            copyReverseBytes(&(readings->conductivity),response->data,4);
+            copyReverseBytes(&(readings->temperature),response->data+4,4);
+            copyReverseBytes(&(readings->pressure),response->data+8,4);
+            copyReverseBytes(&(readings->soundVelocity),response->data+12,4);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for CTD readings.");
         }
@@ -332,12 +332,13 @@ void receiveGetPumpStatus(int connection, char* command){
 void receiveGetHeaterStatus(int connection, char* command){
     heaterStatus_s* status = NULL;
     unsigned char sendBuffer[13];
+    char* byteTemp;
     syslog(LOG_DAEMON|LOG_INFO,"Getting heater %d status.",command[3]);
-    
+
     if(command[0] == RHS){
         status = getHeaterStatus(command[3]);
         if(status){
-            syslog(LOG_DAEMON|LOG_INFO,"Heater %d status retrieved.  Heater is %s.  Set temperature is %f.  Current temperature is %f.",status->heaterID,status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
+            syslog(LOG_DAEMON|LOG_INFO,"Heater %d status retrieved.  Heater is %s.  Set temperature is %g.  Current temperature is %g.",status->heaterID,status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
             sendBuffer[0] = RHS;
             sendBuffer[1] = 0;
             sendBuffer[2] = 13;
@@ -345,6 +346,9 @@ void receiveGetHeaterStatus(int connection, char* command){
             sendBuffer[4] = status->power == ENA;
             memcpy(sendBuffer+5,&(status->setTemperature),4);
             memcpy(sendBuffer+9,&(status->currentTemperature),4);
+            byteTemp = byteArrayToString(sendBuffer, 13);
+            syslog(LOG_DAEMON|LOG_INFO,"Responding with bytes: %s",byteTemp);
+            free(byteTemp);
             send(connection,sendBuffer,13,0);
             free(status);
         } else {
