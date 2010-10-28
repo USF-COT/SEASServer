@@ -6,7 +6,12 @@
 #ifndef METHODFILERUNNER_H
 #define METHODFILERUNNER_H
 
+#include <syslog.h>
 #include <pthread.h>
+#include "MethodNodesTable.h"
+#include "MethodParser.tab.h"
+
+extern FILE* yyin;
 
 // Generic Methods
 void executeMethodFile();

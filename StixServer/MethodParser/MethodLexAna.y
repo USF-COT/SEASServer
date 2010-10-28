@@ -46,6 +46,7 @@ dwell { debug("Dwell keyword.\n"); return DWELL;}
 read { debug("Read keyword.\n"); return READ;}
 reference { debug("Reference keyword.\n"); return REF;}
 absorbance { debug("Absorbance keyword.\n"); return ABSO;}
+non { debug("Non keyword.\n"; return NON;}
 full { debug("Full keyword.\n"); return FULL;}
 spectrum { debug("Spectrum keyword.\n"); return SPEC;}
 
@@ -73,7 +74,7 @@ loop { debug("Loop keyword.\n"); return LOOP;}
 
 \n {return '\n';}
 
-[ \t]+ /* eat up whitespace */
+[- \t]+ /* eat up whitespace and hyphens */
 
 %%
 

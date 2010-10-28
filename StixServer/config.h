@@ -19,6 +19,7 @@ extern "C" {
 #include <unistd.h>
 #include <string.h>
 #include <sys/syslog.h>
+#include <pthread.h>
 
 #define MAX_ABS_WAVES 9
 #define MAX_ANA_NAME 24
@@ -63,17 +64,26 @@ typedef struct ABSORBANCECALCPARAMETERS{
 
 typedef struct SPECCONFIG{
     char serial[12];
+    int dwell;
     spectrometerParameters specParameters;
     wavelengthParameters waveParameters; 
     absorbanceCalcParameters absCalcParameters;
 }specConfig;
 
+// Config File Managment Methods
 void applyConfig();
 void writeConfigFile();
 char readConfig();
+
+// Set Methods
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing);
 char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUnits, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave);
+void setAbsorbanceWavelengths(int specIndex,unsigned char newAbsWaveCount,float* newAbsWaves);
+void setNonAbsorbingWavelengths(int specIndex,float newNonAbsWave);
+void setDwell(int specIndex, int dwell);
 void setComputationDataBytes(int specIndex,unsigned char* bytes);
+
+// Get Methods
 char* getSerialNumber(int specIndex);
 spectrometerParameters* getSpecParameters(int specIndex);
 wavelengthParameters* getWaveParameters(int specIndex);
@@ -85,6 +95,8 @@ float* getAbsorbingWavelengths(int specIndex);
 float getNonAbsorbingWavelength(int specIndex);
 unsigned short* getAbsorbancePixels(int specIndex);
 unsigned short getNonAbsorbancePixel(int specIndex);
+
+// Config Debug Methods
 void logConfig();
 
 #ifdef	__cplusplus

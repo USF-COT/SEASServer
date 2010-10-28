@@ -4,12 +4,15 @@
  * Mini-SEAS Method Scripts
  *
  * By: Michael Lindemuth
+ * 
+ * Linked-List of Doubles derived from: http://stackoverflow.com/questions/1429794/how-to-build-an-array-with-bison-yacc-and-a-recursive-rule
  */
 
 %{
     #include <stdio.h>
     #include <string.h>
     #include <stdlib.h>
+    #include "configManager.h"
     #include "SEASPeripheralCommands.h"
     #include "MethodNodesTable.h"
     #define DEBUGPARSER 1
@@ -21,13 +24,23 @@
     void yyerror (char const *);
     int yywrap(void);
     void debug(char* message);
+
+    // Variable Length Double Linked List
+    typedef struct doubleNode{
+        double value;
+        struct doubleNode* next;
+    }DOUBLENODE;
+
+    double* drainListToArray(DOUBLENODE* head); 
 %}
 
 %union {
     double doubleVal;
+    struct doubleNode* node;
 }
 %type <doubleVal> VAL 
-%token PUMP LAMP VALVE HEATER ON OFF READ CALC RECORD WRITE VAL SET DWELL SPECM PARAMS SAMP WAVE CORR REF ABSO FULL SPEC CONC PCO2 PH OPEN CLOSE DATA DELAY BEG EN LOOP FIL
+%type <node> arrayExp
+%token PUMP LAMP VALVE HEATER ON OFF READ CALC RECORD WRITE VAL SET DWELL SPECM PARAMS SAMP WAVE CORR REF ABSO NON FULL SPEC CONC PCO2 PH OPEN CLOSE DATA DELAY BEG EN LOOP FIL
 
 /* Grammer Follows */
 %%
@@ -60,14 +73,16 @@ controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pum
 ;
 
 /* Set Expression Grammers Follow */
-setExp:    SET specParameters
-         | SET DWELL VAL VAL
+setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params = malloc(sizeof(double)*4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters);}
+         | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths);} 
+         | SET NON ABSO WAVE VAL VAL {double* params = malloc(sizeof(double*2)); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength);}
+         | SET CORR WAVE VAL VAL 
+         | SET DWELL VAL VAL {double* params = malloc(sizeof(double*2)); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell);}
 ;
 
-specParameters:    SPECM PARAMS VAL VAL VAL
-                 | SAMP WAVE VAL VAL
-                 | CORR WAVE VAL VAL
-;
+arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); $$->next=$2; $$->value=$1;}
+           | VAL {$$=malloc(sizeof(DOUBLENODE)); $$->next=NULL; $$->value=$1;}
+        
 
 /* Read Expression Grammers Follow */
 readExp:   READ readParameters
@@ -125,4 +140,48 @@ void debug(char* message)
 #if DEBUGPARSER
     printf("%s",message);
 #endif
+}
+
+void addDoubleNode(double value){
+    DOUBLENODE newNode = malloc(sizeof(DOUBLENODE));
+    newNode->value = value;
+    newNode->next = NULL;
+
+    if(head == NULL){
+        head = newNode;
+    } else {
+        current->next = newNode;
+    }
+    current = newNode;
+    numDoubleNodes++;
+}
+
+// Creates a double array numDoubleNodes+1 long.  The first element is the number of elements and the rest of the elements in the array are the double values stored in the linked list.  This function also clears the linked list created by calling addDoubleNode.
+double* drainListToArray(DOUBLENODE* head){
+    DOUBLENODE* nodeTemp;
+    DOUBLENODE* prevNode;
+    double* retVal = NULL;
+    unsigned int i = 0;
+
+    unsigned int numDoubleNodes = 0;
+
+    // Calculate the number of nodes
+    nodeTemp = head;
+    while(nodeTemp){
+        numDoubleNodes++;
+        nodeTemp = nodeTemp->next;
+    }
+
+    if(numDoubleNodes > 0){
+        retVal = malloc(sizeof(double)*(numDoubleNodes+1));
+        retVal[i++] = numDoubleNodes;
+        nodeTemp = head;
+        while(nodeTemp && i < numDoubleNodes+1){
+            retVal[i++] = nodeTemp->value;
+            prevNode = nodeTemp;
+            nodeTemp = nodeTemp->next;
+            free(prevNode);
+        }
+    }
+    return retVal;
 }

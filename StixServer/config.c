@@ -3,8 +3,11 @@
 #define CONFIGPATH "/media/card/StixServerConfig.txt"
 #define MAXCONFIGLINE 128
 
+static pthread_mutex_t writeConfigMutex = PTHREAD_MUTEX_INITIALIZER;
+
 specConfig config[2];
 
+// Config File Management Methods
 char readConfig(){
 
     FILE* configFile;
@@ -43,6 +46,10 @@ char readConfig(){
             if(strcmp(tok,"SERIAL") == 0){
                 tok = strtok(NULL,"\n");
                 strncpy(config[specIndex].serial,tok,11);
+            }
+            else if(strcmp(tok,"DWELL") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].dwell = atoi(tok);
             }
             else if(strcmp(tok,"INTEGRATION_TIME") == 0){
                 tok = strtok(NULL,"\n");
@@ -154,52 +161,58 @@ void writeConfigFile(){
     }
 
     configFile = fopen(CONFIGPATH,"w+");
-
-    for(i=0; i < 2; i++){
-        fprintf(configFile,"# Spectrometer %d Parameters\n",i+1);
-        fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,config[i].serial);
-        fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i+1,config[i].specParameters.integrationTime);
-        fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i+1,config[i].specParameters.scansPerSample);
-        fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i+1,config[i].specParameters.boxcarSmoothing);
-        fprintf(configFile,"\n"); 
-        fprintf(configFile,"SPEC%d.ABSORBANCE_WAVELENGTHS=",i+1);
-        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
-            if(j==0)
-              fprintf(configFile,"%f",config[i].waveParameters.absorbingWavelengths[j]);
-            else
-                fprintf(configFile,",%f",config[i].waveParameters.absorbingWavelengths[j]); 
+    if(configFile){
+        pthread_mutex_lock(&writeConfigMutex);
+        for(i=0; i < 2; i++){
+            fprintf(configFile,"# Spectrometer %d Parameters\n",i+1);
+            fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,config[i].serial);
+            fprintf(configFile,"SPEC%d.DWELL=%d\n",i+1,config[i].dwell);
+            fprintf(configFile,"SPEC%d.INTEGRATION_TIME=%d\n",i+1,config[i].specParameters.integrationTime);
+            fprintf(configFile,"SPEC%d.SCANS_PER_SAMPLE=%d\n",i+1,config[i].specParameters.scansPerSample);
+            fprintf(configFile,"SPEC%d.BOXCAR=%d\n",i+1,config[i].specParameters.boxcarSmoothing);
+            fprintf(configFile,"\n"); 
+            fprintf(configFile,"SPEC%d.ABSORBANCE_WAVELENGTHS=",i+1);
+            for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+                if(j==0)
+                    fprintf(configFile,"%f",config[i].waveParameters.absorbingWavelengths[j]);
+                else
+                    fprintf(configFile,",%f",config[i].waveParameters.absorbingWavelengths[j]); 
+            }
+            fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
+            fprintf(configFile,"\nSPEC%d.ANALYTE=%s\n",i+1,config[i].waveParameters.analyteName);
+            fprintf(configFile,"SPEC%d.UNITS=%d\n",i+1,config[i].waveParameters.units);
+            fprintf(configFile,"SPEC%d.TEMP=%f\n",i+1,config[i].waveParameters.temperature);
+            fprintf(configFile,"SPEC%d.CTS1=%f\n",i+1,config[i].waveParameters.CtS1);
+            fprintf(configFile,"SPEC%d.PCO2S1=%f\n",i+1,config[i].waveParameters.pCO2S1);
+            fprintf(configFile,"SPEC%d.PCO2S2=%f\n",i+1,config[i].waveParameters.pCO2S2);
+            fprintf(configFile,"SPEC%d.SYSMEASUREMODE=%d\n",i+1,config[i].waveParameters.systemMeasureMode);
+            fprintf(configFile,"SPEC%d.CMEASUREMODE=%d\n",i+1,config[i].waveParameters.cMeasureMode);
+            fprintf(configFile,"SPEC%d.SLOPE=",i+1);
+            for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+                if(j==0)
+                    fprintf(configFile,"%f",config[i].waveParameters.slope[j]);
+                else
+                    fprintf(configFile,",%f",config[i].waveParameters.slope[j]);
+            } 
+            fprintf(configFile,"\n");
+            fprintf(configFile,"SPEC%d.INTERCEPT=",i+1);
+            for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
+                if(j==0)
+                    fprintf(configFile,"%f",config[i].waveParameters.intercept[j]);
+                else
+                    fprintf(configFile,",%f",config[i].waveParameters.intercept[j]);
+            }
+            fprintf(configFile,"\n");
+            fprintf(configFile,"\n");
         }
-        fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
-        fprintf(configFile,"\nSPEC%d.ANALYTE=%s\n",i+1,config[i].waveParameters.analyteName);
-        fprintf(configFile,"SPEC%d.UNITS=%d\n",i+1,config[i].waveParameters.units);
-        fprintf(configFile,"SPEC%d.TEMP=%f\n",i+1,config[i].waveParameters.temperature);
-        fprintf(configFile,"SPEC%d.CTS1=%f\n",i+1,config[i].waveParameters.CtS1);
-        fprintf(configFile,"SPEC%d.PCO2S1=%f\n",i+1,config[i].waveParameters.pCO2S1);
-        fprintf(configFile,"SPEC%d.PCO2S2=%f\n",i+1,config[i].waveParameters.pCO2S2);
-        fprintf(configFile,"SPEC%d.SYSMEASUREMODE=%d\n",i+1,config[i].waveParameters.systemMeasureMode);
-        fprintf(configFile,"SPEC%d.CMEASUREMODE=%d\n",i+1,config[i].waveParameters.cMeasureMode);
-        fprintf(configFile,"SPEC%d.SLOPE=",i+1);
-        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
-            if(j==0)
-              fprintf(configFile,"%f",config[i].waveParameters.slope[j]);
-            else
-                fprintf(configFile,",%f",config[i].waveParameters.slope[j]);
-        } 
-        fprintf(configFile,"\n");
-        fprintf(configFile,"SPEC%d.INTERCEPT=",i+1);
-        for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
-            if(j==0)
-              fprintf(configFile,"%f",config[i].waveParameters.intercept[j]);
-            else
-                fprintf(configFile,",%f",config[i].waveParameters.intercept[j]);
-        }
-        fprintf(configFile,"\n");
-        fprintf(configFile,"\n");
+        fclose(configFile);
+        pthread_mutex_unlock(&writeConfigMutex);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Cannot open config file @: %s.",CONFIGPATH);
     }
-    fclose(configFile);
-
 }
 
+// Set Methods
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing){
     config[specIndex].specParameters.integrationTime = newIntTime;
     setSpecIntegrationTimeinMilli(specIndex,config[specIndex].specParameters.integrationTime);
@@ -223,6 +236,30 @@ char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUn
     writeConfigFile();
 }
 
+void setAbsorbanceWavelengths(int specIndex, unsigned char newAbsWaveCount,float* newAbsWaves){
+    int i;
+
+    config[specIndex].waveParameters.absorbingWavelengthCount = newAbsWaveCount;
+    for(i=0; i < newAbsWaveCount; i++){
+        config[specIndex].waveParameters.absorbingWavelengths[i] = newAbsWaves[i];
+        config[specIndex].absCalcParameters.absorbingPixels[i] = calcPixelValueForWavelength(specIndex,newAbsWaves[i]);
+    }
+    applyConfig();
+    writeConfigFile();
+}
+
+void setNonAbsorbingWavelengths(int specIndex, float newNonAbsWave){
+    config[specIndex].waveParameters.nonAbsorbingWavelength = newNonAbsWave;
+    config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,newNonAbsWave);
+    applyConfig();
+    writeConfigFile();
+}
+
+void setDwell(int specIndex,int dwell){
+    config[specIndex].dwell = dwell;
+    writeConfigFile();
+}
+
 void setComputationDataBytes(int specIndex,unsigned char* bytes){
     memcpy(&(config[specIndex].waveParameters),bytes,sizeof(wavelengthParameters));
     applyConfig();
@@ -237,6 +274,7 @@ wavelengthParameters* getWaveParameters(int specIndex){
     return &(config[specIndex].waveParameters);
 }
 
+// Get Methods
 char* getSerialNumber(int specIndex){
     return config[specIndex].serial;
 }
@@ -267,6 +305,7 @@ unsigned short getNonAbsorbancePixel(int specIndex){
     return config[specIndex].absCalcParameters.nonAbsorbingPixel;
 }
 
+// Config Debug Methods
 void logConfig(){
     int i,j;
 
@@ -274,6 +313,7 @@ void logConfig(){
         syslog(LOG_DAEMON||LOG_INFO,"Spectrometer %i Configuration",i+1);
         syslog(LOG_DAEMON||LOG_INFO,"=============================");
         syslog(LOG_DAEMON||LOG_INFO,"Serial Number: %s",config[i].serial);
+        syslog(LOG_DAEMON|LOG_INFO,"Dwell Time: %d",config[i].dwell);
         syslog(LOG_DAEMON||LOG_INFO,"Integration Time: %d",config[i].specParameters.integrationTime);
         syslog(LOG_DAEMON||LOG_INFO,"Scans Per Sample: %d",config[i].specParameters.scansPerSample);
         syslog(LOG_DAEMON||LOG_INFO,"Boxcar Smoothing: %d",config[i].specParameters.boxcarSmoothing);
@@ -296,3 +336,4 @@ void logConfig(){
             syslog(LOG_DAEMON||LOG_INFO,"Intercept %i: %f",j+1,config[i].waveParameters.intercept[j]);
     }
 }
+
