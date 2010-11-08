@@ -191,6 +191,15 @@ void closeControlNode()
     pthread_mutex_unlock(&nodesMutex);
 }
 
+BOOL decCounterToZero(unsigned long counter){
+    if(counter == 0){
+        return TRUE;
+    } else{
+        counter--;
+        return FALSE;
+    }       
+}
+
 void runNodes()
 {
     int rc;

@@ -31,6 +31,7 @@ typedef struct node{
 void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*));
 void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long));
 void closeControlNode();
+BOOL decCounterToZero(unsigned long counter);
 void runNodes();
 void stopNodes();
 void clearNodes();

@@ -12,6 +12,7 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdlib.h>
+    #include "dataFileManager.h"
     #include "configManager.h"
     #include "SEASPeripheralCommands.h"
     #include "MethodNodesTable.h"
@@ -40,7 +41,7 @@
 }
 %type <doubleVal> VAL 
 %type <node> arrayExp
-%token PUMP LAMP VALVE HEATER ON OFF READ CALC RECORD WRITE VAL SET DWELL SPECM PARAMS SAMP WAVE CORR REF ABSO NON FULL SPEC CONC PCO2 PH OPEN CLOSE DATA DELAY BEG EN LOOP FIL
+%token PUMP LAMP VALVE HEATER ON OFF READ CALC RECORD WRITE VAL SET DWELL SPECM PARAMS SAMP WAVE CORR REF ABSO NON FULL SPEC CONC PCO2 PH OPEN CLOSE DATA DELAY BEG EN LOOP FIL BEEP
 
 /* Grammer Follows */
 %%
@@ -61,6 +62,7 @@ line:     '\n'
         | writeExp '\n'
         | delayExp '\n'
         | loopExp '\n' 
+        | BEEP '\n' { soundBeep(); }
 ;
 
 /* Control Expression Grammers Follow */
@@ -105,26 +107,27 @@ calcParameters:   CONC
 
 /* Data File Expressions */
 
-dataFileExp:   OPEN DATA FIL
-             | CLOSE DATA FIL
+dataFileExp:   OPEN DATA FIL { openDataFile(); }
+             | CLOSE DATA FIL { closeDataFile(); }
 ;
 
 /* Write Expressions */
 
-writeExp:   WRITE CONC DATA VAL
-          | WRITE FULL SPEC VAL
+writeExp:   WRITE CONC DATA VAL { writeConcData(); }
+          | WRITE FULL SPEC VAL { writeFullSpec(); }
 ;
 
 /* Delay Expression */
 
-delayExp:   DELAY VAL
+delayExp:   DELAY VAL { milliSleep(((int)$2) * 1000); }
 ;
 
 /* Loop Expressions */
 
-loopExp:   BEG LOOP VAL VAL
-         | EN LOOP VAL
+loopExp:   BEG LOOP VAL VAL { addControlNode(((unsigned long)$4),decCounterToZero); }
+         | EN LOOP VAL { closeControlNode(); }
 ;      
+
 
 %%
 

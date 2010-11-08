@@ -44,3 +44,9 @@ void copyReverseBytes(void* dest, const void* src, unsigned int numBytes){
     }
     free(bytes);
 }
+
+// Taken from: http://www.developer.com/open/article.php/631191
+void soundBeep(){
+    char beep[2] = {7,'\0'};
+    printf("%c",beep);
+}

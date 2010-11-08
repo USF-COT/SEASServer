@@ -68,6 +68,8 @@ begin { debug("Begin keyword.\n"); return BEG;}
 end { debug("End keyword.\n"); return EN;}
 loop { debug("Loop keyword.\n"); return LOOP;}
 
+beep { debug("Beep keyword.\n"); return BEEP;}
+
 [+-]?{DIGIT}+"."?{DIGIT}* {printf("Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return VAL; }
 
 "#"[a-z0-9 \t]*|"//"[a-z0-9 \t]*"\n"|"/*"[a-z0-9 \t\n]*"*/" /* eat up comments */
