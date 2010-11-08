@@ -85,12 +85,9 @@ arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); $$->next=$2; $$->val
         
 
 /* Read Expression Grammers Follow */
-readExp:   READ readParameters
-;
-
-readParameters:   REF VAL
-                | SAMP VAL
-                | FULL SPEC VAL
+readExp:   READ REF VAL
+         | READ SAMP VAL
+         | READ FULL SPEC VAL 
 ;
 
 /* Absorbance Correction Expression */
