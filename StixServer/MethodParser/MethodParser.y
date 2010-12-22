@@ -107,14 +107,14 @@ calcParameters:   CONC
 
 /* Data File Expressions */
 
-dataFileExp:   OPEN DATA FIL { openDataFile(); }
-             | CLOSE DATA FIL { closeDataFile(); }
+dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile); }
+             | CLOSE DATA FIL { addCommandNode(0,NULL,methodCloseDataFile); }
 ;
 
 /* Write Expressions */
 
-writeExp:   WRITE CONC DATA VAL { writeConcData(); }
-          | WRITE FULL SPEC VAL { writeFullSpec(); }
+writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData); }
+          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec)}
 ;
 
 /* Delay Expression */

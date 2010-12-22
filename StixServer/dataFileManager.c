@@ -40,3 +40,21 @@ void writeFullSpec(){
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to write full spectrum data because no data file is open.");
     }
 }
+
+// Method Wrapper Functions
+void methodOpenDataFile(unsigned long argc, void* argv){
+
+}
+
+void methodCloseDataFile(unsigned long argc, void* argv){
+
+}
+
+void methodWriteConcData(unsigned long argc, void* argv){
+
+}
+
+void methodWriteFullSpec(unsigned long argc, void* argv){
+
+}
+

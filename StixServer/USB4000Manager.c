@@ -15,7 +15,7 @@ int connectSpectrometers(char* serialNumber[]){
 
     if(specsConnected)
     {
-        syslog(LOG_DAEMON||LOG_INFO,"USB4000 Already Connected.");
+        syslog(LOG_DAEMON|LOG_INFO,"USB4000 Already Connected.");
         return CONNECT_OK;
     }
     else
@@ -24,7 +24,7 @@ int connectSpectrometers(char* serialNumber[]){
         {
             pthread_mutex_init(&specsMutex[i],NULL);
 	    pthread_mutex_lock(&specsMutex[i]);
-	    syslog(LOG_DAEMON||LOG_INFO,"Connecting Spectrometer %s",serialNumber[i]);
+	    syslog(LOG_DAEMON|LOG_INFO,"Connecting Spectrometer %s",serialNumber[i]);
 	    spectrometers[i] = openUSB4000(serialNumber[i]);
             if(spectrometers[i] == NULL)
                 return CONNECT_ERR;
@@ -55,7 +55,7 @@ calibrationCoefficients* getCalCos(char specNumber){
     }
     else
     {
-        syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+        syslog(LOG_DAEMON|LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
         calCos = NULL;
     }
 
@@ -63,7 +63,7 @@ calibrationCoefficients* getCalCos(char specNumber){
 }
 
 void sendCalCos(int connection, char* command){
-    syslog(LOG_DAEMON||LOG_INFO,"Retrieving calibration coefficients from USB4000");
+    syslog(LOG_DAEMON|LOG_INFO,"Retrieving calibration coefficients from USB4000");
     calibrationCoefficients* calCos;
 
     calCos = getCalCos(command[1]);
@@ -71,7 +71,7 @@ void sendCalCos(int connection, char* command){
         send(connection,(void*) calCos,sizeof(calibrationCoefficients),0);
         free(calCos);
     }
-    syslog(LOG_DAEMON||LOG_INFO,"Retrieved calibration coefficients. Returning.");
+    syslog(LOG_DAEMON|LOG_INFO,"Retrieved calibration coefficients. Returning.");
 }
 
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
@@ -80,9 +80,9 @@ void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned 
     {
         readDarkSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
         if(spectrometers[specNumber]->darkSample == NULL)
-            syslog(LOG_DAEMON||LOG_INFO,"Dark sample NULL after attempted read.");
+            syslog(LOG_DAEMON|LOG_INFO,"Dark sample NULL after attempted read.");
         else
-            syslog(LOG_DAEMON||LOG_INFO,"Dark sample read OK.");
+            syslog(LOG_DAEMON|LOG_INFO,"Dark sample read OK.");
     }
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
@@ -93,9 +93,9 @@ void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned i
     {
         readRefSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
         if(spectrometers[specNumber]->refSample == NULL)
-            syslog(LOG_DAEMON||LOG_INFO,"Reference sample NULL after attempted read.");
+            syslog(LOG_DAEMON|LOG_INFO,"Reference sample NULL after attempted read.");
         else
-            syslog(LOG_DAEMON||LOG_INFO,"Reference sample read OK.");
+            syslog(LOG_DAEMON|LOG_INFO,"Reference sample read OK.");
     }
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
@@ -109,7 +109,7 @@ void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned 
     }
     else
     {
-        syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+        syslog(LOG_DAEMON|LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
     }
 }
 
@@ -126,7 +126,7 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
     }
     else
     {
-        syslog(LOG_DAEMON||LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+        syslog(LOG_DAEMON|LOG_ERR,"Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
         sample = NULL;
     }
 
@@ -190,59 +190,62 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
 void sendSpecSample(int connection, char* command){
     specSample* sample;
 
-    syslog(LOG_DAEMON||LOG_INFO,"Sending wavelength sample from USB4000");
+    syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000");
     sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
     send(connection,(void*)sample->pixels,sizeof(float)*3840,0);
     free(sample);
-    syslog(LOG_DAEMON||LOG_INFO,"Sent wavelength.");
+    syslog(LOG_DAEMON|LOG_INFO,"Sent wavelength.");
 }
 
 void sendAbsorbance(int connection, char* command){
     float* absorbance = NULL;
 
-    syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance for Specified Wavelengths.");
+    syslog(LOG_DAEMON|LOG_INFO,"Retrieving Spec %d Absorbance for %d Wavelengths.",command[1],getAbsorbingWavelengthCount(command[1]));
     absorbance = getAbsorbance(command[1]);
     if(absorbance){
+        syslog(LOG_DAEMON|LOG_INFO,"Sending Absorbance. Value 1=%f .",absorbance[0]);
         send(connection,(void*)absorbance,sizeof(float)*(MAX_ABS_WAVES+1),0);
         free(absorbance);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to read absorbance wavelengths.");
     }
-    syslog(LOG_DAEMON||LOG_INFO,"Absorbance for Specified Wavelengths Retrieved.");
+    syslog(LOG_DAEMON|LOG_INFO,"Absorbance for Specified Wavelengths Retrieved.");
 }
 
 void sendAbsorbanceSpectrum(int connection, char* command){
     float* absSpec = NULL;
 
-    syslog(LOG_DAEMON||LOG_INFO,"Retrieving Absorbance Spectrum...");
+    syslog(LOG_DAEMON|LOG_INFO,"Retrieving Absorbance Spectrum...");
     absSpec = getAbsorbanceSpectrum(command[1]);
     if(absSpec){
         send(connection,(void*)absSpec,sizeof(float)*3840,0);
         free(absSpec);
     }
-    syslog(LOG_DAEMON||LOG_INFO,"Absorbance Spectrum Retrieved.");
+    syslog(LOG_DAEMON|LOG_INFO,"Absorbance Spectrum Retrieved.");
 }
 
 void receiveRecordDarkSample(int connection, char* command){
     char response[1] = {RDS};
 
-    syslog(LOG_DAEMON||LOG_INFO,"Recording Dark Sample...");
+    syslog(LOG_DAEMON|LOG_INFO,"Recording Dark Sample...");
     recordDarkSample(command[1],getScansPerSample(command[1]),100);
     send(connection,(void*)response,1,0);    
-    syslog(LOG_DAEMON||LOG_INFO,"Dark Sample Recorded.");
+    syslog(LOG_DAEMON|LOG_INFO,"Dark Sample Recorded.");
 }
 
 void receiveRecordRefSample(int connection, char* command){
     char response[1] = {RRS};
     
-    syslog(LOG_DAEMON||LOG_INFO,"Recording Reference Sample...");
+    syslog(LOG_DAEMON|LOG_INFO,"Recording Reference Sample...");
     recordRefSample(command[1],getScansPerSample(command[1]),100);
     send(connection,(void*)response,1,0);
-    syslog(LOG_DAEMON||LOG_INFO,"Reference Sample Recorded.");
+    syslog(LOG_DAEMON|LOG_INFO,"Reference Sample Recorded.");
 }
 
 void receiveRecordSpecSample(int connection, char* command){
-    syslog(LOG_DAEMON||LOG_INFO,"Recording Sample.");
+    syslog(LOG_DAEMON|LOG_INFO,"Recording Sample.");
     recordSpecSample(command[1],getScansPerSample(command[1]),100);
-    syslog(LOG_DAEMON||LOG_INFO,"Sample Recorded");
+    syslog(LOG_DAEMON|LOG_INFO,"Sample Recorded");
 }
 
 int disconnectSpectrometers(){

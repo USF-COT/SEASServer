@@ -16,3 +16,9 @@ void closeDataFile();
 // Write Functions
 void writeConcData();
 void writeFullSpec();
+
+// Method Wrapper Functions
+void methodOpenDataFile(unsigned long argc, void* argv);
+void methodCloseDataFile(unsigned long argc, void* argv);
+void methodWriteConcData(unsigned long argc, void* argv);
+void methodWriteFullSpec(unsigned long argc, void* argv);
