@@ -35,6 +35,12 @@ enum  CONCENTRATION_UNITS   {
 
 };
 
+/* Mode */
+typedef enum SYS_MODE {
+    MANUAL,
+    PROGRAM
+}systemMode;
+
 typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
     unsigned short scansPerSample;

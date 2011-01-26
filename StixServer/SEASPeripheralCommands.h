@@ -34,6 +34,16 @@ typedef struct CTDREADINGS{
     float soundVelocity;
 }CTDreadings_s;
 
+typedef struct PERIPHERALENABLED{
+    BOOL CTDNode;
+    BOOL LONInterfaceNode;
+    BOOL pump[6];
+    BOOL heaterNode;
+}peripheralsEnabled;
+
+// LON Power Management Monitor Functions
+void enableLONPowerManagement();
+void disableLONPowerManagement();
 
 // Base Functions
 void pumpOn(unsigned char pumpID);

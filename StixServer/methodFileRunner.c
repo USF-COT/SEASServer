@@ -7,7 +7,7 @@ void *methodFileRunner(void* name){
     struct s_node* node;
     char* filename = (char*)name;
 
-    yyin = fopen("test.m","r");
+    yyin = fopen(filename,"r");
     if(yyin){
         runNodes();
     }

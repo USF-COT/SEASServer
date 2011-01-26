@@ -5,7 +5,8 @@
 
 static pthread_mutex_t writeConfigMutex = PTHREAD_MUTEX_INITIALIZER;
 
-specConfig config[2];
+static systemMode mode = MANUAL;
+static specConfig config[2];
 
 // Config File Management Methods
 char readConfig(){
@@ -16,7 +17,7 @@ char readConfig(){
     int specIndex,wavelengthCount;
     int i;
 
-    if(access(CONFIGPATH,R_OK||W_OK)){
+    if(access(CONFIGPATH,R_OK|W_OK)){
         return 0; // Do not have access to file
     }
 
@@ -25,25 +26,39 @@ char readConfig(){
         fgets(configLine,MAXCONFIGLINE,configFile);
  
         // Skip Comments and Empty Lines
-        if(configLine[0] == '#' || strlen(configLine) == 0){
-            syslog(LOG_DAEMON||LOG_INFO,"Skipped Commented or Empty Config Line: %s",configLine);
+        if(configLine[0] == '#' | strlen(configLine) == 0){
+            syslog(LOG_DAEMON|LOG_INFO,"Skipped Commented or Empty Config Line: %s",configLine);
             continue;
         }
         else{
             tok = strtok(configLine,".");
-            if(strcmp(tok,"SPEC1") == 0){
+            if(strcmp(tok,"SYS") == 0){
+                specIndex = -1;
+            }
+            else if(strcmp(tok,"SPEC1") == 0){
                 specIndex = 0;
             }
             else if(strcmp(tok,"SPEC2") == 0){
                 specIndex = 1;
             }
             else{ // Unrecognized prefix, skip this line.
-                syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Prefixed Config Line: %s",configLine);
+                syslog(LOG_DAEMON|LOG_INFO,"Skipped Unrecognized Prefixed Config Line: %s",configLine);
                 continue;
             }
             
             tok = strtok(NULL,"="); 
-            if(strcmp(tok,"SERIAL") == 0){
+            if(strcmp(tok,"MODE") == 0){
+                tok = strtok(NULL,"\n");
+                if(strcmp(tok,"MANUAL") == 0){
+                    mode = MANUAL; 
+                } else if(strcmp(tok,"PROGRAM") == 0){
+                    mode = PROGRAM;
+                } else {
+                    syslog(LOG_DAEMON|LOG_INFO,"Unrecognized Mode Passed: %s",tok);
+                }
+                continue;
+            }
+            else if(strcmp(tok,"SERIAL") == 0){
                 tok = strtok(NULL,"\n");
                 strncpy(config[specIndex].serial,tok,11);
             }
@@ -128,7 +143,7 @@ char readConfig(){
                 }
             }
             else{ // Unrecognized spectrometer parameter, skip this line
-                syslog(LOG_DAEMON||LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
+                syslog(LOG_DAEMON|LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
                 continue;
             }
         }
@@ -156,13 +171,15 @@ void writeConfigFile(){
     int i,j;
     FILE* configFile;
 
-    if(access(CONFIGPATH,R_OK||W_OK)){
+    if(access(CONFIGPATH,R_OK|W_OK)){
         return; // Do not have access to file
     }
 
     configFile = fopen(CONFIGPATH,"w+");
     if(configFile){
         pthread_mutex_lock(&writeConfigMutex);
+        fprintf(configFile,"# System Parameters\n");
+        fprintf(configFile,"SYS.MODE=%s\n",mode == MANUAL ? "MANUAL" : "PROGRAM");
         for(i=0; i < 2; i++){
             fprintf(configFile,"# Spectrometer %d Parameters\n",i+1);
             fprintf(configFile,"SPEC%d.SERIAL=%s\n",i+1,config[i].serial);
@@ -213,6 +230,16 @@ void writeConfigFile(){
 }
 
 // Set Methods
+void setMode(systemMode sysMode){
+    mode = sysMode;
+
+    if(mode == PROGRAM){
+        executeMethodFile();
+    } else if (mode == MANUAL){
+        terminateMethodFile();
+    }
+}
+
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing){
     config[specIndex].specParameters.integrationTime = newIntTime;
     setSpecIntegrationTimeinMilli(specIndex,config[specIndex].specParameters.integrationTime);
@@ -309,31 +336,33 @@ unsigned short getNonAbsorbancePixel(int specIndex){
 void logConfig(){
     int i,j;
 
+    syslog(LOG_DAEMON|LOG_INFO,"System Mode: %s",mode == MANUAL ? "MANUAL" : "PROGRAM");
+
     for(i=0; i < 2; i++){
-        syslog(LOG_DAEMON||LOG_INFO,"Spectrometer %i Configuration",i+1);
-        syslog(LOG_DAEMON||LOG_INFO,"=============================");
-        syslog(LOG_DAEMON||LOG_INFO,"Serial Number: %s",config[i].serial);
+        syslog(LOG_DAEMON|LOG_INFO,"Spectrometer %i Configuration",i+1);
+        syslog(LOG_DAEMON|LOG_INFO,"=============================");
+        syslog(LOG_DAEMON|LOG_INFO,"Serial Number: %s",config[i].serial);
         syslog(LOG_DAEMON|LOG_INFO,"Dwell Time: %d",config[i].dwell);
-        syslog(LOG_DAEMON||LOG_INFO,"Integration Time: %d",config[i].specParameters.integrationTime);
-        syslog(LOG_DAEMON||LOG_INFO,"Scans Per Sample: %d",config[i].specParameters.scansPerSample);
-        syslog(LOG_DAEMON||LOG_INFO,"Boxcar Smoothing: %d",config[i].specParameters.boxcarSmoothing);
-        syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength Count: %d",config[i].waveParameters.absorbingWavelengthCount);
+        syslog(LOG_DAEMON|LOG_INFO,"Integration Time: %d",config[i].specParameters.integrationTime);
+        syslog(LOG_DAEMON|LOG_INFO,"Scans Per Sample: %d",config[i].specParameters.scansPerSample);
+        syslog(LOG_DAEMON|LOG_INFO,"Boxcar Smoothing: %d",config[i].specParameters.boxcarSmoothing);
+        syslog(LOG_DAEMON|LOG_INFO,"Absorbing Wavelength Count: %d",config[i].waveParameters.absorbingWavelengthCount);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
-            syslog(LOG_DAEMON||LOG_INFO,"Absorbing Wavelength %i: %f",j+1,config[i].waveParameters.absorbingWavelengths[j]);
+            syslog(LOG_DAEMON|LOG_INFO,"Absorbing Wavelength %i: %f",j+1,config[i].waveParameters.absorbingWavelengths[j]);
         }
-        syslog(LOG_DAEMON||LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
-        syslog(LOG_DAEMON||LOG_INFO,"Analyte Name: %s",config[i].waveParameters.analyteName);
-        syslog(LOG_DAEMON||LOG_INFO,"Units #: %d",config[i].waveParameters.units);
-        syslog(LOG_DAEMON||LOG_INFO,"System Measure Mode: %d",config[i].waveParameters.systemMeasureMode);
-        syslog(LOG_DAEMON||LOG_INFO,"Carbon Measure Mode: %d",config[i].waveParameters.cMeasureMode);
-        syslog(LOG_DAEMON||LOG_INFO,"Temperature: %f",config[i].waveParameters.temperature);
-        syslog(LOG_DAEMON||LOG_INFO,"CtS1: %f",config[i].waveParameters.CtS1);
-        syslog(LOG_DAEMON||LOG_INFO,"pCO2S1: %f",config[i].waveParameters.pCO2S1);
-        syslog(LOG_DAEMON||LOG_INFO,"pCO2S2: %f",config[i].waveParameters.pCO2S2);
+        syslog(LOG_DAEMON|LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
+        syslog(LOG_DAEMON|LOG_INFO,"Analyte Name: %s",config[i].waveParameters.analyteName);
+        syslog(LOG_DAEMON|LOG_INFO,"Units #: %d",config[i].waveParameters.units);
+        syslog(LOG_DAEMON|LOG_INFO,"System Measure Mode: %d",config[i].waveParameters.systemMeasureMode);
+        syslog(LOG_DAEMON|LOG_INFO,"Carbon Measure Mode: %d",config[i].waveParameters.cMeasureMode);
+        syslog(LOG_DAEMON|LOG_INFO,"Temperature: %f",config[i].waveParameters.temperature);
+        syslog(LOG_DAEMON|LOG_INFO,"CtS1: %f",config[i].waveParameters.CtS1);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2S1: %f",config[i].waveParameters.pCO2S1);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2S2: %f",config[i].waveParameters.pCO2S2);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)
-            syslog(LOG_DAEMON||LOG_INFO,"Slope %i: %f",j+1,config[i].waveParameters.slope[j]);
+            syslog(LOG_DAEMON|LOG_INFO,"Slope %i: %f",j+1,config[i].waveParameters.slope[j]);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)
-            syslog(LOG_DAEMON||LOG_INFO,"Intercept %i: %f",j+1,config[i].waveParameters.intercept[j]);
+            syslog(LOG_DAEMON|LOG_INFO,"Intercept %i: %f",j+1,config[i].waveParameters.intercept[j]);
     }
 }
 
