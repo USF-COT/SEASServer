@@ -1,3 +1,5 @@
+#include "dataFileManager.h"
+
 static FILE* currDataFile=NULL;
 
 // File Management Functions

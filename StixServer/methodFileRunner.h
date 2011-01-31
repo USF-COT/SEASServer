@@ -17,8 +17,4 @@ extern FILE* yyin;
 void executeMethodFile();
 void terminateMethodFile();
 
-// GUI specific wrapper methods
-void receiveExecuteMethod(int connection, char* command);
-void receiveTerminateMethod(int connection, char* command);
-
 #endif

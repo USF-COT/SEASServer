@@ -38,10 +38,3 @@ void terminateMethodFile(){
     executingMethod = 0;
 }
 
-// GUI specific wrapper methods
-void receiveExecuteMethod(int connection, char* command){
-    executeMethodFile();
-}
-void receiveTerminateMethod(int connection, char* command){
-    terminateMethodFile();
-}

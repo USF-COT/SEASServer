@@ -276,9 +276,9 @@ void receiveSetHeaterControl(int connection, char* command){
     unsigned char heaterID;
 
     if(command[0] == HTC){
-        heaterID = command[3];
-        syslog(LOG_DAEMON|LOG_INFO,"Turning heater %d %s.",heaterID,command[4] == 1 ? "ON" : "OFF");
-        if(command[4] == 1){
+        heaterID = 1;
+        syslog(LOG_DAEMON|LOG_INFO,"Turning heater %s.",command[3] == 1 ? "ON" : "OFF");
+        if(command[3] == 1){
             heaterOn(heaterID);
         } else {
             heaterOff(heaterID);
@@ -293,9 +293,9 @@ void receiveSetHeaterTemp(int connection, char* command){
     float temperature;
 
     if(command[0] == HTP){
-        heaterID = command[3];
+        heaterID = 1;
         memcpy(&temperature,command+4,4);
-        syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to %f.",heaterID,temperature);
+        syslog(LOG_DAEMON|LOG_INFO,"Setting heater temperature to %f.",temperature);
         setHeaterTemp(heaterID,temperature);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetHeaterControl method.");
@@ -331,28 +331,27 @@ void receiveGetPumpStatus(int connection, char* command){
 
 void receiveGetHeaterStatus(int connection, char* command){
     heaterStatus_s* status = NULL;
-    unsigned char sendBuffer[13];
+    unsigned char sendBuffer[12];
     char* byteTemp;
-    syslog(LOG_DAEMON|LOG_INFO,"Getting heater %d status.",command[3]);
+    syslog(LOG_DAEMON|LOG_INFO,"Getting heater status.");
 
     if(command[0] == RHS){
-        status = getHeaterStatus(command[3]);
+        status = getHeaterStatus(1);
         if(status){
-            syslog(LOG_DAEMON|LOG_INFO,"Heater %d status retrieved.  Heater is %s.  Set temperature is %g.  Current temperature is %g.",status->heaterID,status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
+            syslog(LOG_DAEMON|LOG_INFO,"Heater status retrieved.  Heater is %s.  Set temperature is %g.  Current temperature is %g.",status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
             sendBuffer[0] = RHS;
             sendBuffer[1] = 0;
             sendBuffer[2] = 13;
-            sendBuffer[3] = status->heaterID;
-            sendBuffer[4] = status->power == ENA;
-            memcpy(sendBuffer+5,&(status->setTemperature),4);
-            memcpy(sendBuffer+9,&(status->currentTemperature),4);
-            byteTemp = byteArrayToString(sendBuffer, 13);
+            sendBuffer[3] = status->power == ENA;
+            memcpy(sendBuffer+4,&(status->setTemperature),4);
+            memcpy(sendBuffer+8,&(status->currentTemperature),4);
+            byteTemp = byteArrayToString(sendBuffer, 12);
             syslog(LOG_DAEMON|LOG_INFO,"Responding with bytes: %s",byteTemp);
             free(byteTemp);
-            send(connection,sendBuffer,13,0);
+            send(connection,sendBuffer,12,0);
             free(status);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d status not retrieved from LON.",command[3]);
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater status not retrieved from LON.");
             sendErrorMessageBack(connection,"ERROR: Heater status not retrieved from LON.");
         }
     } else {
@@ -466,31 +465,25 @@ void methodLampOff(unsigned long argc, void* argv){
 }
 
 void methodHeaterOn(unsigned long argc, void* argv){
-    unsigned char heaterID;
     float temperature;
     double* arguments = (double*)argv;
 
-    if(argc != 2){
+    if(argc != 1){
         syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to heaterOn function.");
         return;
     }
 
-    heaterID = (unsigned char)arguments[0];
-    temperature = (float)arguments[1];
-    heaterOn(heaterID);
-    setHeaterTemp(heaterID,temperature);
+    temperature = (float)arguments[0];
+    heaterOn(1);
+    setHeaterTemp(1,temperature);
 }
 
 void methodHeaterOff(unsigned long argc, void* argv){
-    unsigned char heaterID;
-    double* arguments = (double*)argv;
-
-    if(argc != 1){
+    if(argc != 0){
         syslog(LOG_DAEMON|LOG_ERR,"Wrong number of arguments passed to heaterOff function.");
         return;
     }
 
-    heaterID = (unsigned char)arguments[0];
-    heaterOff(heaterID);
+    heaterOff(1);
 }
 

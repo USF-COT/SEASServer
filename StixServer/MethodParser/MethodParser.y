@@ -31,7 +31,7 @@
         double value;
         struct doubleNode* next;
     }DOUBLENODE;
-
+    
     double* drainListToArray(DOUBLENODE* head); 
 %}
 
@@ -66,20 +66,20 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn); printf("Pump ON!");}
+controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn);}
             | PUMP OFF VAL { double* pumpArgs = malloc(sizeof(double)); pumpArgs[0] = $3; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
             | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
             | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
-            | HEATER ON VAL VAL { double* heaterArgs = malloc(sizeof(double)*2); heaterArgs[0]=$3; heaterArgs[1]=$4; addCommandNode(2,(void*)heaterArgs,methodHeaterOn); }
-            | HEATER OFF VAL { double* heaterArgs = malloc(sizeof(double)); heaterArgs[0]=$3; addCommandNode(1,(void*)heaterArgs,methodHeaterOff); }             
+            | HEATER ON VAL { double* heaterArgs = malloc(sizeof(double)); heaterArgs[0]=$3; addCommandNode(1,(void*)heaterArgs,methodHeaterOn); }
+            | HEATER OFF { addCommandNode(0,NULL,methodHeaterOff); }             
 ;
 
 /* Set Expression Grammers Follow */
 setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params = malloc(sizeof(double)*4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters);}
          | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths);} 
-         | SET NON ABSO WAVE VAL VAL {double* params = malloc(sizeof(double*2)); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength);}
-         | SET CORR WAVE VAL VAL 
-         | SET DWELL VAL VAL {double* params = malloc(sizeof(double*2)); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell);}
+         | SET NON ABSO WAVE VAL VAL {double* params = malloc(sizeof(double)*2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength);}
+         | SET CORR WAVE VAL VAL {} 
+         | SET DWELL VAL VAL {double* params = malloc(sizeof(double)*2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell);}
 ;
 
 arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); $$->next=$2; $$->value=$1;}
@@ -142,21 +142,7 @@ void debug(char* message)
 #endif
 }
 
-void addDoubleNode(double value){
-    DOUBLENODE newNode = malloc(sizeof(DOUBLENODE));
-    newNode->value = value;
-    newNode->next = NULL;
-
-    if(head == NULL){
-        head = newNode;
-    } else {
-        current->next = newNode;
-    }
-    current = newNode;
-    numDoubleNodes++;
-}
-
-// Creates a double array numDoubleNodes+1 long.  The first element is the number of elements and the rest of the elements in the array are the double values stored in the linked list.  This function also clears the linked list created by calling addDoubleNode.
+// Creates a double array numDoubleNodes+1 long.  The first element is the number of elements and the rest of the elements in the array are the double values stored in the linked list. 
 double* drainListToArray(DOUBLENODE* head){
     DOUBLENODE* nodeTemp;
     DOUBLENODE* prevNode;

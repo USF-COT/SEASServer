@@ -150,6 +150,10 @@ char readConfig(){
     }
 
     fclose(configFile);
+
+    // Apply Mode Setting After All Possible Settings Have Been Read
+    setMode(mode);
+
     return 1;
 }
 

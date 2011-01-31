@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "SEASPeripheralCommands.h"
 #include "carbonCalc.h"
-#include "CTD.h"
+
+static
 
 /*
   void  ComputeSystemTotalCarbon( int Spectrometer )
@@ -32,7 +34,7 @@ void  ComputeSystemTotalCarbon( int Spectrometer )
   AbsorbanceRatio = ComputeAbsorbanceRatio( Spectrometer );
 
   /* Get the temperature */
-  Temperature = ComputationData.Temperature;
+  Temperature = ;
 
   /* Get the salinity */
   Salinity = CTDData.Salinity;
