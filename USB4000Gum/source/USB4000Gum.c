@@ -480,7 +480,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
         if(usb_bulk_write(USB4000->usbHandle,EP1OUT,command,1,1000) > 0){
 
             // Wait for Pixels to Fill
-            usleep(4000);
+            milliSleep(20);
             // Handle Response Depending on USB Connection
             if(USB4000->status->isHighSpeed){
                 fprintf(stderr,"Handling High-Speed USB Connection.");
@@ -514,7 +514,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                deallocateSample(sample);
                return NULL;
             }
-            usleep(delayBetweenScansInMicroSeconds);
+            milliSleep(delayBetweenScansInMicroSeconds);
         }
         else{
             #ifdef DEBUG

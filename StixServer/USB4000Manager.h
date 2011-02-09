@@ -23,6 +23,8 @@
 #define NUM_SPECS 2
 
 int connectSpectrometers(char* serialNumber[]);
+int sleepSpectrometer(short specID);
+int wakeSpectrometer(short specID);
 
 void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);

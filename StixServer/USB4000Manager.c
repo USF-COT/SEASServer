@@ -36,6 +36,13 @@ int connectSpectrometers(char* serialNumber[]){
     }
 }
 
+void sleepSpectrometer(short specID){
+    setShutdownMode(spectrometers[specID],FALSE);
+}
+void wakeSpectrometer(short specID){
+    setShutdownMode(spectrometers[specID],TRUE);
+}
+
 void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime){
     setIntegrationTime(spectrometers[specID],integrationTime*1000);
 }

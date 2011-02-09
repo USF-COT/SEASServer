@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include "globalIncludes.h"
  
 #define STATUS char
 #define USB4000ERR 0

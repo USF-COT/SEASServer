@@ -54,6 +54,21 @@ int main(){
         printStatus(spectrometers[SPECID]);
         printf("-------------------\n");
 
+        printf("Shutdown Spectrometers\n");
+        printf("-------------------\n");
+        setShutdownMode(spectrometers[0],FALSE);
+        setShutdownMode(spectrometers[1],FALSE);
+        printf("-------------------\n");
+
+        printf("Press Enter to Power Up Spectrometers.\n");
+        while(getchar() != '\n'){};
+
+        printf("Starting Spectrometers\n");
+        printf("-------------------\n");
+        setShutdownMode(spectrometers[0],TRUE);
+        setShutdownMode(spectrometers[1],TRUE);
+        printf("-------------------\n");
+
         printf("Closing Device\n");
         closeUSB4000(spectrometers[0]);
         closeUSB4000(spectrometers[1]);

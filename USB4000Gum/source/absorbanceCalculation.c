@@ -16,7 +16,7 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    float Denominator;
    float DarkValue;
 
-   if(USB4000->refSample == NULL || USB4000->darkSample == NULL || USB4000->sample == NULL)
+   if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
    
    DarkValue = ComputeDarkValue(USB4000);
@@ -50,7 +50,7 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
 }
 
 /*
-   float ComputeCorrectionAbsorbance( int Spectrometer, unsigned int nonAbsorbingPixel )
+   float ComputeCorrectionAbsorbance( spectrometer* Spectrometer, unsigned int nonAbsorbingPixel )
    
    Computes the correction absorbance for the specified spectrometer.
 */
@@ -62,7 +62,7 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsor
    float CorrectionAbsorbance;
    float DarkValue;
    
-   if(USB4000->refSample == NULL || USB4000->darkSample == NULL || USB4000->sample == NULL)
+   if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
 
    DarkValue = ComputeDarkValue(USB4000);
