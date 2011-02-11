@@ -12,7 +12,7 @@ GUIHandler const handlers[] = {
         receiveSetHeaterTemp, // 0x08 HTP
         receiveSetHeaterControl, // 0x09 HTC
         receiveSetLampControl, // 0x0A LTC
-        NULL, // 0x0B SVS
+        NULL, // 0x0B LSD 
         receiveParameterBytes, // 0x0C SSP
         receiveWaveSetCommand, // 0x0D SCP
         sendSpecSample, // 0x0E RFS

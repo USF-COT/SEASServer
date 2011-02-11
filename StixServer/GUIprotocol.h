@@ -26,7 +26,7 @@
 #define         HTP     0x08            // Set Heater Temperature
 #define         HTC     0x09            // Heater Control
 #define         LTC     0x0A            // Light Source Control
-#define         SVS     0x0B            // Set Valve State
+#define         LSD     0x0B            // Load Slope Data for Wavelength Concentration Calculation
 #define         SSP     0x0C            // Set Spectrometer Parameters
 #define     SVP      0x1E     // Reserved
 #define         SCP     0x0D            // Set Absorbance Computational Data

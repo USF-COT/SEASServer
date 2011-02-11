@@ -18,6 +18,7 @@ static
 */
 void  ComputeSystemTotalCarbon( int Spectrometer )
 {
+  CTDreadings_s* CTDData;
   float   AbsorbanceRatio;
   float   Temperature;
   float   Salinity;
@@ -29,6 +30,8 @@ void  ComputeSystemTotalCarbon( int Spectrometer )
   float   Term6;
   float   Term7;
   float   Term8;
+
+  /* Read the CTD */
 
   /* Compute the absorbance ratio */
   AbsorbanceRatio = ComputeAbsorbanceRatio( Spectrometer );
