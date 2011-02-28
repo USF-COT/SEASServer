@@ -11,127 +11,134 @@
 /* Run time message header byte */
 #define  RTH   0xF0
 
+/* Run time message types */
 enum  RUN_TIME_MESSAGE_TYPES     {
 
-   SET_SPECTROMETER_PARAMETERS_RUNTIME_CMD   =  0,
-   SET_SAMPLE_WAVELENGTHS_RUNTIME_CMD,
-   SET_CORRECTION_WAVELENGTH_RUNTIME_CMD,
-   PUMP_ON_RUNTIME_CMD,
-   PUMP_OFF_RUNTIME_CMD,
-   LAMP_ON_RUNTIME_CMD,
-   LAMP_OFF_RUNTIME_CMD,
-   HEATER_ON_RUNTIME_CMD,
-   HEATER_OFF_RUNTIME_CMD,
-   READ_REFERENCE_RUNTIME_CMD,
-   READ_SAMPLE_RUNTIME_CMD,
-   CAL_CONCENTRATION_RUNTIME_CMD,
-   CAL_PCO2_RUNTIME_CMD,
-   CAL_PH_RUNTIME_CMD,
-   READ_FULL_SPECTRUM_RUNTIME_CMD,
-   DELAY_RUNTIME_CMD,
-   MAX_RUN_TIME_MESSAGES
+  PUMP_ON_RUNTIME_CMD = 0,
+  PUMP_OFF_RUNTIME_CMD,
+  LAMP_ON_RUNTIME_CMD,
+  LAMP_OFF_RUNTIME_CMD,
+  HEATER_ON_RUNTIME_CMD,
+  HEATER_OFF_RUNTIME_CMD,
+  READ_REFERENCE_RUNTIME_CMD,
+  READ_SAMPLE_RUNTIME_CMD,
+  CAL_CONCENTRATION_RUNTIME_CMD,
+  CAL_PCO2_RUNTIME_CMD,
+  CAL_PH_RUNTIME_CMD,
+  CAL_TC_RUNTIME_CMD,
+  READ_FULL_SPECTRUM_RUNTIME_CMD,
+  DELAY_RUNTIME_CMD,
+  WAIT_HEATER_RUNTIME_CMD,
+  READ_TEMPERATURE_RUNTIME_CMD,
+  SET_DWELL_RUNTIME_CMD,
+  MAX_RUNTIME_COMMANDS
 };
+
+/* Set dwell */
+typedef  struct   {
+
+  uint16   Seconds;
+
+}SET_DWELL_RUNTIME_DATA;
 
 
 /* Runtime messages */
 
-/* Set spectrometer parameters */                              
-typedef  struct   {
-
-   uchar       Command;
-   uchar       Spectrometer;
-   uint16      IntegrationTime;
-   uint16      ScansPerSample;
-   short int   Boxcar;
-
-}SPECTROMETER_PARAMETERS_RUNTIME_MSG;
-
-/* Set sample wavelegth */
-typedef  struct   {
-
-   uchar  Command;
-   uchar  Spectrometer;
-   float  Wavelength;
-   
-}SET_SAMPLE_WAVELENGTH_RUNTIME_MSG;
-
-/* Set correction wavelegth */
-typedef  struct   {
-
-   uchar  Command;
-   uchar  Spectrometer;
-   float  Wavelength;
-   
-}SET_CORRECTION_WAVELENGTH_RUNTIME_MSG;
-
 /* Pump on */
 typedef  struct   {
 
-   uchar  Command;
    uint16 Pump;
    float  RPM;
    
-}PUMP_ON_RUNTIME_MSG;
+}PUMP_ON_RUNTIME_DATA;
 
 /* Pump off */
 typedef  struct   {
 
-   uchar  Command;
    uint16 Pump;
    
-}PUMP_OFF_RUNTIME_MSG;
+}PUMP_OFF_RUNTIME_DATA;
 
 /* Heater on */
 typedef  struct   {
 
-   uchar  Command;
    float  Temperature;
    
-}HEATER_ON_RUNTIME_MSG;
+}HEATER_ON_RUNTIME_DATA;
 
 /* Calculate concentration */
 typedef  struct   {
 
-   uchar  Command;
-   uchar  Spectrometer;
-   double Concentration;
+   uchar Spectrometer;
+   float Concentration;
+   float RRatio;
    
-}CAL_CONCENTRATION_RUNTIME_MSG,
+}CAL_CONCENTRATION_RUNTIME_DATA;
 
-/* Calculate pCO2 */
+/* Read reference */
 typedef  struct   {
 
-   uchar  Command;
-   uchar  Spectrometer;
-   double pCO2;
-   
-}CAL_PCO2_RUNTIME_MSG,
+   uchar Spectrometer;
+   float Counts[ USB4000_PIXELS ];
 
-/* Calculate concentration */
+}READ_REFERENCE_RUNTIME_DATA;
+
+/* Read sample */
 typedef  struct   {
 
-   uchar  Command;
-   uchar  Spectrometer;
-   double pH;
-   
-}CAL_PH_RUNTIME_MSG,
+   uchar Spectrometer;
+   float Counts[ USB4000_PIXELS ];
+   float Absorbance[ MAX_ABSORBANCE_WAVELENGTHS ];
+   float CorrectionAbsorbance;
 
-/* Read full spectrum */
+}READ_SAMPLE_RUNTIME_DATA;
+
+/* Delay */
 typedef  struct   {
 
-   uchar  Command;
-   uchar  Spectrometer;
-   float  Counts[ USB4000_PIXELS ];
-
-}READ_FULL_SPECTRUM_RUNTIME_MSG;
-
-
-/* Delay*/
-typedef  struct   {
-
-   uchar  Command;
    uchar  Spectrometer;
    uint16 Seconds;
 
-}DELAY_RUNTIME_MSG;
+}DELAY_RUNTIME_DATA;
+
+
+/* Wait heater */
+typedef  struct   {
+
+   float  Temperature;
+   uint16 Seconds;
+
+}WAIT_HEATER_RUNTIME_DATA;
+
+
+/* Read temperature */
+typedef  struct   {
+
+   float  Temperature;
+
+}READ_TEMPERATURE_RUNTIME_DATA;
+
+
+/* Runtime data record */
+typedef  union   {
+
+   PUMP_ON_RUNTIME_DATA                      PumpOnData;
+   PUMP_OFF_RUNTIME_DATA                     PumpOffData;
+   HEATER_ON_RUNTIME_DATA                    HeaterOnData;
+   CAL_CONCENTRATION_RUNTIME_DATA            ConcentrationData;
+   READ_REFERENCE_RUNTIME_DATA               ReferenceData;
+   READ_SAMPLE_RUNTIME_DATA                  SampleData;
+   DELAY_RUNTIME_DATA                        DelayData;
+   WAIT_HEATER_RUNTIME_DATA                  WaitHeaterData;
+   READ_TEMPERATURE_RUNTIME_DATA             ReadTemperatureData;
+   
+}RUNTIME_DATA;
+
+/* Runtime command record */
+typedef  struct   {
+
+   int            Command;
+   RUNTIME_DATA   Data;
+   
+}RUNTIME_COMMAND_RECORD;
 
