@@ -13,11 +13,23 @@
 #include "LONprotocol.h"
 #include "LONDispatch.h"
 #include "parseGUI.h"
+#include "A2D-MCP3424.h"
+
+#define MAX_NUM_PUMPS 6
+#define MAXPUMPFREQHZ 1200
+
+#define CTD_NODE_GPIO 59
+#define LON_INT_GPIO 61
+#define PUMP_A_GPIO 63
+#define PUMP_B_GPIO 65
+#define PUMP_C_GPIO 67
+#define HEAT_GPIO 69
+#define SPARE_GPIO 71
 
 typedef struct PUMPSTATUS{
     unsigned char pumpID;
     unsigned char power;
-    unsigned int RPM;
+    unsigned int percent;
 }pumpStatus_s;
 
 typedef struct HEATERSTATUS{
@@ -34,12 +46,14 @@ typedef struct CTDREADINGS{
     float soundVelocity;
 }CTDreadings_s;
 
-typedef struct PERIPHERALENABLED{
-    BOOL CTDNode;
-    BOOL LONInterfaceNode;
-    BOOL pump[6];
-    BOOL heaterNode;
-}peripheralsEnabled;
+typedef struct PERIPHSTATUSES{
+    BOOL pumpsStatus[MAX_NUM_PUMPS];
+    BOOL heaterStatus;
+    BOOL CTDStatus;
+}periphStatuses_s;
+
+// Init Status Function Must Be Called Before Anything Else Below
+void initPeripheralStatuses();
 
 // LON Power Management Monitor Functions
 void enableLONPowerManagement();
@@ -48,11 +62,13 @@ void disableLONPowerManagement();
 // Base Functions
 void pumpOn(unsigned char pumpID);
 void pumpOff(unsigned char pumpID);
-void setPumpRPM(unsigned char pumpID, unsigned int RPM);
+void setPumpPercent(unsigned char pumpID, unsigned int percent);
 void lampOn();
 void lampOff();
 void heaterOn(unsigned char heaterID);
 void heaterOff(unsigned char heaterID);
+//void CTDOn();
+//void CTDOff();
 void setHeaterTemp(unsigned char heaterID,float temperature);
 
 // Status Functions
@@ -65,7 +81,7 @@ CTDreadings_s* getCTDValues();
 
 // GUI Protocol Wrappers
 void receiveSetPumpControl(int connection, char* command);
-void receiveSetPumpRPM(int connection, char* command);
+void receiveSetPumpPercent(int connection, char* command);
 void receiveSetLampControl(int connection, char* command);
 void receiveSetHeaterControl(int connection, char* command);
 void receiveSetHeaterTemp(int connection, char* command);

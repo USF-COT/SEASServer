@@ -33,6 +33,7 @@
 #include "parseGUI.h"
 #include "USB4000Manager.h"
 #include "LONDispatch.h"
+#include "SEASPeripheralCommands.h"
 
 #define LONPORT "/dev/ttyS2"
 
@@ -70,6 +71,7 @@ void* handleConnection(void* info){
 
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
     while(numBytesReceived > 0 && keep_going){
+
         // Terminate buffer
         buffer[numBytesReceived] = '\0';
 #ifdef DEBUG

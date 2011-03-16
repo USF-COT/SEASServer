@@ -53,6 +53,21 @@ void sendSpecParameters(int connection, char* command){
     syslog(LOG_DAEMON||LOG_INFO,"Spectrometer %d parameters sent.",command[1]);
 }
 
+void receiveSlopeInterceptPairs(int connection, char* command){
+    int i=0;
+
+    if(command[0] == LSD){
+        syslog(LOG_DAEMON|LOG_INFO,"Setting Slope Intercept Pairs for Spectrometers.");
+        for(i=0; i < 2; i++){
+            setSlopeIntercept(i,(float*)command+(1+i*MAX_ABS_WAVES));
+        }
+        syslog(LOG_DAEMON|LOG_INFO,"Successfully Set Slope Intercept Pairs.");
+    } else {
+        syslog(LOG_DAEMON|LOG_INFO,"Unrecognized Command (%02X) Passed to Slope Intercept Pair Receiver.",command[0]);
+        sendErrorMessageBack(connection,"Unrecognized Command Sent to Slope Intercept Pair Receiver.");
+    }
+}
+
 void writeConfigChanges(int connection, char* command){
     syslog(LOG_DAEMON||LOG_INFO,"Saving Configuration.");
     char response[1] = {SVC};

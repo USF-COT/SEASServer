@@ -12,10 +12,14 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdlib.h>
+    #include <syslog.h>
     #include "dataFileManager.h"
     #include "configManager.h"
     #include "SEASPeripheralCommands.h"
+    #include "USB4000Manager.h"
     #include "MethodNodesTable.h"
+    #include "runProtocol.h"
+    #include "globalIncludes.h"
     #define DEBUGPARSER 1
 
     extern int yylineno;
@@ -33,6 +37,7 @@
     }DOUBLENODE;
     
     double* drainListToArray(DOUBLENODE* head); 
+    double* allocateParamArray(uint16_t size);
 %}
 
 %union {
@@ -66,60 +71,57 @@ line:     '\n'
 ;
 
 /* Control Expression Grammers Follow */
-controlExp:   PUMP ON VAL VAL { double* pumpArgs = malloc(sizeof(double)*2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn);}
-            | PUMP OFF VAL { double* pumpArgs = malloc(sizeof(double)); pumpArgs[0] = $3; addCommandNode(1,(void*)pumpArgs, methodPumpOff); }
-            | LAMP ON { addCommandNode(0,NULL,methodLampOn); }
-            | LAMP OFF { addCommandNode(0,NULL,methodLampOff); }
-            | HEATER ON VAL { double* heaterArgs = malloc(sizeof(double)); heaterArgs[0]=$3; addCommandNode(1,(void*)heaterArgs,methodHeaterOn); }
-            | HEATER OFF { addCommandNode(0,NULL,methodHeaterOff); }             
+controlExp:   PUMP ON VAL VAL { double* pumpArgs =  allocateParamArray(2); pumpArgs[0] = $3; pumpArgs[1] = $4; addCommandNode(2,(void*)pumpArgs, methodPumpOn,PUMP_ON_RUNTIME_CMD);}
+            | PUMP OFF VAL { double* pumpArgs = allocateParamArray(1); pumpArgs[0] = $3; addCommandNode(1,(void*)pumpArgs, methodPumpOff,PUMP_OFF_RUNTIME_CMD); }
+            | LAMP ON { addCommandNode(0,NULL,methodLampOn,LAMP_ON_RUNTIME_CMD); }
+            | LAMP OFF { addCommandNode(0,NULL,methodLampOff,LAMP_OFF_RUNTIME_CMD); }
+            | HEATER ON VAL { double* heaterArgs = allocateParamArray(1); heaterArgs[0]=$3; addCommandNode(1,(void*)heaterArgs,methodHeaterOn,HEATER_ON_RUNTIME_CMD); }
+            | HEATER OFF { addCommandNode(0,NULL,methodHeaterOff,HEATER_OFF_RUNTIME_CMD); }             
 ;
 
 /* Set Expression Grammers Follow */
-setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params = malloc(sizeof(double)*4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters);}
-         | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths);} 
-         | SET NON ABSO WAVE VAL VAL {double* params = malloc(sizeof(double)*2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength);}
+setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params =  allocateParamArray(4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters,-1);}
+         | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,-1);} 
+         | SET NON ABSO WAVE VAL VAL {double* params =  allocateParamArray(2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,-1);}
          | SET CORR WAVE VAL VAL {} 
-         | SET DWELL VAL VAL {double* params = malloc(sizeof(double)*2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell);}
+         | SET DWELL VAL VAL {double* params =  allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell,-1);}
 ;
 
-arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); $$->next=$2; $$->value=$1;}
-           | VAL {$$=malloc(sizeof(DOUBLENODE)); $$->next=NULL; $$->value=$1;}
-        
+arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); if($$){ $$->next=$2; $$->value=$1;}else{yyerror("Could Not Allocate Double Node.");}}
+           | VAL {$$=malloc(sizeof(DOUBLENODE)); if($$){ $$->next=NULL; $$->value=$1;}else{yyerror("Could Not Allocate Double Node.");}}
+;
 
 /* Read Expression Grammers Follow */
-readExp:   READ REF VAL
-         | READ SAMP VAL
-         | READ FULL SPEC VAL 
+readExp:   READ REF VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodReadReference,READ_REFERENCE_RUNTIME_CMD); }
+         | READ SAMP VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodReadSample,READ_SAMPLE_RUNTIME_CMD); }
+         | READ FULL SPEC VAL { double* params = allocateParamArray(1); params[0] = $4; addCommandNode(1,(void*)params,methodReadFullSpec,READ_FULL_SPECTRUM_RUNTIME_CMD); }
 ;
 
 /* Absorbance Correction Expression */
-absExp:   ABSO CORR VAL VAL
+absExp:   ABSO CORR VAL VAL { double* params = allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(1,(void*)params,methodAbsCorr,-1);}
 ;
 
 /* Calculate Expression Grammers Follow */
-calcExp: CALC calcParameters VAL
-;
-
-calcParameters:   CONC
-                | PCO2
-                | PH
+calcExp: CALC CONC VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcConc,CAL_CONCENTRATION_RUNTIME_CMD);}
+         CALC PCO2 VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPCO2,CAL_PCO2_RUNTIME_CMD); }
+         CALC PH VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPH,CAL_PH_RUNTIME_CMD);}
 ;
 
 /* Data File Expressions */
 
-dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile); }
-             | CLOSE DATA FIL { addCommandNode(0,NULL,methodCloseDataFile); }
+dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile,-1); }
+             | CLOSE DATA FIL { addCommandNode(0,NULL,methodCloseDataFile,-1); }
 ;
 
 /* Write Expressions */
 
-writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData); }
-          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec)}
+writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData,-1); }
+          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec,-1)}
 ;
 
 /* Delay Expression */
 
-delayExp:   DELAY VAL { milliSleep(((int)$2) * 1000); }
+delayExp:   DELAY VAL { double* params = allocateParamArray(1); params[0] = $2; addCommandNode(0,NULL,methodDelay,DELAY_RUNTIME_CMD); }
 ;
 
 /* Loop Expressions */
@@ -168,6 +170,14 @@ double* drainListToArray(DOUBLENODE* head){
             nodeTemp = nodeTemp->next;
             free(prevNode);
         }
+    }
+    return retVal;
+}
+
+double* allocateParamArray(uint16_t size){
+    double* retVal = malloc(sizeof(double)*size);
+    if(retVal == NULL){
+        yyerror("Cannot allocate parameters array.");
     }
     return retVal;
 }

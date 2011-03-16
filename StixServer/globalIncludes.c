@@ -50,3 +50,11 @@ void soundBeep(){
     char beep[2] = {7,'\0'};
     printf("%c",beep);
 }
+
+void methodDelay(unsigned int argc, void* argv){
+    unsigned int sleepTime = 0;
+    if(argc == 1){
+        sleepTime = (unsigned int)((double*)argv)[0];
+        milliSleep(sleepTime);
+    }
+}

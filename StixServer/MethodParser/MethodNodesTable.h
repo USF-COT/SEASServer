@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <signal.h>
+#include "globalIncludes.h"
+#include "runProtocol.h"
 #include "MethodNodesStack.h"
 
 typedef enum type{COMMAND,CONTROL}e_type;
@@ -26,12 +28,15 @@ typedef struct node{
     struct node* next;
     struct node* branch;
     BOOL closed;
+    int commandID; // For run protocol lookup
 }s_node;
 
-void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*));
+void addComandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID);
 void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long));
+s_node* evaluateNode(s_node* node);
 void closeControlNode();
 BOOL decCounterToZero(unsigned long counter);
+s_node* getHeadNode();
 void runNodes();
 void stopNodes();
 void clearNodes();

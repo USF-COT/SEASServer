@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include "globalIncludes.h"
 
 #include "i2c-dev.h" /* for I2C_SLAVE */
@@ -26,12 +27,8 @@ typedef struct A2DMCP3424{
     MCP3424PGAGain gain;
 }a2dMCP3424;
 
-a2dMCP3424* createMCP3424(const char* port,uint8_t addressBits);
-void destroyMCP3424(a2dMCP3424* handle);
+BOOL setConfiguration(BOOL RDY, uint8_t channel, MCP3424ConvMode mode, MCP3424SampRate rate, MCP3424PGAGain gain);
 
-BOOL setConfiguration(a2dMCP3424* handle, BOOL RDY, uint8_t channel, MCP3424ConvMode mode, MCP3424SampRate rate, MCP3424PGAGain gain);
-
-// Reads in all channels up to maxChannel then returns them as an array terminated by a NULL pointer element.
-int readChannel(a2dMCP3424* handle,uint8_t channel);
+int readChannel();
 
 #endif

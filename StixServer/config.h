@@ -89,8 +89,10 @@ void setAbsorbanceWavelengths(int specIndex,unsigned char newAbsWaveCount,float*
 void setNonAbsorbingWavelengths(int specIndex,float newNonAbsWave);
 void setDwell(int specIndex, int dwell);
 void setComputationDataBytes(int specIndex,unsigned char* bytes);
+void setSlopeIntercept(int specIndex, float* slopeInterceptPairs);
 
 // Get Methods
+systemMode getMode();
 char* getSerialNumber(int specIndex);
 spectrometerParameters* getSpecParameters(int specIndex);
 wavelengthParameters* getWaveParameters(int specIndex);
@@ -102,6 +104,8 @@ float* getAbsorbingWavelengths(int specIndex);
 float getNonAbsorbingWavelength(int specIndex);
 unsigned short* getAbsorbancePixels(int specIndex);
 unsigned short getNonAbsorbancePixel(int specIndex);
+float* getSlopes(int specIndex);
+float* getIntercepts(int specIndex);
 
 // Config Debug Methods
 void logConfig();

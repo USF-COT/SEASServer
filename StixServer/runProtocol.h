@@ -8,8 +8,17 @@
   4/11/2011   Jim Patten        Created.
 */
 
+#ifndef RUN_PROTO_H
+#define RUN_PROTO_H
+
+/* Static Size of Scan Size */
+#define USB4000_NUMPIXELS 3840
+#define MAX_ABSORBANCE_WAVELENGTHS 9
+
 /* Run time message header byte */
 #define  RTH   0xF0
+
+#include "USB4000Gum.h"
 
 /* Run time message types */
 enum  RUN_TIME_MESSAGE_TYPES     {
@@ -34,11 +43,16 @@ enum  RUN_TIME_MESSAGE_TYPES     {
   MAX_RUNTIME_COMMANDS
 };
 
+// Standard Header
+typedef struct {
+    unsigned char HeadByte;
+    int Command;
+}RUNTIME_RESPONSE_HEADER;
+
 /* Set dwell */
 typedef  struct   {
-
-  uint16   Seconds;
-
+  RUNTIME_RESPONSE_HEADER Header;
+  uint16_t   Seconds;
 }SET_DWELL_RUNTIME_DATA;
 
 
@@ -46,99 +60,70 @@ typedef  struct   {
 
 /* Pump on */
 typedef  struct   {
-
-   uint16 Pump;
+   RUNTIME_RESPONSE_HEADER Header;
+   uint16_t Pump;
    float  RPM;
-   
 }PUMP_ON_RUNTIME_DATA;
 
 /* Pump off */
 typedef  struct   {
-
-   uint16 Pump;
-   
+   RUNTIME_RESPONSE_HEADER Header;
+   uint16_t Pump;
 }PUMP_OFF_RUNTIME_DATA;
 
 /* Heater on */
 typedef  struct   {
-
+   RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
-   
 }HEATER_ON_RUNTIME_DATA;
 
 /* Calculate concentration */
 typedef  struct   {
-
-   uchar Spectrometer;
-   float Concentration;
+   RUNTIME_RESPONSE_HEADER Header;
+   unsigned char Spectrometer;
+   float Absorbance;
+   float Concentration[MAX_ABSORBANCE_WAVELENGTHS];
    float RRatio;
-   
 }CAL_CONCENTRATION_RUNTIME_DATA;
 
 /* Read reference */
 typedef  struct   {
-
-   uchar Spectrometer;
-   float Counts[ USB4000_PIXELS ];
-
+   RUNTIME_RESPONSE_HEADER Header;
+   unsigned char Spectrometer;
+   float Counts[ USB4000_NUMPIXELS ];
 }READ_REFERENCE_RUNTIME_DATA;
 
 /* Read sample */
 typedef  struct   {
-
-   uchar Spectrometer;
-   float Counts[ USB4000_PIXELS ];
+   RUNTIME_RESPONSE_HEADER Header;
+   unsigned char Spectrometer;
+   float Counts[ USB4000_NUMPIXELS ];
    float Absorbance[ MAX_ABSORBANCE_WAVELENGTHS ];
+   float AbsorbanceSpectra [ USB4000_NUMPIXELS ];
    float CorrectionAbsorbance;
-
 }READ_SAMPLE_RUNTIME_DATA;
 
 /* Delay */
 typedef  struct   {
-
-   uchar  Spectrometer;
-   uint16 Seconds;
-
+   RUNTIME_RESPONSE_HEADER Header;
+   unsigned char  Spectrometer;
+   uint16_t Seconds;
 }DELAY_RUNTIME_DATA;
 
 
 /* Wait heater */
 typedef  struct   {
-
+   RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
-   uint16 Seconds;
-
+   uint16_t Seconds;
 }WAIT_HEATER_RUNTIME_DATA;
 
 
 /* Read temperature */
 typedef  struct   {
-
+   RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
-
 }READ_TEMPERATURE_RUNTIME_DATA;
 
-
-/* Runtime data record */
-typedef  union   {
-
-   PUMP_ON_RUNTIME_DATA                      PumpOnData;
-   PUMP_OFF_RUNTIME_DATA                     PumpOffData;
-   HEATER_ON_RUNTIME_DATA                    HeaterOnData;
-   CAL_CONCENTRATION_RUNTIME_DATA            ConcentrationData;
-   READ_REFERENCE_RUNTIME_DATA               ReferenceData;
-   READ_SAMPLE_RUNTIME_DATA                  SampleData;
-   DELAY_RUNTIME_DATA                        DelayData;
-   WAIT_HEATER_RUNTIME_DATA                  WaitHeaterData;
-   READ_TEMPERATURE_RUNTIME_DATA             ReadTemperatureData;
-   
-}RUNTIME_DATA;
-
-/* Runtime command record */
-typedef  struct   {
-
-   int            Command;
-   RUNTIME_DATA   Data;
-   
-}RUNTIME_COMMAND_RECORD;
+#endif
 

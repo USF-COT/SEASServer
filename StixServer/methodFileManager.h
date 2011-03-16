@@ -16,6 +16,7 @@
 #include "GUIprotocol.h"
 #include "MethodParser.tab.h"
 #include "MethodNodesTable.h"
+#include "socketUtils.h"
 
 extern FILE* yyin;
 

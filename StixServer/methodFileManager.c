@@ -296,8 +296,12 @@ void sendActiveMethodFile(int connection, char* command){
 }
 
 void receiveExecuteMethod(int connection, char* command){
+    s_node* node = NULL;
+    s_node* nextNode = NULL;
     char* filename = NULL;
     char* fullPath = NULL;
+    int numBytesReceived = 0;
+    char termRecBuf[2] = {'\0','\0'};
     
     filename = getActiveMethodFilename();
     if(filename){
@@ -308,8 +312,21 @@ void receiveExecuteMethod(int connection, char* command){
             if(yyin){
                 yyparse();
                 fclose(yyin);
-                runNodes();
-                syslog(LOG_DAEMON|LOG_INFO,"Execution successfully started for file @ path: %s.",fullPath);
+                node = getHeadNode();
+                setSocketTimeout(connection,1,0);
+                syslog(LOG_DAEMON|LOG_INFO,"Sucessfully started executing method file @ path: %s.",fullPath);
+                while(node != NULL){
+                    nextNode = evaluateNode(node);
+                    sendRunProtocolMessage(connection,node);
+                    node = nextNode;
+                    numBytesReceived = recv(connection,termRecBuf,1,0);
+                    if(numBytesReceived > 0 && termRecBuf[0] == TRM){
+                        syslog(LOG_DAEMON|LOG_INFO,"Terminate Command Received.  Stopping Node Execution.");
+                        break;
+                    } 
+                }
+                setSocketTimeout(connection,0,0);
+                syslog(LOG_DAEMON|LOG_INFO,"Execution finished for file @ path: %s.",fullPath);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to open method file @: %s.",fullPath);
             }

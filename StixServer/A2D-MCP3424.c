@@ -1,5 +1,11 @@
 #include "A2D-MCP3424.h"
 
+#define MCP3424PORT "/dev/i2c-0"
+#define MCP3424ADDR 0x68
+
+static a2dMCP3424* a2d = NULL;
+static pthread_mutex_t a2dMutex = PTHREAD_MUTEX_INITIALIZER;
+
 a2dMCP3424* createMCP3424(const char* port,uint8_t addressBits){
     a2dMCP3424* retVal = malloc(sizeof(struct A2DMCP3424));
 
@@ -9,7 +15,7 @@ a2dMCP3424* createMCP3424(const char* port,uint8_t addressBits){
     retVal->addressBits = addressBits;
 
     // Set Default Parameters for MCP3424
-    setConfiguration(retVal,0,0,ONESHOT,SPS3_75,PGAX1);
+    setConfiguration(0,0,ONESHOT,SPS3_75,PGAX1);
     return retVal;
 }
 
@@ -18,45 +24,61 @@ void destroyMCP3424(a2dMCP3424* handle){
     free(handle);
 }
 
-BOOL setConfiguration(a2dMCP3424* handle, BOOL RDY, uint8_t channel, MCP3424ConvMode mode, MCP3424SampRate rate, MCP3424PGAGain gain){
+void initA2D(){
+    pthread_mutex_lock(&a2dMutex);
+    if(a2d == NULL){
+        a2d = createMCP3424(MCP3424PORT,MCP3424ADDR);
+    }
+}
+
+void freeA2D(){
+    if(a2d != NULL){
+        destroyMCP3424(a2d);
+    }
+    pthread_mutex_unlock(&a2dMutex);
+}
+
+BOOL setConfiguration(BOOL RDY, uint8_t channel, MCP3424ConvMode mode, MCP3424SampRate rate, MCP3424PGAGain gain){
     int fh;
     uint8_t writeByte = 0;
     uint8_t baseAddress = 0x68;
 
-    fh = open(handle->port,O_RDWR);
+    initA2D();
+    
+    fh = open(a2d->port,O_RDWR);
     if(fh){
-        baseAddress |= (handle->addressBits & 0x07);
+        baseAddress |= (a2d->addressBits & 0x07);
         ioctl(fh,I2C_SLAVE,baseAddress);
         writeByte |= (RDY << 7) | ((channel & 0x03) << 5) | ((mode & 0x01) << 4) | ((rate & 0x03) << 2) | (gain & 0x03);
         if((write(fh,&writeByte,1) > 0)){
-            handle->channel = channel;
-            handle->mode = mode;
-            handle->rate = rate;
-            handle->gain = gain;
+            a2d->channel = channel;
+            a2d->mode = mode;
+            a2d->rate = rate;
+            a2d->gain = gain;
             close(fh);
+            freeA2D();
             return TRUE;
         }
         close(fh);
     } 
+    freeA2D();
     return FALSE;
 }
 
-// Reads in all channels up to maxChannel then returns them as an array terminated by a NULL pointer element.
-int readChannel(a2dMCP3424* handle,uint8_t channel){
+int readChannel(){
     int fh,retVal = -1;
     uint8_t baseAddress = 0;
     uint8_t readBytes[5];
  
-    setConfiguration(handle,1,channel,handle->mode,handle->rate,handle->gain);
-    milliSleep(300); 
+    initA2D();
 
-    fh = open(handle->port,O_RDWR);
+    fh = open(a2d->port,O_RDWR);
     if(fh){
-        baseAddress |= (handle->addressBits & 0x07); 
+        baseAddress |= (a2d->addressBits & 0x07); 
         ioctl(fh,I2C_SLAVE,baseAddress);
         if(read(fh,readBytes,5) == 5){
             retVal = 0;
-            switch(handle->mode){
+            switch(a2d->mode){
                 case SPS3_75:
                    retVal |= ((readBytes[1] & 0x03) << 13) | (readBytes[2] << 8) | readBytes[3];
                    break;
@@ -73,6 +95,7 @@ int readChannel(a2dMCP3424* handle,uint8_t channel){
         }                
         close(fh);
     } 
+    freeA2D();
     return retVal;
 }
 

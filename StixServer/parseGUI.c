@@ -7,12 +7,12 @@ GUIHandler const handlers[] = {
         NULL, // 0x03 RSD
         NULL, // 0x04 RSF
         NULL, // 0x05 DSF
-        receiveSetPumpRPM, // 0x06 PMW
+        receiveSetPumpPercent, // 0x06 PMW
         receiveSetPumpControl, // 0x07 PMC
         receiveSetHeaterTemp, // 0x08 HTP
         receiveSetHeaterControl, // 0x09 HTC
         receiveSetLampControl, // 0x0A LTC
-        NULL, // 0x0B LSD 
+        receiveSlopeInterceptPairs, // 0x0B LSD 
         receiveParameterBytes, // 0x0C SSP
         receiveWaveSetCommand, // 0x0D SCP
         sendSpecSample, // 0x0E RFS
@@ -21,7 +21,7 @@ GUIHandler const handlers[] = {
         sendWaveParameters, // 0x11 RCP
         writeConfigChanges, // 0x12 SVC
         sendAbsorbance, // 0x13 RAD
-        NULL, // 0x14 RCC
+        sendConcentration, // 0x14 RCC
         receiveRecordDarkSample, // 0x15 RDS
         receiveRecordRefSample, // 0x16 RRS
         receiveRecordSpecSample, // 0x17 RSS

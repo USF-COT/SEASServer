@@ -1,5 +1,58 @@
 #include "SEASPeripheralCommands.h"
 
+static a2dMCP3424* a2dChip = NULL;
+static periphStatuses_s status;
+
+// LON Power Manager Thread Variables
+static volatile sig_atomic_t LONmanaging;
+static pthread_t LONPMThread;
+static pthread_mutex_t LONPMMutex = PTHREAD_MUTEX_INITIALIZER; 
+
+// GPIO functions for managing LON nodes
+void initGPIOs(){
+    int i;
+    char sysCmd[128];
+
+    sysCmd[0] = '\0';
+
+    for(i=CTD_NODE_GPIO; i <= SPARE_GPIO; i=i+2){
+        sprintf(sysCmd,"echo \"GPIO out set\" > /proc/gpio/GPIO%d",i);
+        system(sysCmd);
+    } 
+}
+
+// Init Status Function Must Be Called Before Anything Else Below
+void initPeripheralStatuses(){
+    unsigned char i;
+
+    for(i=0; i < MAX_NUM_PUMPS; i++){
+        pumpOff(i);
+        status.pumpsStatus[i] = FALSE;
+    }
+
+    heaterOff(0);
+    status.heaterStatus = FALSE;
+
+    status.CTDStatus = TRUE;
+}
+
+
+// LON Power Management Monitor Functions
+void *LONpowerManager(void* blah){
+    while(LONmanaging){
+        // Check if a LON Pump Controller Needs to Be Disabled
+        
+    }
+}
+
+void enableLONPowerManagement(){
+    
+}
+
+void disableLONPowerManagement(){
+
+}
+
 // Base Functions
 void pumpOn(unsigned char pumpID){
     LONresponse_s* response;
@@ -28,20 +81,22 @@ void pumpOff(unsigned char pumpID){
     freeLONResponse(response);
 }
 
-void setPumpRPM(unsigned char pumpID,unsigned int RPM){
+void setPumpPercent(unsigned char pumpID,unsigned int percent){
     LONresponse_s* response;
     unsigned char data[3];
 
-    data[0] = pumpID;
-    data[1] = (unsigned char)(RPM & 0xFF);
-    data[2] = (unsigned char)((RPM & 0xFF00) >> 8);
+    percent = percent * 10;
 
-    syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d RPM to: %d.",pumpID,RPM);
+    data[0] = pumpID;
+    data[1] = (unsigned char)(percent & 0xFF);
+    data[2] = (unsigned char)((percent & 0xFF00) >> 8);
+
+    syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d percent to: %d/1000.",pumpID,percent);
     response = sendLONCommand(PMP,PWL,3,data);
     if(response->deviceID == ACK){
-        syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d RPM set to: %d.",pumpID,RPM);
+        syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d percent set to: %d/1000.",pumpID,percent);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d RPM NOT set to: %d.",pumpID,RPM);
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d percent NOT set to: %d/1000.",pumpID,percent);
     }
     freeLONResponse(response);
 }
@@ -130,7 +185,7 @@ pumpStatus_s* getPumpStatus(unsigned char pumpID){
             status = malloc(sizeof(pumpStatus_s));
             status->pumpID = response->data[0];
             status->power = response->data[1];
-            copyReverseBytes(&(status->RPM),response->data+2,4);        
+            copyReverseBytes(&(status->percent),response->data+2,4);        
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve pump %d status.",pumpID);
         }
@@ -245,17 +300,17 @@ void receiveSetPumpControl(int connection, char* command){
     }
 }
 
-void receiveSetPumpRPM(int connection, char* command){
+void receiveSetPumpPercent(int connection, char* command){
     unsigned char pumpID;
-    unsigned int RPM;
+    unsigned int percent;
 
     if(command[0] == PMW){
         pumpID = command[3];
-        RPM = (command[4] << 8) + command[5];
-        syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d Power to: %d",pumpID,RPM);
-        setPumpRPM(pumpID,RPM);
+        percent = (command[4] << 8) + command[5];
+        syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d Power to: %d",pumpID,percent);
+        setPumpPercent(pumpID,percent);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetPumpRPM method.");
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetPumpPercent method.");
     }
 }
 
@@ -311,13 +366,13 @@ void receiveGetPumpStatus(int connection, char* command){
     if(command[0] == RPS){
         status = getPumpStatus(command[3]);
         if(status){
-            syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM is %d.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->RPM);
+            syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM Percent is %d.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->percent);
             sendBuffer[0] = RPS;
             sendBuffer[1] = 0;
             sendBuffer[2] = 9;
             sendBuffer[3] = status->pumpID;
             sendBuffer[4] = status->power == ENA;
-            memcpy(sendBuffer+5,&(status->RPM),4);
+            memcpy(sendBuffer+5,&(status->percent),4);
             send(connection,sendBuffer,9,0);
             free(status);
         } else {
@@ -420,7 +475,7 @@ void receiveGetCTDValues(int connection, char* command){
 // Method Wrappers
 void methodPumpOn(unsigned long argc, void* argv){
     unsigned char pumpID;
-    unsigned int RPM;
+    unsigned int percent;
     double* arguments = (double*) argv;
 
     if(argc != 2){
@@ -429,10 +484,10 @@ void methodPumpOn(unsigned long argc, void* argv){
     }
 
     pumpID = (unsigned char) arguments[0];
-    RPM = (unsigned int) arguments[1];
+    percent = (unsigned int) arguments[1];
 
     pumpOn(pumpID);
-    setPumpRPM(pumpID,RPM);
+    setPumpPercent(pumpID,percent);
 }
 
 void methodPumpOff(unsigned long argc, void* argv){

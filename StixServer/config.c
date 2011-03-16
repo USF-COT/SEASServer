@@ -297,6 +297,16 @@ void setComputationDataBytes(int specIndex,unsigned char* bytes){
     writeConfigFile();
 }
 
+void setSlopeIntercept(int specIndex, float* slopeInterceptPairs){
+    int i=0;
+    for(i=0; i < MAX_ABS_WAVES; i++){
+        config[specIndex].waveParameters.slope[i] = slopeInterceptPairs[i*2];
+        config[specIndex].waveParameters.intercept[i] = slopeInterceptPairs[i*2+1];
+    }
+    applyConfig();
+    writeConfigFile();
+}
+
 spectrometerParameters* getSpecParameters(int specIndex){
     return &(config[specIndex].specParameters);
 }
@@ -306,6 +316,11 @@ wavelengthParameters* getWaveParameters(int specIndex){
 }
 
 // Get Methods
+systemMode getMode(){
+    systemMode retVal = mode; // Make a copy to return
+    return retVal;
+}
+ 
 char* getSerialNumber(int specIndex){
     return config[specIndex].serial;
 }
@@ -334,6 +349,20 @@ unsigned short* getAbsorbancePixels(int specIndex){
 
 unsigned short getNonAbsorbancePixel(int specIndex){
     return config[specIndex].absCalcParameters.nonAbsorbingPixel;
+}
+
+float* getSlopes(int specIndex){
+    size_t arraySize = sizeof(float) * getAbsorbingWavelengthCount(specIndex);
+    float* slopes = malloc(arraySize);
+    memcpy(slopes,config[specIndex].waveParameters.slope,arraySize);
+    return slopes;
+}
+
+float* getIntercepts(int specIndex){
+    size_t arraySize = sizeof(float) * getAbsorbingWavelengthCount(specIndex);
+    float* intercepts = malloc(arraySize);
+    memcpy(intercepts,config[specIndex].waveParameters.intercept,arraySize);
+    return intercepts;
 }
 
 // Config Debug Methods

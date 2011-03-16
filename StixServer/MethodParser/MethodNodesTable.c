@@ -15,7 +15,7 @@ static s_node* current = NULL;
 // Open Control Stack Parameters 
 s_stack* openControlStack = NULL;
 
-s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*))
+s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID)
 {
     s_node* node = malloc(sizeof(s_node));
     node->argc = argc;
@@ -28,6 +28,7 @@ s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigne
     node->branch = NULL;
 
     node->closed = TRUE;
+    node->commandID = commandID;
 
     return node;
 }
@@ -146,10 +147,10 @@ void *processNodes(void* blah)
 
 // Public methods
 
-void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*))
+void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID)
 {
     pthread_mutex_lock(&nodesMutex);
-    s_node* node = buildCommandNode(argc, argv, command);
+    s_node* node = buildCommandNode(argc, argv, command, commandID);
     linkNode(node);
     pthread_mutex_unlock(&nodesMutex);
 }
@@ -198,6 +199,16 @@ BOOL decCounterToZero(unsigned long counter){
         counter--;
         return FALSE;
     }       
+}
+
+s_node* getHeadNode(){
+    // Check to Make Sure There is a Closed Execution Path
+    if(openControlStack != NULL){
+        return NULL;
+    }
+
+    // Return head node
+    return head;
 }
 
 void runNodes()

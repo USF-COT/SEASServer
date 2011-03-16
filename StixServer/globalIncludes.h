@@ -25,4 +25,7 @@ char* byteArrayToString(unsigned char* bytes, unsigned int length);
 void copyReverseBytes(void* dest, const void* src, unsigned int numBytes);
 void soundBeep();
 
+// Method File Command
+void methodDelay(unsigned int argc, void* argv);
+
 #endif
