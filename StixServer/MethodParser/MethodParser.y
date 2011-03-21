@@ -80,11 +80,11 @@ controlExp:   PUMP ON VAL VAL { double* pumpArgs =  allocateParamArray(2); pumpA
 ;
 
 /* Set Expression Grammers Follow */
-setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params =  allocateParamArray(4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters,-1);}
-         | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,-1);} 
-         | SET NON ABSO WAVE VAL VAL {double* params =  allocateParamArray(2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,-1);}
+setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params =  allocateParamArray(4); params[0] = $4; params[1] = $5; params[2] = $6; params[3] = $7; addCommandNode(4,(void*)params,methodSetSpectrometerParameters,MAX_RUNTIME_COMMANDS);}
+         | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,MAX_RUNTIME_COMMANDS);} 
+         | SET NON ABSO WAVE VAL VAL {double* params =  allocateParamArray(2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,MAX_RUNTIME_COMMANDS);}
          | SET CORR WAVE VAL VAL {} 
-         | SET DWELL VAL VAL {double* params =  allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell,-1);}
+         | SET DWELL VAL VAL {double* params =  allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell,MAX_RUNTIME_COMMANDS);}
 ;
 
 arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); if($$){ $$->next=$2; $$->value=$1;}else{yyerror("Could Not Allocate Double Node.");}}
@@ -98,7 +98,7 @@ readExp:   READ REF VAL { double* params = allocateParamArray(1); params[0] = $3
 ;
 
 /* Absorbance Correction Expression */
-absExp:   ABSO CORR VAL VAL { double* params = allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(1,(void*)params,methodAbsCorr,-1);}
+absExp:   ABSO CORR VAL VAL { double* params = allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(1,(void*)params,methodAbsCorr,MAX_RUNTIME_COMMANDS);}
 ;
 
 /* Calculate Expression Grammers Follow */
@@ -109,24 +109,23 @@ calcExp: CALC CONC VAL { double* params = allocateParamArray(1); params[0] = $3;
 
 /* Data File Expressions */
 
-dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile,-1); }
-             | CLOSE DATA FIL { addCommandNode(0,NULL,methodCloseDataFile,-1); }
+dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile,MAX_RUNTIME_COMMANDS); }
+             | CLOSE DATA FIL { addCommandNode(0,NULL,methodCloseDataFile,MAX_RUNTIME_COMMANDS); }
 ;
 
 /* Write Expressions */
 
-writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData,-1); }
-          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec,-1)}
+writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData,MAX_RUNTIME_COMMANDS); }
+          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec,MAX_RUNTIME_COMMANDS)}
 ;
 
 /* Delay Expression */
-
-delayExp:   DELAY VAL { double* params = allocateParamArray(1); params[0] = $2; addCommandNode(0,NULL,methodDelay,DELAY_RUNTIME_CMD); }
+delayExp:   DELAY VAL { addControlNode((unsigned long)$2,methodDelay,DELAY_RUNTIME_CMD); closeControlNode(); }
 ;
 
 /* Loop Expressions */
 
-loopExp:   BEG LOOP VAL VAL { addControlNode(((unsigned long)$4),decCounterToZero); }
+loopExp:   BEG LOOP VAL VAL { addControlNode(((unsigned long)$4),decCounterToZero,MAX_RUNTIME_COMMANDS); }
          | EN LOOP VAL { closeControlNode(); }
 ;      
 
@@ -134,7 +133,7 @@ loopExp:   BEG LOOP VAL VAL { addControlNode(((unsigned long)$4),decCounterToZer
 %%
 
 void yyerror (char const* error){
-    fprintf(stderr,"Error on line %d: %s\n",yylineno,error);
+    syslog(LOG_DAEMON|LOG_ERR,"Error on line %d: %s\n",yylineno,error);
 }
 
 void debug(char* message)

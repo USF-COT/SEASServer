@@ -5,7 +5,6 @@ static periphStatuses_s status;
 
 // LON Power Manager Thread Variables
 static volatile sig_atomic_t LONmanaging;
-static pthread_t LONPMThread;
 static pthread_mutex_t LONPMMutex = PTHREAD_MUTEX_INITIALIZER; 
 
 // GPIO functions for managing LON nodes
@@ -16,7 +15,11 @@ void initGPIOs(){
     sysCmd[0] = '\0';
 
     for(i=CTD_NODE_GPIO; i <= SPARE_GPIO; i=i+2){
-        sprintf(sysCmd,"echo \"GPIO out set\" > /proc/gpio/GPIO%d",i);
+        if(i == LON_INT_GPIO || i== CTD_NODE_GPIO){
+            sprintf(sysCmd,GPIO_SET_FMT,i); 
+        } else {
+            sprintf(sysCmd,GPIO_CLEAR_FMT,i);
+        }
         system(sysCmd);
     } 
 }
@@ -25,6 +28,9 @@ void initGPIOs(){
 void initPeripheralStatuses(){
     unsigned char i;
 
+    status.CTDStatus = TRUE;
+    status.LONHead = TRUE;
+
     for(i=0; i < MAX_NUM_PUMPS; i++){
         pumpOff(i);
         status.pumpsStatus[i] = FALSE;
@@ -32,10 +38,16 @@ void initPeripheralStatuses(){
 
     heaterOff(0);
     status.heaterStatus = FALSE;
-
-    status.CTDStatus = TRUE;
 }
 
+void initPeripherals(){
+    pthread_mutex_lock(&LONPMMutex);
+    initGPIOs();
+    initPeripheralStatuses();
+    pthread_mutex_unlock(&LONPMMutex);
+}
+
+// TODO: Figure out power management callback
 
 // LON Power Management Monitor Functions
 void *LONpowerManager(void* blah){
@@ -85,11 +97,9 @@ void setPumpPercent(unsigned char pumpID,unsigned int percent){
     LONresponse_s* response;
     unsigned char data[3];
 
-    percent = percent * 10;
-
     data[0] = pumpID;
-    data[1] = (unsigned char)(percent & 0xFF);
-    data[2] = (unsigned char)((percent & 0xFF00) >> 8);
+    data[1] = (unsigned char)((percent & 0xFF00) >> 8);
+    data[2] = (unsigned char)(percent & 0xFF);
 
     syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d percent to: %d/1000.",pumpID,percent);
     response = sendLONCommand(PMP,PWL,3,data);
@@ -289,11 +299,11 @@ CTDreadings_s* getCTDValues(){
 // GUI Protocol Wrappers
 void receiveSetPumpControl(int connection, char* command){
     if(command[0] == PMC){
-        syslog(LOG_DAEMON|LOG_INFO,"Switching pump %d %s.",command[3],command[4] == 1 ? "ON" : "OFF");
-        if(command[4] == 1){
-            pumpOn(command[3]);
+        syslog(LOG_DAEMON|LOG_INFO,"Switching pump %d %s.",command[1],command[2] == 1 ? "ON" : "OFF");
+        if(command[2] == 1){
+            pumpOn(command[1]);
         } else {
-            pumpOff(command[3]);
+            pumpOff(command[1]);
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveSetPumpControl method.");
@@ -305,8 +315,9 @@ void receiveSetPumpPercent(int connection, char* command){
     unsigned int percent;
 
     if(command[0] == PMW){
-        pumpID = command[3];
-        percent = (command[4] << 8) + command[5];
+        pumpID = command[1];
+        percent = (command[2] << 8) + command[3];
+        percent = percent * 10;
         syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d Power to: %d",pumpID,percent);
         setPumpPercent(pumpID,percent);
     } else {
@@ -316,8 +327,8 @@ void receiveSetPumpPercent(int connection, char* command){
 
 void receiveSetLampControl(int connection, char* command){
     if(command[0] == LTC){
-        syslog(LOG_DAEMON|LOG_INFO,"Turning lamp %s.",command[3] == 1 ? "ON" : "OFF");
-        if(command[3] == 1){
+        syslog(LOG_DAEMON|LOG_INFO,"Turning lamp %s.",command[1] == 1 ? "ON" : "OFF");
+        if(command[1] == 1){
             lampOn();
         } else {
             lampOff();
@@ -332,8 +343,8 @@ void receiveSetHeaterControl(int connection, char* command){
 
     if(command[0] == HTC){
         heaterID = 1;
-        syslog(LOG_DAEMON|LOG_INFO,"Turning heater %s.",command[3] == 1 ? "ON" : "OFF");
-        if(command[3] == 1){
+        syslog(LOG_DAEMON|LOG_INFO,"Turning heater %s.",command[1] == 1 ? "ON" : "OFF");
+        if(command[1] == 1){
             heaterOn(heaterID);
         } else {
             heaterOff(heaterID);
@@ -349,7 +360,7 @@ void receiveSetHeaterTemp(int connection, char* command){
 
     if(command[0] == HTP){
         heaterID = 1;
-        memcpy(&temperature,command+4,4);
+        memcpy(&temperature,command+1,4);
         syslog(LOG_DAEMON|LOG_INFO,"Setting heater temperature to %f.",temperature);
         setHeaterTemp(heaterID,temperature);
     } else {
@@ -360,23 +371,21 @@ void receiveSetHeaterTemp(int connection, char* command){
 
 void receiveGetPumpStatus(int connection, char* command){
     pumpStatus_s* status = NULL;
-    unsigned char sendBuffer[9];
-    syslog(LOG_DAEMON|LOG_INFO,"Getting pump %d status.",command[3]);
+    unsigned char sendBuffer[7];
+    syslog(LOG_DAEMON|LOG_INFO,"Getting pump %d status.",command[1]);
 
     if(command[0] == RPS){
-        status = getPumpStatus(command[3]);
+        status = getPumpStatus(command[1]);
         if(status){
             syslog(LOG_DAEMON|LOG_INFO,"Pump %d status retrieved.  Pump is %s. RPM Percent is %d.",status->pumpID,status->power == ENA ? "ON" : "OFF",status->percent);
             sendBuffer[0] = RPS;
-            sendBuffer[1] = 0;
-            sendBuffer[2] = 9;
-            sendBuffer[3] = status->pumpID;
-            sendBuffer[4] = status->power == ENA;
-            memcpy(sendBuffer+5,&(status->percent),4);
-            send(connection,sendBuffer,9,0);
+            sendBuffer[1] = status->pumpID;
+            sendBuffer[2] = status->power == ENA;
+            memcpy(sendBuffer+3,&(status->percent),4);
+            send(connection,sendBuffer,7,0);
             free(status);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d status not retrieved from LON.",command[3]);
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d status not retrieved from LON.",command[1]);
             sendErrorMessageBack(connection,"ERROR: Pump status not retrieved from LON.");
         }
     } else {
@@ -386,7 +395,7 @@ void receiveGetPumpStatus(int connection, char* command){
 
 void receiveGetHeaterStatus(int connection, char* command){
     heaterStatus_s* status = NULL;
-    unsigned char sendBuffer[12];
+    unsigned char sendBuffer[10];
     char* byteTemp;
     syslog(LOG_DAEMON|LOG_INFO,"Getting heater status.");
 
@@ -395,15 +404,13 @@ void receiveGetHeaterStatus(int connection, char* command){
         if(status){
             syslog(LOG_DAEMON|LOG_INFO,"Heater status retrieved.  Heater is %s.  Set temperature is %g.  Current temperature is %g.",status->power == ENA ? "ON" : "OFF",status->setTemperature,status->currentTemperature);
             sendBuffer[0] = RHS;
-            sendBuffer[1] = 0;
-            sendBuffer[2] = 13;
-            sendBuffer[3] = status->power == ENA;
-            memcpy(sendBuffer+4,&(status->setTemperature),4);
-            memcpy(sendBuffer+8,&(status->currentTemperature),4);
+            sendBuffer[1] = status->power == ENA;
+            memcpy(sendBuffer+2,&(status->setTemperature),4);
+            memcpy(sendBuffer+6,&(status->currentTemperature),4);
             byteTemp = byteArrayToString(sendBuffer, 12);
             syslog(LOG_DAEMON|LOG_INFO,"Responding with bytes: %s",byteTemp);
             free(byteTemp);
-            send(connection,sendBuffer,12,0);
+            send(connection,sendBuffer,10,0);
             free(status);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater status not retrieved from LON.");
@@ -415,22 +422,20 @@ void receiveGetHeaterStatus(int connection, char* command){
 }
 
 void receiveGetLampStatus(int connection, char* command){
-    unsigned char sendBuffer[4];
+    unsigned char sendBuffer[2];
 
     syslog(LOG_DAEMON|LOG_INFO,"Getting light status.");
     if(command[0] == RLS){
         sendBuffer[0] = RLS;
-        sendBuffer[1] = 0;
-        sendBuffer[2] = 4;
-        sendBuffer[3] = getLampStatus() == ENA;
-        send(connection,sendBuffer,4,0);
+        sendBuffer[1] = getLampStatus() == ENA;
+        send(connection,sendBuffer,2,0);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetLampStatus method.");
     }
 }
 
 void receiveGetBatteryVoltage(int connection, char* command){
-    unsigned char sendBuffer[7];
+    unsigned char sendBuffer[5];
     float batteryVoltage;
 
     syslog(LOG_DAEMON|LOG_INFO,"Getting battery voltage.");
@@ -438,17 +443,15 @@ void receiveGetBatteryVoltage(int connection, char* command){
         batteryVoltage = getBatteryVoltage();
         syslog(LOG_DAEMON|LOG_INFO,"Retrieved battery voltage as: %f.",batteryVoltage);
         sendBuffer[0] = RBS;
-        sendBuffer[1] = 0;
-        sendBuffer[2] = 7;
-        memcpy(sendBuffer+3,&batteryVoltage,4);
-        send(connection,sendBuffer,7,0);
+        memcpy(sendBuffer+1,&batteryVoltage,4);
+        send(connection,sendBuffer,5,0);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveBatteryVoltage method.");
     }
 }
 
 void receiveGetCTDValues(int connection, char* command){
-    unsigned char sendBuffer[19];
+    unsigned char sendBuffer[17];
     CTDreadings_s* readings = NULL;
 
     if(command[0] == RTD){
@@ -456,19 +459,32 @@ void receiveGetCTDValues(int connection, char* command){
         if(readings){
             syslog(LOG_DAEMON|LOG_INFO,"CTD Readings - Cond: %f, Temp: %f, Pres: %f, Sound: %f.",readings->conductivity,readings->temperature,readings->pressure,readings->soundVelocity);
             sendBuffer[0] = RTD;
-            sendBuffer[1] = 0;
-            sendBuffer[2] = 19;
-            memcpy(sendBuffer+3,&(readings->conductivity),4);
-            memcpy(sendBuffer+7,&(readings->temperature),4);
-            memcpy(sendBuffer+11,&(readings->pressure),4);
-            memcpy(sendBuffer+15,&(readings->soundVelocity),4);
-            send(connection,sendBuffer,19,0);
+            memcpy(sendBuffer+1,&(readings->conductivity),4);
+            memcpy(sendBuffer+5,&(readings->temperature),4);
+            memcpy(sendBuffer+9,&(readings->pressure),4);
+            memcpy(sendBuffer+13,&(readings->soundVelocity),4);
+            send(connection,sendBuffer,17,0);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Could not read CTD readings from LON.");
             sendErrorMessageBack(connection,"ERROR: Could not read CTD readings from LON.");
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetCTDValues method.");
+    }
+}
+
+void receiveGetTemperatureValue(int connection, char* command){
+    unsigned char sendBuffer[5];
+    float heaterTemp = 0;
+    
+    if(command[0] == RHT){
+        sendBuffer[0] = RHT;
+        heaterTemp = getHeaterCurrentTemperature(1);
+        memcpy(sendBuffer+1,&heaterTemp,4);
+        syslog(LOG_DAEMON|LOG_INFO,"Sending heater current temperature: %3.5f",heaterTemp);
+        send(connection,(void*)sendBuffer,sizeof(unsigned char)*5,0);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command (0x%02x) sent ot receive GetTemperatureValue.",command[0]);
     }
 }
 
@@ -484,7 +500,7 @@ void methodPumpOn(unsigned long argc, void* argv){
     }
 
     pumpID = (unsigned char) arguments[0];
-    percent = (unsigned int) arguments[1];
+    percent = (unsigned int) arguments[1]*10;
 
     pumpOn(pumpID);
     setPumpPercent(pumpID,percent);

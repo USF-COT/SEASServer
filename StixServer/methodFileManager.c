@@ -62,11 +62,11 @@ void receiveMethodFile(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Opening method file.");
     filename = strtok(command+1,"\n");
     if(filename){
-        createMethodFile(filename);
+        methodFile = createMethodFile(filename);
         offset = strlen(filename+1);
     } else {
         sprintf(defaultFilename,"%u.m",time(NULL));
-        createMethodFile(defaultFilename);
+        methodFile = createMethodFile(defaultFilename);
     }
 
     syslog(LOG_DAEMON|LOG_INFO,"Storing contents in method file: %s", filename);
@@ -258,7 +258,7 @@ char* getActiveMethodFilename(){
                     filename = NULL;
                 }
             }
-            filename[bytesRead-1] = '\0'; // Clean up the EOF character at the end.
+            filename[bytesRead] = '\0'; // Clean up the EOF character at the end.
             fclose(activeConfigFile);
         }
         free(fullPath);
@@ -302,6 +302,10 @@ void receiveExecuteMethod(int connection, char* command){
     char* fullPath = NULL;
     int numBytesReceived = 0;
     char termRecBuf[2] = {'\0','\0'};
+    RUNTIME_RESPONSE_HEADER termResponse;
+
+    termResponse.HeadByte = RTH;
+    termResponse.Command = METHOD_COMPLETED_CMD;
     
     filename = getActiveMethodFilename();
     if(filename){
@@ -310,6 +314,7 @@ void receiveExecuteMethod(int connection, char* command){
             syslog(LOG_DAEMON|LOG_INFO,"Executing method file @ path: %s.",fullPath);
             yyin = fopen(fullPath,"r");
             if(yyin){
+                clearNodes();
                 yyparse();
                 fclose(yyin);
                 node = getHeadNode();
@@ -338,6 +343,9 @@ void receiveExecuteMethod(int connection, char* command){
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve method filename.");
     }
+    
+    // Let the GUI know that method file execution has terminated
+    send(connection,(void*)&termResponse,sizeof(RUNTIME_RESPONSE_HEADER),0);
 }
 
 void receiveTerminateMethod(int connection, char* command){

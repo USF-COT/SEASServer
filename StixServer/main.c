@@ -186,6 +186,7 @@ int main(){
   syslog(LOG_DAEMON||LOG_INFO,"Starting LON Connection.");
   if(startDispatch(LONPORT) == -1){
       syslog(LOG_DAEMON||LOG_ERR,"LON Not Connected!  Check serial port.");
+      exit(EXIT_FAILURE);
   } else {
     syslog(LOG_DAEMON||LOG_INFO,"LON Connection Started.");
   }

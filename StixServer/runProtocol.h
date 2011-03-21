@@ -6,6 +6,7 @@
   Revision History:
 
   4/11/2011   Jim Patten        Created.
+  3/21/2011   Michael Lindemuth  Added byte packing attribute to avoid confusion when transmitting structures.
 */
 
 #ifndef RUN_PROTO_H
@@ -40,20 +41,22 @@ enum  RUN_TIME_MESSAGE_TYPES     {
   WAIT_HEATER_RUNTIME_CMD,
   READ_TEMPERATURE_RUNTIME_CMD,
   SET_DWELL_RUNTIME_CMD,
+  METHOD_COMPLETED_CMD,
   MAX_RUNTIME_COMMANDS
 };
 
 // Standard Header
 typedef struct {
     unsigned char HeadByte;
-    int Command;
-}RUNTIME_RESPONSE_HEADER;
+    unsigned char Command;
+}__attribute__((packed)) RUNTIME_RESPONSE_HEADER;
 
 /* Set dwell */
 typedef  struct   {
   RUNTIME_RESPONSE_HEADER Header;
+  unsigned char Spectrometer;
   uint16_t   Seconds;
-}SET_DWELL_RUNTIME_DATA;
+}__attribute__((packed)) SET_DWELL_RUNTIME_DATA;
 
 
 /* Runtime messages */
@@ -62,20 +65,20 @@ typedef  struct   {
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    uint16_t Pump;
-   float  RPM;
-}PUMP_ON_RUNTIME_DATA;
+   uint16_t Percent;
+}__attribute__((packed)) PUMP_ON_RUNTIME_DATA;
 
 /* Pump off */
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    uint16_t Pump;
-}PUMP_OFF_RUNTIME_DATA;
+}__attribute__((packed)) PUMP_OFF_RUNTIME_DATA;
 
 /* Heater on */
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
-}HEATER_ON_RUNTIME_DATA;
+}__attribute__((packed)) HEATER_ON_RUNTIME_DATA;
 
 /* Calculate concentration */
 typedef  struct   {
@@ -84,14 +87,14 @@ typedef  struct   {
    float Absorbance;
    float Concentration[MAX_ABSORBANCE_WAVELENGTHS];
    float RRatio;
-}CAL_CONCENTRATION_RUNTIME_DATA;
+}__attribute__((packed)) CAL_CONCENTRATION_RUNTIME_DATA;
 
 /* Read reference */
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    unsigned char Spectrometer;
    float Counts[ USB4000_NUMPIXELS ];
-}READ_REFERENCE_RUNTIME_DATA;
+}__attribute__((packed)) READ_REFERENCE_RUNTIME_DATA; 
 
 /* Read sample */
 typedef  struct   {
@@ -101,14 +104,13 @@ typedef  struct   {
    float Absorbance[ MAX_ABSORBANCE_WAVELENGTHS ];
    float AbsorbanceSpectra [ USB4000_NUMPIXELS ];
    float CorrectionAbsorbance;
-}READ_SAMPLE_RUNTIME_DATA;
+}__attribute__((packed)) READ_SAMPLE_RUNTIME_DATA;
 
 /* Delay */
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
-   unsigned char  Spectrometer;
-   uint16_t Seconds;
-}DELAY_RUNTIME_DATA;
+   uint16_t SecondsRemaining;
+}__attribute__((packed)) DELAY_RUNTIME_DATA;
 
 
 /* Wait heater */
@@ -116,14 +118,14 @@ typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
    uint16_t Seconds;
-}WAIT_HEATER_RUNTIME_DATA;
+}__attribute__((packed)) WAIT_HEATER_RUNTIME_DATA;
 
 
 /* Read temperature */
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
-}READ_TEMPERATURE_RUNTIME_DATA;
+}__attribute__((packed)) READ_TEMPERATURE_RUNTIME_DATA;
 
 #endif
 

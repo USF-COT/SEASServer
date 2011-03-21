@@ -23,19 +23,21 @@ typedef struct node{
     union
     {
         void (*command)(unsigned long,void*);
-        BOOL (*conditional)(unsigned long);
+        BOOL (*conditional)(unsigned long*);
     } function;
     struct node* next;
     struct node* branch;
     BOOL closed;
-    int commandID; // For run protocol lookup
+    unsigned char commandID; // For run protocol lookup
 }s_node;
 
-void addComandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID);
-void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long));
+void addComandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),unsigned char commandID);
+void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*),unsigned char commandID);
 s_node* evaluateNode(s_node* node);
 void closeControlNode();
-BOOL decCounterToZero(unsigned long counter);
+// Control Command Functions
+BOOL methodDelay(unsigned long* delayInSeconds);
+BOOL decCounterToZero(unsigned long* counter);
 s_node* getHeadNode();
 void runNodes();
 void stopNodes();

@@ -276,7 +276,7 @@ void sendSpecSample(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000");
     sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
     send(connection,(void*)sample->pixels,sizeof(float)*3840,0);
-    free(sample);
+    deallocateSample(sample);
     syslog(LOG_DAEMON|LOG_INFO,"Sent wavelength.");
 }
 
@@ -355,6 +355,8 @@ void receiveRecordSpecSample(int connection, char* command){
 specSample* getRefSample(char specNumber){
     specSample* refSample = NULL;
 
+    syslog(LOG_DAEMON|LOG_INFO,"Reading ref sample for spectrometer %d. Number of pixels = %d",specNumber,spectrometers[specNumber]->status->numPixels);
+
     if(specNumber < NUM_SPECS){
         pthread_mutex_lock(&specsMutex[specNumber]);
         if(spectrometers[specNumber]->refSample){
@@ -381,25 +383,33 @@ specSample* getLastSample(char specNumber){
 }
 
 void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
+    int i;
     if(sample){
-        memcpy(dest,sample->pixels,sizeof(float)*numPixels);
-        free(sample->pixels);
-        free(sample);
+        for(i=0; i < numPixels; i++){
+            dest[i] = ((float*)sample->pixels)[i];
+            if(i <= 10) syslog(LOG_DAEMON|LOG_INFO,"%d: Dest=%f,Sample=%f",i,dest[i],((float*)sample->pixels)[i]);
+        } 
+        deallocateSample(sample);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Cannot move sample to floats, sample is NULL.");
     }
 }
 
 void readRefRunResponse(int connection, s_node* node){
+    int i;
     unsigned short numPixels = 0; // for readability
+    unsigned char header[3] = {RTH,READ_REFERENCE_RUNTIME_CMD,0};
     specSample* refSample = NULL;
     READ_REFERENCE_RUNTIME_DATA data;
+
+    memset(&data,0,sizeof(READ_REFERENCE_RUNTIME_DATA));
 
     if(node->commandID == READ_REFERENCE_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (unsigned char) ((float*)node->argv)[0];
+        data.Spectrometer = (unsigned char) (((double*)node->argv)[0]-1);
         
+        header[2] = data.Spectrometer;
         // Store Reference Sample
         if(data.Spectrometer < NUM_SPECS){
             numPixels = spectrometers[data.Spectrometer]->status->numPixels;
@@ -408,7 +418,11 @@ void readRefRunResponse(int connection, s_node* node){
                 moveSpecSampleToFloats(data.Counts,refSample,numPixels); 
 
                 // Send the Structure
+                for(i=0; i < 20; i++) syslog(LOG_DAEMON|LOG_INFO,"Data[%d]=0X%02X",i,((unsigned char*)&data)[i]);
                 send(connection,(void*)&data,sizeof(READ_REFERENCE_RUNTIME_DATA),0);
+                //send(connection,(void*)header,sizeof(unsigned char)*3,0);
+                //send(connection,(void*)refSample->pixels,sizeof(float)*numPixels,0);
+                //deallocateSample(refSample);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to read reference spectrum.  Have you initialized it?");
             }
@@ -431,7 +445,7 @@ void readSampRunResponse(int connection, s_node* node){
     if(node->commandID == READ_SAMPLE_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (unsigned char) ((float*)node->argv)[0];
+        data.Spectrometer = (unsigned char) (((double*)node->argv)[0]-1);
         if(data.Spectrometer < NUM_SPECS){
             numPixels = spectrometers[data.Spectrometer]->status->numPixels;
             
@@ -454,8 +468,7 @@ void readSampRunResponse(int connection, s_node* node){
 
             // Free Utilized Memory
             if(sample){
-                free(sample->pixels);
-                free(sample);
+                deallocateSample(sample);
             }
             if(abs){
                 free(abs);
@@ -478,18 +491,19 @@ void readSampRunResponse(int connection, s_node* node){
 // Method File Commands
 void methodReadReference(unsigned long argc, void* argv){
     double* args = (double*)argv;
-    char specNumber = (char)args[0];
+    char specNumber = (char)args[0]-1;
     
-    recordRefSample(specNumber,10,10);
+    recordRefSample(specNumber,getScansPerSample(specNumber),100);
 
     // TODO: Write Reference to Data File?
 }
 
 void methodReadSample(unsigned long argc, void* argv){
     double* args = (double*)argv;
-    char specNumber = (char)args[0];
+    char specNumber = (char)args[0]-1;
     float* absorbance = NULL;
     
+    recordSpecSample(specNumber, getScansPerSample(specNumber), 100);
     absorbance = getAbsorbance(specNumber);
 
     if(absorbance){
@@ -501,17 +515,17 @@ void methodReadSample(unsigned long argc, void* argv){
 
 void methodReadFullSpec(unsigned long argc, void* argv){
     double* args = (double*)argv;
-    char specNumber = (char)args[0];
+    char specNumber = (char)args[0]-1;
 
-    recordSpecSample(specNumber,10,10);
+    recordSpecSample(specNumber,getScansPerSample(specNumber),100);
 
     // TODO: Write Sample to Data File
 }
 
 void methodAbsCorr(unsigned long argc, void* argv){
     double* args = (double*)argv;
-    unsigned char origSpecNumber = (unsigned char) args[0];
-    unsigned char corrSpecNumber = (unsigned char) args[1];
+    unsigned char origSpecNumber = (unsigned char) args[0]-1;
+    unsigned char corrSpecNumber = (unsigned char) args[1]-1;
     float* corrAbs = NULL;
 
     corrAbs = getCorrectionAbsorbance(origSpecNumber,corrSpecNumber);
@@ -520,7 +534,10 @@ void methodAbsCorr(unsigned long argc, void* argv){
 }
 
 void methodCalcConc(unsigned long argc, void* argv){
+    
+    if(argc == 1){
         
+    }        
 }
 
 void methodCalcPCO2(unsigned long argc, void* argv){
@@ -538,7 +555,7 @@ void calConcRunResponse(int connection, s_node* node){
     if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (float)((double*)node->argv)[0];
+        data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
         // TODO: Fill in concentration code
         data.Concentration[0] = 0;
@@ -556,7 +573,7 @@ void calPCO2RunResponse(int connection, s_node* node){
     if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (float)((double*)node->argv)[0];
+        data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
         // TODO: Fill in PCO2 code
         data.Concentration[0] = 0;
@@ -573,7 +590,7 @@ void calPHRunResponse(int connection, s_node* node){
     if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (float)((double*)node->argv)[0];
+        data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
         // TODO: Fill in PH code
         data.Concentration[0] = 0;
@@ -591,7 +608,7 @@ void calTCRunResponse(int connection, s_node* node){
     if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        data.Spectrometer = (float)((double*)node->argv)[0];
+        data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
         // TODO: Fill in concentration code
         data.Concentration[0] = 0;

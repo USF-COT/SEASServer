@@ -9,6 +9,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "GUIprotocol.h"
 #include "LONprotocol.h"
 #include "LONDispatch.h"
@@ -18,6 +19,9 @@
 #define MAX_NUM_PUMPS 6
 #define MAXPUMPFREQHZ 1200
 
+#define GPIO_SET_FMT "echo \"GPIO out set\" > /proc/gpio/GPIO%d"
+#define GPIO_CLEAR_FMT "echo \"GPIO out clear\" > /proc/gpio/GPIO%d"
+
 #define CTD_NODE_GPIO 59
 #define LON_INT_GPIO 61
 #define PUMP_A_GPIO 63
@@ -25,6 +29,8 @@
 #define PUMP_C_GPIO 67
 #define HEAT_GPIO 69
 #define SPARE_GPIO 71
+
+typedef enum PMPERIPH{PMCTD,PMLONHEAD,PMPUMP,PMHEAT}pmPeriph;
 
 typedef struct PUMPSTATUS{
     unsigned char pumpID;
@@ -47,17 +53,13 @@ typedef struct CTDREADINGS{
 }CTDreadings_s;
 
 typedef struct PERIPHSTATUSES{
+    BOOL CTDStatus;
+    BOOL LONHead;
     BOOL pumpsStatus[MAX_NUM_PUMPS];
     BOOL heaterStatus;
-    BOOL CTDStatus;
 }periphStatuses_s;
 
-// Init Status Function Must Be Called Before Anything Else Below
-void initPeripheralStatuses();
-
-// LON Power Management Monitor Functions
-void enableLONPowerManagement();
-void disableLONPowerManagement();
+void initPeripherals();
 
 // Base Functions
 void pumpOn(unsigned char pumpID);
@@ -91,6 +93,7 @@ void receiveGetHeaterStatus(int connection, char* command);
 void receiveGetLampStatus(int connection, char* command);
 void receiveGetBatteryVoltage(int connection, char* command);
 void receiveGetCTDValues(int connection, char* command);
+void receiveGetTemperatureValue(int connection, char* command);
 
 // Method Wrappers
 void methodPumpOn(unsigned long argc, void* argv);

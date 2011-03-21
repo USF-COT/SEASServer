@@ -503,7 +503,7 @@ static const yytype_uint8 yyrline[] =
       65,    66,    67,    68,    69,    70,    74,    75,    76,    77,
       78,    79,    83,    84,    85,    86,    87,    90,    91,    95,
       96,    97,   101,   105,   106,   105,   112,   113,   118,   119,
-     124,   129,   130
+     123,   128,   129
 };
 #endif
 
@@ -1517,21 +1517,21 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 83 "MethodParser.y"
-    {double* params =  allocateParamArray(4); params[0] = (yyvsp[(4) - (7)].doubleVal); params[1] = (yyvsp[(5) - (7)].doubleVal); params[2] = (yyvsp[(6) - (7)].doubleVal); params[3] = (yyvsp[(7) - (7)].doubleVal); addCommandNode(4,(void*)params,methodSetSpectrometerParameters,-1);;}
+    {double* params =  allocateParamArray(4); params[0] = (yyvsp[(4) - (7)].doubleVal); params[1] = (yyvsp[(5) - (7)].doubleVal); params[2] = (yyvsp[(6) - (7)].doubleVal); params[3] = (yyvsp[(7) - (7)].doubleVal); addCommandNode(4,(void*)params,methodSetSpectrometerParameters,MAX_RUNTIME_COMMANDS);;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
 #line 84 "MethodParser.y"
-    {double* params = drainListToArray((yyvsp[(4) - (4)].node));  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,-1);;}
+    {double* params = drainListToArray((yyvsp[(4) - (4)].node));  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,MAX_RUNTIME_COMMANDS);;}
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
 #line 85 "MethodParser.y"
-    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(5) - (6)].doubleVal); params[1] = (yyvsp[(6) - (6)].doubleVal); addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,-1);;}
+    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(5) - (6)].doubleVal); params[1] = (yyvsp[(6) - (6)].doubleVal); addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,MAX_RUNTIME_COMMANDS);;}
     break;
 
   case 25:
@@ -1545,7 +1545,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 87 "MethodParser.y"
-    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)params,methodSetDwell,-1);;}
+    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)params,methodSetDwell,MAX_RUNTIME_COMMANDS);;}
     break;
 
   case 27:
@@ -1587,7 +1587,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 101 "MethodParser.y"
-    { double* params = allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(1,(void*)params,methodAbsCorr,-1);;}
+    { double* params = allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(1,(void*)params,methodAbsCorr,MAX_RUNTIME_COMMANDS);;}
     break;
 
   case 33:
@@ -1615,48 +1615,48 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 112 "MethodParser.y"
-    { addCommandNode(0,NULL,methodOpenDataFile,-1); ;}
+    { addCommandNode(0,NULL,methodOpenDataFile,MAX_RUNTIME_COMMANDS); ;}
     break;
 
   case 37:
 
 /* Line 1455 of yacc.c  */
 #line 113 "MethodParser.y"
-    { addCommandNode(0,NULL,methodCloseDataFile,-1); ;}
+    { addCommandNode(0,NULL,methodCloseDataFile,MAX_RUNTIME_COMMANDS); ;}
     break;
 
   case 38:
 
 /* Line 1455 of yacc.c  */
 #line 118 "MethodParser.y"
-    { addCommandNode(0,NULL,methodWriteConcData,-1); ;}
+    { addCommandNode(0,NULL,methodWriteConcData,MAX_RUNTIME_COMMANDS); ;}
     break;
 
   case 39:
 
 /* Line 1455 of yacc.c  */
 #line 119 "MethodParser.y"
-    { addCommandNode(0,NULL,methodWriteFullSpec,-1);}
+    { addCommandNode(0,NULL,methodWriteFullSpec,MAX_RUNTIME_COMMANDS);}
     break;
 
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 124 "MethodParser.y"
-    { double* params = allocateParamArray(1); params[0] = (yyvsp[(2) - (2)].doubleVal); addCommandNode(0,NULL,methodDelay,DELAY_RUNTIME_CMD); ;}
+#line 123 "MethodParser.y"
+    { addControlNode((unsigned long)(yyvsp[(2) - (2)].doubleVal),methodDelay,DELAY_RUNTIME_CMD); closeControlNode(); ;}
     break;
 
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 129 "MethodParser.y"
-    { addControlNode(((unsigned long)(yyvsp[(4) - (4)].doubleVal)),decCounterToZero); ;}
+#line 128 "MethodParser.y"
+    { addControlNode(((unsigned long)(yyvsp[(4) - (4)].doubleVal)),decCounterToZero,MAX_RUNTIME_COMMANDS); ;}
     break;
 
   case 42:
 
 /* Line 1455 of yacc.c  */
-#line 130 "MethodParser.y"
+#line 129 "MethodParser.y"
     { closeControlNode(); ;}
     break;
 
@@ -1875,11 +1875,11 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 134 "MethodParser.y"
+#line 133 "MethodParser.y"
 
 
 void yyerror (char const* error){
-    fprintf(stderr,"Error on line %d: %s\n",yylineno,error);
+    syslog(LOG_DAEMON|LOG_ERR,"Error on line %d: %s\n",yylineno,error);
 }
 
 void debug(char* message)

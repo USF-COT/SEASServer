@@ -286,7 +286,7 @@ void setNonAbsorbingWavelengths(int specIndex, float newNonAbsWave){
     writeConfigFile();
 }
 
-void setDwell(int specIndex,int dwell){
+void setDwell(int specIndex,uint16_t dwell){
     config[specIndex].dwell = dwell;
     writeConfigFile();
 }
@@ -349,6 +349,10 @@ unsigned short* getAbsorbancePixels(int specIndex){
 
 unsigned short getNonAbsorbancePixel(int specIndex){
     return config[specIndex].absCalcParameters.nonAbsorbingPixel;
+}
+
+uint16_t getDwell(int specIndex){
+    return config[specIndex].dwell;
 }
 
 float* getSlopes(int specIndex){

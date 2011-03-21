@@ -15,7 +15,7 @@ static s_node* current = NULL;
 // Open Control Stack Parameters 
 s_stack* openControlStack = NULL;
 
-s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID)
+s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),unsigned char commandID)
 {
     s_node* node = malloc(sizeof(s_node));
     node->argc = argc;
@@ -33,7 +33,7 @@ s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigne
     return node;
 }
 
-s_node* buildControlNode(unsigned long argc, BOOL (*conditional)(unsigned long))
+s_node* buildControlNode(unsigned long argc, BOOL (*conditional)(unsigned long*), unsigned char commandID)
 {
     s_node* node = malloc(sizeof(s_node));
     node->argc = argc;
@@ -46,6 +46,7 @@ s_node* buildControlNode(unsigned long argc, BOOL (*conditional)(unsigned long))
     node->branch = NULL;
 
     node->closed = FALSE;
+    node->commandID = commandID;
 
     return node;
 }
@@ -65,7 +66,6 @@ void linkNode(s_node* node)
     else
     {
         current->next = node;
-
         current = node;
     }
 }
@@ -102,7 +102,7 @@ s_node* evaluateNode(s_node* node)
             return node->next;
             break;
         case CONTROL:
-            if((*(node->function.conditional))(node->argc))
+            if((*(node->function.conditional))(&node->argc))
                 return node->branch;
             else
                 return node->next;
@@ -146,8 +146,7 @@ void *processNodes(void* blah)
 }
 
 // Public methods
-
-void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),int commandID)
+void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),unsigned char commandID)
 {
     pthread_mutex_lock(&nodesMutex);
     s_node* node = buildCommandNode(argc, argv, command, commandID);
@@ -155,11 +154,11 @@ void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned lon
     pthread_mutex_unlock(&nodesMutex);
 }
 
-void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long))
+void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*),unsigned char commandID)
 {
     pthread_mutex_lock(&nodesMutex);
 
-    s_node* node = buildControlNode(argc, conditional);
+    s_node* node = buildControlNode(argc, conditional, commandID);
     linkNode(node);
     
     // Track the Open Control Node
@@ -179,32 +178,41 @@ void closeControlNode()
 
     if(node == NULL)
     {
-        fprintf(stderr, "Invalid Call to closeControlNode() Method.  Empty Control Stack.\n");
+        syslog(LOG_DAEMON|LOG_ERR,"Invalid Call to closeControlNode() Method.  Empty Control Stack.\n");
         return;
     }
 
     // Close control by having it link back to the control node so that conditional is checked again
-    current->next = node;
+    if(node == current){ // Empty loop points branches back to itself
+        current->branch = current;
+    } else { // Last node in branch chain points to control node top
+        current->next = node;
+    }
 
     // Mark the control node as closed
     node->closed = TRUE;
 
+    current = node;
+
     pthread_mutex_unlock(&nodesMutex);
 }
 
-BOOL decCounterToZero(unsigned long counter){
-    if(counter == 0){
-        return TRUE;
-    } else{
-        counter--;
-        return FALSE;
-    }       
+// Control Command Functions
+BOOL methodDelay(unsigned long* delayInSeconds){
+    sleep(1);
+    (*delayInSeconds)--;
+    return *delayInSeconds != 0 ? TRUE:FALSE;
+}
+
+BOOL decCounterToZero(unsigned long* counter){
+    (*counter)--;
+    return *counter != 0 ? TRUE:FALSE;
 }
 
 s_node* getHeadNode(){
     // Check to Make Sure There is a Closed Execution Path
-    if(openControlStack != NULL){
-        return NULL;
+    if(!stackIsEmpty(openControlStack)){
+        syslog(LOG_DAEMON|LOG_ERR,"Control stack not empty!");
     }
 
     // Return head node

@@ -62,6 +62,7 @@
 #define     RLS         0x23     // Report Light Source State
 #define     RBS         0x24     // Report Battery Voltage
 #define     RTD         0x25     // Report CTD Values
+#define     RHT         0x26     // Read Temperature
 
 
 /* Mini SEAS to GUI commands */

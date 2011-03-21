@@ -70,7 +70,7 @@ typedef struct ABSORBANCECALCPARAMETERS{
 
 typedef struct SPECCONFIG{
     char serial[12];
-    int dwell;
+    uint16_t dwell;
     spectrometerParameters specParameters;
     wavelengthParameters waveParameters; 
     absorbanceCalcParameters absCalcParameters;
@@ -87,7 +87,7 @@ char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned 
 char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUnits, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave);
 void setAbsorbanceWavelengths(int specIndex,unsigned char newAbsWaveCount,float* newAbsWaves);
 void setNonAbsorbingWavelengths(int specIndex,float newNonAbsWave);
-void setDwell(int specIndex, int dwell);
+void setDwell(int specIndex, uint16_t dwell);
 void setComputationDataBytes(int specIndex,unsigned char* bytes);
 void setSlopeIntercept(int specIndex, float* slopeInterceptPairs);
 
@@ -104,6 +104,7 @@ float* getAbsorbingWavelengths(int specIndex);
 float getNonAbsorbingWavelength(int specIndex);
 unsigned short* getAbsorbancePixels(int specIndex);
 unsigned short getNonAbsorbancePixel(int specIndex);
+uint16_t getDwell(int specIndex);
 float* getSlopes(int specIndex);
 float* getIntercepts(int specIndex);
 

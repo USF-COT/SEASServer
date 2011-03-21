@@ -38,13 +38,14 @@ GUIHandler const handlers[] = {
         receiveGetHeaterStatus, // 0x22 RHS
         receiveGetLampStatus, // 0x23 RLS
         receiveGetBatteryVoltage, // 0x24 RBS
-        receiveGetCTDValues // 0x25 RTD
+        receiveGetCTDValues, // 0x25 RTD
+        receiveGetTemperatureValue // 0x26 RHT
     };
 
-static const int numHandlers = 38;
+static const int numGUIHandlers = 0x26;
 
 void parseGUI(int connection,char* command){
-    if(command[0] < numHandlers && command[0] > 0){
+    if(command[0] <= numGUIHandlers && command[0] > 0){
         if(handlers[command[0]]){
             handlers[command[0]](connection,command);
         } else {
