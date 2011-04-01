@@ -6,7 +6,7 @@
 static pthread_mutex_t writeConfigMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static systemMode mode = MANUAL;
-static specConfig config[2];
+static specConfig config[NUM_SPECS];
 
 // Config File Management Methods
 char readConfig(){
@@ -322,37 +322,67 @@ systemMode getMode(){
 }
  
 char* getSerialNumber(int specIndex){
-    return config[specIndex].serial;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].serial;
+    else
+        return NULL;
 }
 unsigned short getIntegrationTime(int specIndex){
-    return config[specIndex].specParameters.integrationTime;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].specParameters.integrationTime;
+    else
+        return -1;
 }
 unsigned short getScansPerSample(int specIndex){
-    return config[specIndex].specParameters.scansPerSample;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].specParameters.scansPerSample;
+    else
+        return -1;
 }
 unsigned short getBoxcarSmoothing(int specIndex){
-    return config[specIndex].specParameters.boxcarSmoothing;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].specParameters.boxcarSmoothing;
+    else
+        return -1;
 }
 unsigned char getAbsorbingWavelengthCount(int specIndex){
-    return config[specIndex].waveParameters.absorbingWavelengthCount;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].waveParameters.absorbingWavelengthCount;
+    else
+        return -1;
 }
 float* getAbsorbingWavelengths(int specIndex){
-    return config[specIndex].waveParameters.absorbingWavelengths;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].waveParameters.absorbingWavelengths;
+    else
+        return NULL;
 }
 float getNonAbsorbingWavelength(int specIndex){
-    return config[specIndex].waveParameters.nonAbsorbingWavelength;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].waveParameters.nonAbsorbingWavelength;
+    else
+        return -1;
 }
 
 unsigned short* getAbsorbancePixels(int specIndex){
-    return config[specIndex].absCalcParameters.absorbingPixels;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].absCalcParameters.absorbingPixels;
+    else
+        return NULL;
 }
 
 unsigned short getNonAbsorbancePixel(int specIndex){
-    return config[specIndex].absCalcParameters.nonAbsorbingPixel;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].absCalcParameters.nonAbsorbingPixel;
+    else
+        return -1;
 }
 
 uint16_t getDwell(int specIndex){
-    return config[specIndex].dwell;
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].dwell;
+    else
+        return -1;
 }
 
 float* getSlopes(int specIndex){

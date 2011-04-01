@@ -17,18 +17,20 @@
 #include "A2D-MCP3424.h"
 
 #define MAX_NUM_PUMPS 6
+#define MAX_NUM_PUMP_LON_NODES 3
+#define NUM_PUMPS_PER_LON 2
 #define MAXPUMPFREQHZ 1200
 
 #define GPIO_SET_FMT "echo \"GPIO out set\" > /proc/gpio/GPIO%d"
 #define GPIO_CLEAR_FMT "echo \"GPIO out clear\" > /proc/gpio/GPIO%d"
 
-#define CTD_NODE_GPIO 59
-#define LON_INT_GPIO 61
-#define PUMP_A_GPIO 63
-#define PUMP_B_GPIO 65
-#define PUMP_C_GPIO 67
-#define HEAT_GPIO 69
-#define SPARE_GPIO 71
+#define CTD_NODE_GPIO 186 
+#define LON_INT_GPIO 170
+#define PUMP_A_GPIO 146
+#define PUMP_B_GPIO 147
+#define PUMP_C_GPIO 144
+#define HEAT_GPIO 28
+#define SPARE_GPIO 18
 
 typedef enum PMPERIPH{PMCTD,PMLONHEAD,PMPUMP,PMHEAT}pmPeriph;
 
@@ -55,7 +57,7 @@ typedef struct CTDREADINGS{
 typedef struct PERIPHSTATUSES{
     BOOL CTDStatus;
     BOOL LONHead;
-    BOOL pumpsStatus[MAX_NUM_PUMPS];
+    BOOL pumpStatus[MAX_NUM_PUMPS];
     BOOL heaterStatus;
 }periphStatuses_s;
 

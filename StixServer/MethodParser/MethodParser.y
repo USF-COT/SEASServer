@@ -84,7 +84,7 @@ setExp:    SET SPECM PARAMS VAL VAL VAL VAL {double* params =  allocateParamArra
          | SET SAMP WAVE arrayExp {double* params = drainListToArray($4);  addCommandNode((unsigned int)params[0],(void*)params,methodSetAbsorbanceWavelengths,MAX_RUNTIME_COMMANDS);} 
          | SET NON ABSO WAVE VAL VAL {double* params =  allocateParamArray(2); params[0] = $5; params[1] = $6; addCommandNode(2,(void*)params,methodSetNonAbsorbanceWavelength,MAX_RUNTIME_COMMANDS);}
          | SET CORR WAVE VAL VAL {} 
-         | SET DWELL VAL VAL {double* params =  allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell,MAX_RUNTIME_COMMANDS);}
+         | SET DWELL VAL VAL {double* params =  allocateParamArray(2); params[0] = $3; params[1] = $4; addCommandNode(2,(void*)params,methodSetDwell,SET_DWELL_RUNTIME_CMD);}
 ;
 
 arrayExp:    VAL arrayExp {$$ = malloc(sizeof(DOUBLENODE)); if($$){ $$->next=$2; $$->value=$1;}else{yyerror("Could Not Allocate Double Node.");}}

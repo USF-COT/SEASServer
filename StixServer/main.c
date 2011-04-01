@@ -51,6 +51,7 @@ typedef struct THREADINFO{
 }threadInfo;
 
 volatile sig_atomic_t keep_going = 1;
+volatile sig_atomic_t numClients = 0;
 int list_s = 0;
 
 void catch_term(int sig)
@@ -93,6 +94,7 @@ void* handleConnection(void* info){
         exit(EXIT_FAILURE);
     }
     syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Connected Socket Closed.",((threadInfo*)info)->thread_bin_index);
+    numClients--;
     thread_bin_available[((threadInfo*)info)->thread_bin_index] = AVAILABLE;
     free(info);
     pthread_exit(NULL);
@@ -105,6 +107,7 @@ int main(){
   short int port = 1995;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
   int i,availableThreadID;
+  uint8_t numClients = 0;
   threadInfo* info;
 
   /* Fork off the parent process */
@@ -191,6 +194,9 @@ int main(){
     syslog(LOG_DAEMON||LOG_INFO,"LON Connection Started.");
   }
 
+  // Init Power Management GPIOs (See SEASPeriperalCommands.c)
+  //initPeripherals();
+
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */
 
@@ -221,6 +227,7 @@ int main(){
         if(thread_bin_available[i]){
             thread_bin_available[i] = UNAVAILABLE;
             syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
+            numClients++;
             info = malloc(sizeof(threadInfo));
             info->socket_connection = conn_s;
             info->thread_bin_index = i;

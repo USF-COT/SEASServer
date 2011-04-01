@@ -23,7 +23,6 @@
 
 /* Run time message types */
 enum  RUN_TIME_MESSAGE_TYPES     {
-
   PUMP_ON_RUNTIME_CMD = 0,
   PUMP_OFF_RUNTIME_CMD,
   LAMP_ON_RUNTIME_CMD,

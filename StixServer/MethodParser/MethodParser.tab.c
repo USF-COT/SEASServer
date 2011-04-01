@@ -1545,7 +1545,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 87 "MethodParser.y"
-    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)params,methodSetDwell,MAX_RUNTIME_COMMANDS);;}
+    {double* params =  allocateParamArray(2); params[0] = (yyvsp[(3) - (4)].doubleVal); params[1] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(2,(void*)params,methodSetDwell,SET_DWELL_RUNTIME_CMD);;}
     break;
 
   case 27:

@@ -2,67 +2,107 @@
 
 static a2dMCP3424* a2dChip = NULL;
 static periphStatuses_s status;
+static const uint16_t pumpLONGPIO[MAX_NUM_PUMP_LON_NODES] = {PUMP_A_GPIO,PUMP_B_GPIO,PUMP_C_GPIO};
 
-// LON Power Manager Thread Variables
-static volatile sig_atomic_t LONmanaging;
-static pthread_mutex_t LONPMMutex = PTHREAD_MUTEX_INITIALIZER; 
+// Power Management Mutex
+static pthread_mutex_t periphPMMutex = PTHREAD_MUTEX_INITIALIZER;
 
-// GPIO functions for managing LON nodes
-void initGPIOs(){
-    int i;
+void switchGPIO(BOOL powerOn, uint16_t GPIO){
     char sysCmd[128];
-
-    sysCmd[0] = '\0';
-
-    for(i=CTD_NODE_GPIO; i <= SPARE_GPIO; i=i+2){
-        if(i == LON_INT_GPIO || i== CTD_NODE_GPIO){
-            sprintf(sysCmd,GPIO_SET_FMT,i); 
-        } else {
-            sprintf(sysCmd,GPIO_CLEAR_FMT,i);
-        }
-        system(sysCmd);
-    } 
-}
-
-// Init Status Function Must Be Called Before Anything Else Below
-void initPeripheralStatuses(){
-    unsigned char i;
-
-    status.CTDStatus = TRUE;
-    status.LONHead = TRUE;
-
-    for(i=0; i < MAX_NUM_PUMPS; i++){
-        pumpOff(i);
-        status.pumpsStatus[i] = FALSE;
-    }
-
-    heaterOff(0);
-    status.heaterStatus = FALSE;
-}
-
-void initPeripherals(){
-    pthread_mutex_lock(&LONPMMutex);
-    initGPIOs();
-    initPeripheralStatuses();
-    pthread_mutex_unlock(&LONPMMutex);
-}
-
-// TODO: Figure out power management callback
-
-// LON Power Management Monitor Functions
-void *LONpowerManager(void* blah){
-    while(LONmanaging){
-        // Check if a LON Pump Controller Needs to Be Disabled
-        
-    }
-}
-
-void enableLONPowerManagement(){
+    char* format = powerOn ? GPIO_SET_FMT : GPIO_CLEAR_FMT;
     
+    sysCmd[0] = '\0';
+    sprintf(sysCmd,format,GPIO);
+    system(sysCmd);
 }
 
-void disableLONPowerManagement(){
+// Called in main.c to initialize the GPIO's to their default startup state
+void initPeripherals(){
+    int i;
 
+    pthread_mutex_lock(&periphPMMutex);
+    // CTD On
+    status.CTDStatus = TRUE;
+    switchGPIO(status.CTDStatus,CTD_NODE_GPIO);
+
+    // LON Gateway On
+    status.LONHead = TRUE;
+    switchGPIO(status.LONHead,LON_INT_GPIO);
+
+    // Pumps Off
+    for(i=0; i < MAX_NUM_PUMP_LON_NODES; i++){
+        status.pumpStatus[NUM_PUMPS_PER_LON*i] = FALSE;
+        status.pumpStatus[NUM_PUMPS_PER_LON*i+1] = FALSE;
+        switchGPIO(FALSE,pumpLONGPIO[i]);
+    }
+
+    // Heater Off
+    status.heaterStatus = FALSE;
+    switchGPIO(status.heaterStatus,HEAT_GPIO);
+
+    // Spare Off
+    switchGPIO(FALSE,SPARE_GPIO);
+    pthread_mutex_unlock(&periphPMMutex);
+}
+
+BOOL getPumpLONState(unsigned char pumpLONNode){
+    int i;
+    BOOL LONState = FALSE;
+
+    if(pumpLONNode < MAX_NUM_PUMP_LON_NODES){
+        for(i=pumpLONNode*NUM_PUMPS_PER_LON; i < pumpLONNode+NUM_PUMPS_PER_LON; i++){
+            LONState |= status.pumpStatus[i];
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"pumpLONNode index (%d) passed to getPumpLONState out of bounds.",pumpLONNode);
+    }
+    return LONState;
+}
+
+// LON Node Switch Commands
+void switchPumpNode(unsigned char pumpID,BOOL powerOn){
+    unsigned char pumpLONNode = (unsigned char)pumpID/NUM_PUMPS_PER_LON;
+    int i;
+    BOOL currLONState = FALSE;
+    BOOL nextLONState = FALSE;
+    BOOL switchedOn = FALSE;
+
+    if(pumpID < MAX_NUM_PUMPS && pumpLONNode < MAX_NUM_PUMP_LON_NODES){
+        pthread_mutex_lock(&periphPMMutex);
+        currLONState = getPumpLONState(pumpLONNode);
+        status.pumpStatus[pumpID] == powerOn;
+        nextLONState = getPumpLONState(pumpLONNode);
+
+        if(currLONState == FALSE && nextLONState == TRUE){
+            syslog(LOG_DAEMON|LOG_INFO,"Switching pump LON node %d ON.", pumpLONNode);
+            switchGPIO(TRUE,pumpLONGPIO[pumpLONNode]); 
+            switchedOn = TRUE;
+        } else if(currLONState == TRUE && nextLONState == FALSE){
+            syslog(LOG_DAEMON|LOG_INFO,"Switching pump LON node %d OFF.", pumpLONNode);
+            switchGPIO(FALSE,pumpLONGPIO[pumpLONNode]);
+        }
+        pthread_mutex_unlock(&periphPMMutex);
+        
+        if(switchedOn) sleep(2);  // Done outside the mutex so that it is not held during sleep.
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Pump ID Out of Range.  Calculated pumpLONNode=%d",pumpLONNode);
+    }
+}
+
+void switchHeaterNode(BOOL powerOn){
+    BOOL switchedOn = FALSE;
+
+    pthread_mutex_lock(&periphPMMutex);
+    syslog(LOG_DAEMON|LOG_INFO,"Switching heater LON node %s.",powerOn ? "ON":"OFF");
+    if(status.heaterStatus == FALSE && powerOn){
+        switchGPIO(TRUE,HEAT_GPIO);
+        switchedOn = TRUE;
+    } else if(status.heaterStatus == TRUE && !powerOn){
+        switchGPIO(FALSE,HEAT_GPIO);
+    }
+    pthread_mutex_unlock(&periphPMMutex);
+
+    if(switchedOn) sleep(2);  // Done outside the mutex so that it is not held during sleep.
 }
 
 // Base Functions
@@ -71,6 +111,7 @@ void pumpOn(unsigned char pumpID){
     unsigned char data[2] = {pumpID,ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
+    //switchPumpNode(pumpID,TRUE);
     response = sendLONCommand(PMP,PWR,2,data);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d enabled.  LON sent ACK.",pumpID);
@@ -85,6 +126,7 @@ void pumpOff(unsigned char pumpID){
 
     syslog(LOG_DAEMON|LOG_INFO,"Disabling pump %d.",pumpID);
     response = sendLONCommand(PMP,PWR,2,data);
+    //switchPumpNode(pumpID,FALSE);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d disabled.  LON sent ACK.",pumpID);
     } else {
@@ -144,6 +186,7 @@ void heaterOn(unsigned char heaterID){
     unsigned char data[2] = {heaterID,ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning on Heater %d.",heaterID);
+    //switchHeaterNode(TRUE);
     response = sendLONCommand(HTR,PWR,2,data);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned on.",heaterID); 
@@ -159,6 +202,7 @@ void heaterOff(unsigned char heaterID){
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning off Heater %d.",heaterID);
     response = sendLONCommand(HTR,PWR,2,data);
+    //switchHeaterNode(FALSE);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned off.",heaterID);
     } else {

@@ -126,7 +126,7 @@ void methodSetDwell(unsigned long argc, void* argv){
     int specIndex;
     int dwell;
 
-    specIndex = (int)params[0];
+    specIndex = (int)params[0]-1;
     dwell = (int)params[1];
 
     setDwell(specIndex,dwell);
