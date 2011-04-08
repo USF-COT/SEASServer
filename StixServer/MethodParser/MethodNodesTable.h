@@ -23,7 +23,7 @@ typedef struct node{
     union
     {
         void (*command)(unsigned long,void*);
-        BOOL (*conditional)(unsigned long*);
+        BOOL (*conditional)(unsigned long*,unsigned long*);
     } function;
     struct node* next;
     struct node* branch;
@@ -32,12 +32,12 @@ typedef struct node{
 }s_node;
 
 void addComandNode(unsigned long argc, void* argv, void (*command)(unsigned long,void*),unsigned char commandID);
-void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*),unsigned char commandID);
+void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*,unsigned long*),unsigned char commandID);
 s_node* evaluateNode(s_node* node);
 void closeControlNode();
 // Control Command Functions
-BOOL methodDelay(unsigned long* delayInSeconds);
-BOOL decCounterToZero(unsigned long* counter);
+BOOL methodDelay(unsigned long* delayInSeconds,unsigned long* originalValue);
+BOOL decCounterToZero(unsigned long* counter,unsigned long* originalValue);
 s_node* getHeadNode();
 void runNodes();
 void stopNodes();

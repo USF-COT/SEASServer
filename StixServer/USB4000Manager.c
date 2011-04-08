@@ -387,7 +387,6 @@ void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
     if(sample){
         for(i=0; i < numPixels; i++){
             dest[i] = ((float*)sample->pixels)[i];
-            if(i <= 10) syslog(LOG_DAEMON|LOG_INFO,"%d: Dest=%f,Sample=%f",i,dest[i],((float*)sample->pixels)[i]);
         } 
         deallocateSample(sample);
     } else {
@@ -418,7 +417,6 @@ void readRefRunResponse(int connection, s_node* node){
                 moveSpecSampleToFloats(data.Counts,refSample,numPixels); 
 
                 // Send the Structure
-                for(i=0; i < 20; i++) syslog(LOG_DAEMON|LOG_INFO,"Data[%d]=0X%02X",i,((unsigned char*)&data)[i]);
                 send(connection,(void*)&data,sizeof(READ_REFERENCE_RUNTIME_DATA),0);
                 //send(connection,(void*)header,sizeof(unsigned char)*3,0);
                 //send(connection,(void*)refSample->pixels,sizeof(float)*numPixels,0);
@@ -435,11 +433,11 @@ void readRefRunResponse(int connection, s_node* node){
 }
 
 void readSampRunResponse(int connection, s_node* node){
+    int i=0;
     unsigned short numPixels = 0;
     specSample* sample = NULL;
     float* abs = NULL;
     float* absSpec = NULL;
-    float* corrAbs = NULL;
     READ_SAMPLE_RUNTIME_DATA data;
 
     if(node->commandID == READ_SAMPLE_RUNTIME_CMD){
@@ -450,42 +448,54 @@ void readSampRunResponse(int connection, s_node* node){
             numPixels = spectrometers[data.Spectrometer]->status->numPixels;
             
             // Request all necessary arrays
+            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Reading %dpx sample for spectrometer %d.",numPixels,data.Spectrometer);
             sample = getLastSample(data.Spectrometer);
             if(!sample) syslog(LOG_DAEMON|LOG_ERR,"Unable to read last sample from spectrometer.");
+            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read sample.");
             abs = getAbsorbance(data.Spectrometer);
+            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read wavelengths.");
             absSpec = getAbsorbanceSpectrum(data.Spectrometer);
+            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read absorbance spectrum.");
             
             // Send Sample, If All Arrays Retrieved
             if(sample && abs && absSpec){
                 moveSpecSampleToFloats(data.Counts,sample,numPixels);
-                memcpy(data.Absorbance,abs,sizeof(float)*(MAX_ABS_WAVES-1));
+                for(i=0;i<MAX_ABS_WAVES-1;i++) data.Absorbance[i]=abs[i];
                 data.CorrectionAbsorbance = abs[MAX_ABS_WAVES];
-                memcpy(data.AbsorbanceSpectra,absSpec,sizeof(float)*numPixels);
+                for(i=0;i<numPixels;i++) data.AbsorbanceSpectra[i]=absSpec[i];
                 send(connection,(void*)&data,sizeof(READ_SAMPLE_RUNTIME_DATA),0);
+                syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully sent read sample response.");
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve data for read sample runtime response.");
             }
 
             // Free Utilized Memory
+            /*
             if(sample){
-                deallocateSample(sample);
+                free(sample->pixels);
+                free(sample);
             }
+            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the sample.");
+            */
             if(abs){
                 free(abs);
             } else {              
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance values.");
             }
+            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the absorbance values.");
             if(absSpec){
                 free(absSpec);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance spectrum.");
             }
+            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the absorbance spectrum.");
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"Spectrometer index (%d) out of bounds.",data.Spectrometer);
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Incorrect command ID (%02x) passed to readSampRunResponse.",node->commandID);
     }
+    syslog(LOG_DAEMON|LOG_INFO,"Read Sample Run Response Method Return Complete.");
 }
 
 // Method File Commands
@@ -517,7 +527,9 @@ void methodReadFullSpec(unsigned long argc, void* argv){
     double* args = (double*)argv;
     char specNumber = (char)args[0]-1;
 
+    syslog(LOG_DAEMON|LOG_INFO,"METHOD: Recording Full Spectrum.");
     recordSpecSample(specNumber,getScansPerSample(specNumber),100);
+   
 
     // TODO: Write Sample to Data File
 }

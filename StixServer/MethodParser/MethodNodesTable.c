@@ -33,11 +33,12 @@ s_node* buildCommandNode(unsigned long argc, void* argv, void (*command)(unsigne
     return node;
 }
 
-s_node* buildControlNode(unsigned long argc, BOOL (*conditional)(unsigned long*), unsigned char commandID)
+s_node* buildControlNode(unsigned long argc, BOOL (*conditional)(unsigned long*,unsigned long*), unsigned char commandID)
 {
     s_node* node = malloc(sizeof(s_node));
     node->argc = argc;
-    node->argv = NULL;
+    node->argv = malloc(sizeof(unsigned long));
+    ((unsigned long*)node->argv)[0] = argc;
     node->function.conditional = conditional;
     node->type = CONTROL;
 
@@ -102,7 +103,7 @@ s_node* evaluateNode(s_node* node)
             return node->next;
             break;
         case CONTROL:
-            if((*(node->function.conditional))(&node->argc))
+            if((*(node->function.conditional))(&node->argc,(unsigned long*)node->argv))
                 return node->branch;
             else
                 return node->next;
@@ -154,7 +155,7 @@ void addCommandNode(unsigned long argc, void* argv, void (*command)(unsigned lon
     pthread_mutex_unlock(&nodesMutex);
 }
 
-void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*),unsigned char commandID)
+void addControlNode(unsigned long argc,BOOL (*conditional)(unsigned long*,unsigned long*),unsigned char commandID)
 {
     pthread_mutex_lock(&nodesMutex);
 
@@ -198,15 +199,25 @@ void closeControlNode()
 }
 
 // Control Command Functions
-BOOL methodDelay(unsigned long* delayInSeconds){
+BOOL methodDelay(unsigned long* delayInSeconds,unsigned long* originalValue){
     sleep(1);
     (*delayInSeconds)--;
-    return *delayInSeconds != 0 ? TRUE:FALSE;
+    if(*delayInSeconds != 0){
+        return TRUE;
+    } else {
+        *delayInSeconds = *originalValue;
+        return FALSE;
+    }
 }
 
-BOOL decCounterToZero(unsigned long* counter){
+BOOL decCounterToZero(unsigned long* counter,unsigned long* originalValue){
     (*counter)--;
-    return *counter != 0 ? TRUE:FALSE;
+    if(*counter != 0){
+        return TRUE;
+    } else {
+        *counter = *originalValue;
+        return FALSE;
+    }
 }
 
 s_node* getHeadNode(){

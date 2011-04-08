@@ -6,6 +6,13 @@
 #ifndef CARBONCALC_H
 #define CARBONCALC_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <syslog.h>
+#include "salinity.h"
+#include "SEASPeripheralCommands.h"
+
 /* Default system temperature */
 #define  DEFAULT_SYSTEM_TEMPERATURE    25.0 + ABSOLUTE_ZERO_TEMPERATURE
 
@@ -41,9 +48,10 @@
 #define  K1                0.0000004592
 #define  K2                0.0000000000468813
 
-void ComputeSystemTotalCarbon(int Spectrometer);
-void  ComputeSystempCO2(int Spectrometer);
-void  ComputeSystempH(int Spectrometer);
-float   ComputeAbsorbanceRatio(int Spectrometer);
+// Base Methods
+float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
+float computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonAbsWave);
+float computeSystempH(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
+float computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorbance, float nonAbsWave);
 
 #endif

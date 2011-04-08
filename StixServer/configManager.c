@@ -83,10 +83,11 @@ void methodSetSpectrometerParameters(unsigned long argc, void* argv){
     int specIndex;
     unsigned short intTime,scansPerSamp,boxcarSmooth;
 
-    specIndex = (int)params[0];
+    specIndex = (int)params[0]-1;
     intTime = (unsigned short)params[1];
     scansPerSamp = (unsigned short)params[2];
     boxcarSmooth = (unsigned short)params[3];
+    syslog(LOG_DAEMON|LOG_INFO,"Setting spectrometer %d parameters.  Integration Time:%d,Scans Per Sample:%d,Boxcar Smoothing:%d.",specIndex,intTime,scansPerSamp,boxcarSmooth);
 
     setSpectrometerParameters(specIndex,intTime,scansPerSamp,boxcarSmooth);
     applyConfig();
@@ -102,9 +103,11 @@ void methodSetAbsorbanceWavelengths(unsigned long argc, void* argv){
     // This is a special circumstance because the number of wavelengths is variable
     absWaveCount = ((unsigned char)params[0])-2; // Array contents [Array Length] [Spec ID] [Wavelength]...[Wavelength]
     waves = malloc(sizeof(float)*absWaveCount);
-    specIndex = (int)params[1];
+    specIndex = (int)params[1]-1;
+    syslog(LOG_DAEMON|LOG_INFO,"Setting %d wavelengths for spectrometer %d.",absWaveCount,specIndex);
     for(i=0; i < absWaveCount; i++){
         waves[i] = (float)params[i+2];
+        syslog(LOG_DAEMON|LOG_INFO,"Wave %d:%f",i,waves[i]);
     }
     setAbsorbanceWavelengths(specIndex,absWaveCount,waves);
     free(waves); 
@@ -115,8 +118,9 @@ void methodSetNonAbsorbanceWavelength(unsigned long argc, void* argv){
     int specIndex;
     float nonAbsWave;
      
-    specIndex = (int)params[0];
+    specIndex = (int)params[0]-1;
     nonAbsWave = (float)params[1];
+    syslog(LOG_DAEMON|LOG_INFO,"Setting spectrometer %d non-absorbing wavelength to %f.",specIndex,nonAbsWave);
 
     setNonAbsorbingWavelengths(specIndex,nonAbsWave);
 }
@@ -128,6 +132,7 @@ void methodSetDwell(unsigned long argc, void* argv){
 
     specIndex = (int)params[0]-1;
     dwell = (int)params[1];
+    syslog(LOG_DAEMON|LOG_INFO,"Setting spectrometer %d dwell to %d.",specIndex,dwell);
 
     setDwell(specIndex,dwell);
 }

@@ -287,8 +287,10 @@ void setNonAbsorbingWavelengths(int specIndex, float newNonAbsWave){
 }
 
 void setDwell(int specIndex,uint16_t dwell){
-    config[specIndex].dwell = dwell;
-    writeConfigFile();
+    if(specIndex < NUM_SPECS){
+        config[specIndex].dwell = dwell;
+        writeConfigFile();
+    }
 }
 
 void setComputationDataBytes(int specIndex,unsigned char* bytes){

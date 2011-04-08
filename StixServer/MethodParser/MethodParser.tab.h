@@ -84,7 +84,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 43 "MethodParser.y"
+#line 44 "MethodParser.y"
 
     double doubleVal;
     struct doubleNode* node;

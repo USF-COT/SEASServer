@@ -3,22 +3,20 @@
  * By: Jim Patten and Michael Lindemuth
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "SEASPeripheralCommands.h"
 #include "carbonCalc.h"
 
-static
+// Change these constants here if necessary
+const float CtS1 = CtS1_DEFAULT;
+const float pCO2S1 = pCO2S1_DEFAULT;
+const float pCO2S2 = pCO2S2_DEFAULT;
 
 /*
   void  ComputeSystemTotalCarbon( int Spectrometer )
 
   Computes the system total carbon.
 */
-void  ComputeSystemTotalCarbon( int Spectrometer )
+float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
 {
-  CTDreadings_s* CTDData;
   float   AbsorbanceRatio;
   float   Temperature;
   float   Salinity;
@@ -30,17 +28,16 @@ void  ComputeSystemTotalCarbon( int Spectrometer )
   float   Term6;
   float   Term7;
   float   Term8;
-
-  /* Read the CTD */
+  float   TotalDissolvedCarbon;
 
   /* Compute the absorbance ratio */
-  AbsorbanceRatio = ComputeAbsorbanceRatio( Spectrometer );
+  AbsorbanceRatio = computeAbsorbanceRatio(absWaveCount,absorbance,nonAbsWave);
 
   /* Get the temperature */
-  Temperature = ;
+  Temperature = CTDReading->temperature;
 
   /* Get the salinity */
-  Salinity = CTDData.Salinity;
+  Salinity = (float) computeSalinity(CTDReading->conductivity, CTDReading->temperature, CTDReading->pressure);
 
   /* Compute the equation terms */
   Term1 = (float) ( Salinity / (float) Ct1 );
@@ -50,12 +47,14 @@ void  ComputeSystemTotalCarbon( int Spectrometer )
   Term5 = (float) ( (float) ( Term1 * (float) ( Term2  + Term4 ) ) );
   Term6 = (float) ( AbsorbanceRatio - (float) Ct6 );
   Term7 = (float) ( (float) 1 - (float) ( AbsorbanceRatio * (float) Ct7 ) );
-  Term8 = (float) ( Term5 - ComputationData.CtS1 - log10( (float) ( Term6 / Term7 ) ) );
+  Term8 = (float) ( Term5 - CtS1 - log10( (float) ( Term6 / Term7 ) ) );
 
   /* Compute the total carbon */
   TotalDissolvedCarbon = pow( (float) 10, Term8 );
   /* Convert to micromoles */
   TotalDissolvedCarbon *= (float) 1000000;
+
+  return TotalDissolvedCarbon;
 }
 
 /*
@@ -63,7 +62,7 @@ void  ComputeSystemTotalCarbon( int Spectrometer )
 
   Computes the system pCO2.
 */
-void  ComputeSystempCO2( int Spectrometer )
+float  computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonAbsWave)
 {
   float   AbsorbanceRatio;
   float   pCO2pH;
@@ -74,7 +73,7 @@ void  ComputeSystempCO2( int Spectrometer )
   float   Term5;
 
   /* Compute the absorbance ratio */
-  AbsorbanceRatio = ComputeAbsorbanceRatio( Spectrometer );
+  AbsorbanceRatio = computeAbsorbanceRatio(absWaveCount,absorbance,nonAbsWave);
 
   /* Compute the equation terms */
   Term1 = (float) ( (float) 2 * (float) K0 * (float) K1 * (float) K2 );
@@ -85,7 +84,8 @@ void  ComputeSystempCO2( int Spectrometer )
   Term5 = (float) ( (float) K0 *(float) K1 * pow( (float) 10, pCO2pH ) );
 
   /* Compute the pCO2 */
-  pCO2 = (float) ( (float) ( ComputationData.pCO2S1 / (float) ( (float) ( Term1 * Term4 ) + Term5 ) ) + ComputationData.pCO2S2 );
+  return (float) ( (float) ( pCO2S1 / (float) ( (float) ( Term1 * Term4 ) + Term5 ) ) + pCO2S2 );
+  
 }
 
 /*
@@ -93,7 +93,7 @@ void  ComputeSystempCO2( int Spectrometer )
 
   Computes the system pH.
 */
-void  ComputeSystempH( int Spectrometer )
+float computeSystempH(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
 {
   float   AbsorbanceRatio;
   float   Temperature;
@@ -106,13 +106,13 @@ void  ComputeSystempH( int Spectrometer )
   float   Term6;
 
   /* Compute the absorbance ratio */
-  AbsorbanceRatio = ComputeAbsorbanceRatio( Spectrometer );
+  AbsorbanceRatio = computeAbsorbanceRatio(absWaveCount,absorbance,nonAbsWave);
 
   /* Get the temperature */
-  Temperature = ComputationData.Temperature;
+  Temperature = CTDReading->temperature;
 
   /* Get the salinity */
-  Salinity = CTDData.Salinity;
+  Salinity = computeSalinity(CTDReading->conductivity,CTDReading->temperature,CTDReading->pressure);
 
   /* Compute the equation terms */
   Term1 = (float) ( (float) ( (float) pHC1 * Salinity ) / Temperature );
@@ -123,7 +123,7 @@ void  ComputeSystempH( int Spectrometer )
   Term6 = log10( Term4 / Term5 );
 
   /* Compute the pH */
-  pH = (float) ( Term1 + Term2 - Term3 + Term6 );
+  return (float) ( Term1 + Term2 - Term3 + Term6 );
 }
 
 /*
@@ -131,26 +131,16 @@ void  ComputeSystempH( int Spectrometer )
 
   Computes the absorbance ratio for the spectrometer.
 */
-float   ComputeAbsorbanceRatio( int Spectrometer )
+float   computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorbance, float nonAbsWave)
 {
-  float   Lambda1Absorbance;
-  float   Lambda2Absorbance;
-  float   CorrectionAbsorbance;
-  float   AbsorbanceRatio;
+  float   absorbanceRatio = -1;
 
-  /* Compute the lambda 1 absorbance */
-  Lambda1Absorbance = ComputeAbsorbance( Spectrometer, AbsorbanceWavelength[0] );
-
-  /* Compute the lambda 2 absorbance */
-  Lambda2Absorbance = ComputeAbsorbance( Spectrometer, AbsorbanceWavelength[1] );
-
-  /* Compute the correction absorbance */
-  CorrectionAbsorbance = ComputeAbsorbance( Spectrometer, CorrectionWavelength );
-
-  /* Compute the absorbance ratio */
-  AbsorbanceRatio =
-     (float) ( ( Lambda2Absorbance - CorrectionAbsorbance ) / ( Lambda1Absorbance - CorrectionAbsorbance ) );
-
+  if(absorbingWaveCount > 2){
+      /* Compute the absorbance ratio */
+      absorbanceRatio = (float) ( (absorbance[1] - nonAbsWave) / (absorbance[0] - nonAbsWave ) );
+  } else {
+      syslog(LOG_DAEMON|LOG_ERR,"Too few wavelengths (%d) passed to computeAbsorbanceRatio function.",absorbingWaveCount);
+  }
   /* Return the absorbance ratio */
-  return( AbsorbanceRatio );
+  return( absorbanceRatio );
 }

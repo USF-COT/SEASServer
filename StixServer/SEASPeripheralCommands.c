@@ -219,6 +219,7 @@ void setHeaterTemp(unsigned char heaterID, float temperature){
     copyReverseBytes(data+1,(void*)&temperature,4);
     
     syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to: %f.",heaterID,temperature);
+    switchHeaterNode(TRUE);
     response = sendLONCommand(HTR,TMP,5,data);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d temperature set to: %f.",heaterID,temperature);
