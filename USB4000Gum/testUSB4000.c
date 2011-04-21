@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "USB4000Gum.h"
+#include "libUSB4000.h"
 
 #define SPECID 1
 

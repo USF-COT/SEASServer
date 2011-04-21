@@ -72,18 +72,18 @@ typedef struct SPECTROMETER{
 }spectrometer;
 
 // Device Connectivity
-spectrometer* openUSB4000(const char* serialNumber);
-BOOL isConnected(spectrometer* USB4000);
-STATUS closeUSB4000(spectrometer* USB4000);
+extern spectrometer* openUSB4000(const char* serialNumber);
+extern BOOL isConnected(spectrometer* USB4000);
+extern STATUS closeUSB4000(spectrometer* USB4000);
 
 // USB Commands
-STATUS initDevice(spectrometer* USB4000); // 0x01
-STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time); // 0x02
-STATUS setStrobe(spectrometer* USB4000, BOOL on); // 0x03
-STATUS setShutdownMode(spectrometer* USB4000, BOOL powerAll); // 0x04
-char* queryConfig(spectrometer* USB4000, char paramNumber); // 0x05
-STATUS writeConfig(spectrometer* USB4000, char paramNumber, char* writeASCII); // 0x06 writeASCII must be 16 bytes long
-STATUS setTriggerMode(spectrometer* USB4000, TRIGGER triggerMode); // 0x0A
+extern STATUS initDevice(spectrometer* USB4000); // 0x01
+extern STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time); // 0x02
+extern STATUS setStrobe(spectrometer* USB4000, BOOL on); // 0x03
+extern STATUS setShutdownMode(spectrometer* USB4000, BOOL powerAll); // 0x04
+extern char* queryConfig(spectrometer* USB4000, char paramNumber); // 0x05
+extern STATUS writeConfig(spectrometer* USB4000, char paramNumber, char* writeASCII); // 0x06 writeASCII must be 16 bytes long
+extern STATUS setTriggerMode(spectrometer* USB4000, TRIGGER triggerMode); // 0x0A
 
 // I2C Functions - Not Implemented
 /*
@@ -96,20 +96,20 @@ const char* SPIIO(spectrometer* USB4000,char numBytes, char writeBytes); // 0x62
 */
 
 // Read and Write Microcontroller Registers.  Very raw functions, RTFM.
-STATUS writeRegister(spectrometer* USB4000,char registerValue, char dataLSB, char dataMSB); // 0x6A
-STATUS readRegister(spectrometer* USB4000,char registerValue); // 0x6B
+extern STATUS writeRegister(spectrometer* USB4000,char registerValue, char dataLSB, char dataMSB); // 0x6A
+extern STATUS readRegister(spectrometer* USB4000,char registerValue); // 0x6B
 
 // Status Query Functions
-double readPCBTemp(spectrometer* USB4000); // 0x6C
-STATUS updateStatus(spectrometer* USB4000); // 0xFE
-void printStatus(spectrometer* USB4000);
+extern double readPCBTemp(spectrometer* USB4000); // 0x6C
+extern STATUS updateStatus(spectrometer* USB4000); // 0xFE
+extern void printStatus(spectrometer* USB4000);
 
 // Data Read and Calibration Functions
-STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
-void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
-void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
-specSample* copySample(specSample* source,unsigned short numPixels);
-specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
+extern STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
+extern void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+extern void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+extern specSample* copySample(specSample* source,unsigned short numPixels);
+extern specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
 
 #endif
 
