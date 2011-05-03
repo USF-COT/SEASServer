@@ -14,8 +14,8 @@
 #include <fcntl.h>
 #include "parseGUI.h"
 #include "GUIprotocol.h"
-#include "MethodParser.tab.h"
-#include "MethodNodesTable.h"
+#include "MethodParser/MethodParser.tab.h"
+#include "MethodParser/MethodNodesTable.h"
 #include "socketUtils.h"
 
 extern FILE* yyin;

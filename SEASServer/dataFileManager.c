@@ -7,7 +7,7 @@ void openDataFile(){
     char filePath[64];
 
     if(!currDataFile){
-        sprintf(filePath,"%sDATA%u.csv",DATAFILEPATH,time(NULL));        
+        sprintf(filePath,"%sDATA%u.csv",DATAFILEPATH,(unsigned int)time(NULL));        
         syslog(LOG_DAEMON|LOG_INFO,"Opening data file @: %s.",filePath);
         currDataFile = fopen(filePath,"w+");
         if(!currDataFile){

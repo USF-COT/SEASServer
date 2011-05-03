@@ -2,11 +2,16 @@
 # By: Michael Lindemuth
 
 # Build the Server
-SEASServer: MethodParser/MethodLexAna.lex.c MethodParser/MethodParser.tab.c
-	gcc -IMethodParser/ -lusb -lpthread -lm ./*.c MethodParser/MethodLexAna.lex.c MethodParser/MethodParser.tab.c
 
-MethodParser/MethodLexAna.lex.c: MethodParser/MethodParser.tab.c MethodParser/MethodLexAna.y
-	flex -o MethodParser/MethodLexAna.lex.c -i MethodParser/MethodLexAna.y
+SEASServer: libUSB4000 MethodParser 
+	cd SEASServer; \
+	gcc -I../USB4000Gum/include -L../USB4000Gum/lib -lUSB4000 -lusb -lm -lpthread -IMethodParser MethodParser/*.c *.c -o SEASServer
 
-MethodParser/MethodParser.tab.c: MethodParser/MethodParser.y
-	bison -d MethodParser/MethodParser.y
+MethodParser:
+	cd SEASServer/MethodParser; \
+	make; \
+
+libUSB4000:
+	cd USB4000Gum; \
+	make; \
+

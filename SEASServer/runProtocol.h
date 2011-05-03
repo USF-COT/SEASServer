@@ -19,7 +19,7 @@
 /* Run time message header byte */
 #define  RTH   0xF0
 
-#include "USB4000Gum.h"
+#include "libUSB4000.h"
 
 /* Run time message types */
 enum  RUN_TIME_MESSAGE_TYPES     {

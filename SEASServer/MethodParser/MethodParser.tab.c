@@ -74,13 +74,13 @@
     #include <string.h>
     #include <stdlib.h>
     #include <syslog.h>
-    #include "dataFileManager.h"
-    #include "configManager.h"
-    #include "SEASPeripheralCommands.h"
-    #include "USB4000Manager.h"
+    #include "../dataFileManager.h"
+    #include "../configManager.h"
+    #include "../SEASPeripheralCommands.h"
+    #include "../USB4000Manager.h"
     #include "MethodNodesTable.h"
-    #include "runProtocol.h"
-    #include "globalIncludes.h"
+    #include "../runProtocol.h"
+    #include "../globalIncludes.h"
     #define DEBUGPARSER 1
 
     extern int yylineno;

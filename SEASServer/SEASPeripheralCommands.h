@@ -14,7 +14,6 @@
 #include "LONprotocol.h"
 #include "LONDispatch.h"
 #include "parseGUI.h"
-#include "A2D-MCP3424.h"
 
 #define MAX_NUM_PUMPS 6
 #define MAX_NUM_PUMP_LON_NODES 3

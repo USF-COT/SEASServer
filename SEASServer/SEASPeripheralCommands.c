@@ -1,6 +1,5 @@
 #include "SEASPeripheralCommands.h"
 
-static a2dMCP3424* a2dChip = NULL;
 static periphStatuses_s status;
 static const uint16_t pumpLONGPIO[MAX_NUM_PUMP_LON_NODES] = {PUMP_A_GPIO,PUMP_B_GPIO,PUMP_C_GPIO};
 

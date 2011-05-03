@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include "usleep-drv.h"
 #include <fcntl.h>
 #include <syslog.h>
 #include <string.h>

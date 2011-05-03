@@ -10,7 +10,7 @@
 #define METHODNODESSTACK_H
 
 #include "MethodNodesTable.h" // Used for s_node struct and BOOL array
-#include "globalIncludes.h"
+#include "../globalIncludes.h"
 
 typedef struct stack
 {

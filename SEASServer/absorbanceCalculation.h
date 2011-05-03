@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "USB4000Gum.h"
+#include "libUSB4000.h"
 
 float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel);
 float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel);

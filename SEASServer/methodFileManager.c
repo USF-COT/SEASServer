@@ -65,7 +65,7 @@ void receiveMethodFile(int connection, char* command){
         methodFile = createMethodFile(filename);
         offset = strlen(filename+1);
     } else {
-        sprintf(defaultFilename,"%u.m",time(NULL));
+        sprintf(defaultFilename,"%u.m",(unsigned int)time(NULL));
         methodFile = createMethodFile(defaultFilename);
     }
 

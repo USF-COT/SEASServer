@@ -7,6 +7,7 @@
  * By: Michael Lindemuth
  */
 
+
 %option yylineno
 %option batch
 %option noyywrap

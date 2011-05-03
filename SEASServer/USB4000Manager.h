@@ -8,11 +8,11 @@
 #include <pthread.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
-#include "USB4000Gum.h"
+#include "libUSB4000.h"
 #include "config.h"
 #include "absorbanceCalculation.h"
 #include "GUIprotocol.h"
-#include "MethodNodesTable.h"
+#include "MethodParser/MethodNodesTable.h"
 #include "runProtocol.h"
 
 #ifndef _USB4000MANAGER_H

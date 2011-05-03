@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <signal.h>
-#include "globalIncludes.h"
-#include "runProtocol.h"
+#include "../globalIncludes.h"
+#include "../runProtocol.h"
 #include "MethodNodesStack.h"
 
 typedef enum type{COMMAND,CONTROL}e_type;

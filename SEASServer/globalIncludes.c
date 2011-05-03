@@ -1,19 +1,8 @@
 #include "globalIncludes.h"
 
 int milliSleep(unsigned int millisecondsToSleep){
-    int usleepDev;
-    int retVal = 1;
-    const char* usleepDevName = "/dev/usleep";
-
-    if((usleepDev = open(usleepDevName,O_RDWR)) < 0){
-        return -1;
-    }
-
-    if((ioctl(usleepDev, USLEEP_IOCTL_MDELAY, millisecondsToSleep)) != 0){
-        retVal = -1;
-    }
-    close(usleepDev);
-    return retVal;
+    usleep(millisecondsToSleep);
+    return 1;
 }
 
 char* byteArrayToString(unsigned char* bytes, unsigned int length){
@@ -45,10 +34,8 @@ void copyReverseBytes(void* dest, const void* src, unsigned int numBytes){
     free(bytes);
 }
 
-// Taken from: http://www.developer.com/open/article.php/631191
 void soundBeep(){
-    char beep[2] = {7,'\0'};
-    printf("%c",beep);
+    return;
 }
 
 
