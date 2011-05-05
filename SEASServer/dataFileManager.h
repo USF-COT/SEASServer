@@ -7,7 +7,7 @@
 #include <time.h>
 #include <syslog.h>
 
-#define DATAFILEPATH "/media/card/data/"
+#define DATAFILEPATH "/home/datauser/data/"
 
 // File Management Functions
 void openDataFile();

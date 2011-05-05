@@ -35,7 +35,7 @@
 #include "LONDispatch.h"
 #include "SEASPeripheralCommands.h"
 
-#define LONPORT "/dev/ttyS2"
+#define LONPORT "/dev/ttyS0"
 
 #define NUM_THREADS 10
 #define MAXBUF 512
@@ -56,7 +56,7 @@ int list_s = 0;
 
 void catch_term(int sig)
 {
-    syslog(LOG_DAEMON||LOG_INFO,"SIGTERM Caught.");
+    syslog(LOG_DAEMON|LOG_INFO,"SIGTERM Caught.");
     keep_going = 0;
     close(list_s);
     stopDispatch();
@@ -82,7 +82,7 @@ void* handleConnection(void* info){
 		snprintf(hexBuf,4,"%02X ",buffer[i]);
 		strncat(hexString,hexBuf,4);	
 	}
-        syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
+        syslog(LOG_DAEMON|LOG_INFO,"(Thread %i)Received(%i bytes): %s",((threadInfo*)info)->thread_bin_index,numBytesReceived,hexString);
 #endif
 
         parseGUI(*connection,buffer);
@@ -90,10 +90,10 @@ void* handleConnection(void* info){
     }
 
     if ( close(*connection) < 0 ) {
-        syslog(LOG_DAEMON||LOG_ERR,"(Thread %i)Error calling close() on connection socket. Daemon Terminated.",((threadInfo*)info)->thread_bin_index);
+        syslog(LOG_DAEMON|LOG_ERR,"(Thread %i)Error calling close() on connection socket. Daemon Terminated.",((threadInfo*)info)->thread_bin_index);
         exit(EXIT_FAILURE);
     }
-    syslog(LOG_DAEMON||LOG_INFO,"(Thread %i)Connected Socket Closed.",((threadInfo*)info)->thread_bin_index);
+    syslog(LOG_DAEMON|LOG_INFO,"(Thread %i)Connected Socket Closed.",((threadInfo*)info)->thread_bin_index);
     numClients--;
     thread_bin_available[((threadInfo*)info)->thread_bin_index] = AVAILABLE;
     free(info);
@@ -129,12 +129,12 @@ int main(){
   signal(SIGTERM, catch_term);
 
   /* Open Log File Here */
-  openlog("STIXSERVER",LOG_PID,LOG_DAEMON);
-  syslog(LOG_DAEMON||LOG_INFO,"Daemon Started.");
+  openlog("SEASSERVER",LOG_PID,LOG_DAEMON);
+  syslog(LOG_DAEMON|LOG_INFO,"Daemon Started.");
 
   /* Open Config File Here */
   if(!readConfig()){
-    syslog(LOG_DAEMON||LOG_ERR,"Unable to Read Configuration File.  Daemon Terminated.\n");
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to Read Configuration File.  Daemon Terminated.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -144,13 +144,13 @@ int main(){
   /* Create a new SID for the child process */
   sid = setsid();
   if(sid < 0){
-    syslog(LOG_DAEMON||LOG_ERR,"Unable to create a new SID for child process. Daemon Terminated.");
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to create a new SID for child process. Daemon Terminated.");
     exit(EXIT_FAILURE);
   }
 
   /* Change the current working directory */
   if((chdir("/")) < 0){
-    syslog(LOG_DAEMON||LOG_ERR,"Unable to switch working directory. Daemon Terminated.");
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to switch working directory. Daemon Terminated.");
     exit(EXIT_FAILURE);
   }
 
@@ -160,7 +160,7 @@ int main(){
 
   /* Setup TCP/IP Socket */
   if((list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-      syslog(LOG_DAEMON||LOG_ERR,"Unable to create socket. Daemon Terminated.");
+      syslog(LOG_DAEMON|LOG_ERR,"Unable to create socket. Daemon Terminated.");
       exit(EXIT_FAILURE);
   }
 
@@ -170,28 +170,28 @@ int main(){
   servaddr.sin_port = htons(port);
 
 #ifdef DEBUG
-  syslog(LOG_DAEMON||LOG_INFO,"Opening Spectrometers.");
+  syslog(LOG_DAEMON|LOG_INFO,"Opening Spectrometers.");
 #endif
   // Connect the USB Spectrometers
   char *serialNumbers[NUM_SPECS] = {getSerialNumber(0),getSerialNumber(1)};
   if(connectSpectrometers(serialNumbers) == CONNECT_ERR)
   {
-      syslog(LOG_DAEMON||LOG_ERR,"Spectrometers could not be opened.  Daemon Exiting");
+      syslog(LOG_DAEMON|LOG_ERR,"Spectrometers could not be opened.  Daemon Exiting");
       exit(EXIT_FAILURE);
   }
 #ifdef DEBUG
-  syslog(LOG_DAEMON||LOG_INFO,"Spectrometers Opened.");
+  syslog(LOG_DAEMON|LOG_INFO,"Spectrometers Opened.");
 #endif
 
   applyConfig();
 
   // Start LON Dispatch
-  syslog(LOG_DAEMON||LOG_INFO,"Starting LON Connection.");
+  syslog(LOG_DAEMON|LOG_INFO,"Starting LON Connection.");
   if(startDispatch(LONPORT) == -1){
-      syslog(LOG_DAEMON||LOG_ERR,"LON Not Connected!  Check serial port.");
+      syslog(LOG_DAEMON|LOG_ERR,"LON Not Connected!  Check serial port.");
       exit(EXIT_FAILURE);
   } else {
-    syslog(LOG_DAEMON||LOG_INFO,"LON Connection Started.");
+    syslog(LOG_DAEMON|LOG_INFO,"LON Connection Started.");
   }
 
   // Init Power Management GPIOs (See SEASPeriperalCommands.c)
@@ -201,12 +201,12 @@ int main(){
 	listening socket, and call listen()  */
 
   if ( bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0 ) {
-    syslog(LOG_DAEMON||LOG_ERR,"Unable to bind socket. Daemon Terminated.");
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to bind socket. Daemon Terminated.");
     exit(EXIT_FAILURE);
   }
 
   if ( listen(list_s, NUM_THREADS) < 0 ) {
-    syslog(LOG_DAEMON||LOG_ERR,"Unable to listen on socket. Daemon Terminated.");
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to listen on socket. Daemon Terminated.");
     exit(EXIT_FAILURE);
   }
 
@@ -214,11 +214,11 @@ int main(){
       thread_bin_available[i] = AVAILABLE;
 
   while(keep_going){
-    syslog(LOG_DAEMON||LOG_INFO,"Listening for connection on port %i", port);
+    syslog(LOG_DAEMON|LOG_INFO,"Listening for connection on port %i", port);
     /* Wait for TCP/IP Connection */
     conn_s = accept(list_s, NULL, NULL);
     if ( conn_s < 0 ) {
-        syslog(LOG_DAEMON||LOG_ERR,"Unable to call accept() on socket.");
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to call accept() on socket.");
         break;
     }
 
@@ -226,7 +226,7 @@ int main(){
     for(i=0; i < NUM_THREADS; i++){
         if(thread_bin_available[i]){
             thread_bin_available[i] = UNAVAILABLE;
-            syslog(LOG_DAEMON||LOG_INFO,"Handling new connection on port %i",port);
+            syslog(LOG_DAEMON|LOG_INFO,"Handling new connection on port %i",port);
             numClients++;
             info = malloc(sizeof(threadInfo));
             info->socket_connection = conn_s;
@@ -237,13 +237,13 @@ int main(){
     }
 
     if(i > NUM_THREADS){
-        syslog(LOG_DAEMON||LOG_ERR,"Unable to create thread to handle connection.  Continuing...");
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to create thread to handle connection.  Continuing...");
     }
     
   }
   
   disconnectSpectrometers();
-  syslog(LOG_DAEMON||LOG_INFO,"Daemon Exited Politely.");
+  syslog(LOG_DAEMON|LOG_INFO,"Daemon Exited Politely.");
   exit(EXIT_SUCCESS);
 
 }

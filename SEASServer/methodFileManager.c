@@ -1,7 +1,7 @@
 #include "methodFileManager.h"
 
 #define MAXMETHODPATHLENGTH 512
-#define STORAGEDIRECTORY "/media/card/methods/"
+#define STORAGEDIRECTORY "/home/datauser/methods"
 #define ACTIVESCRIPTCONFIGFILE ".active.config"
 #define MAXMETHRECVBUF 512
 

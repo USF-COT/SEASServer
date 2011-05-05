@@ -1,6 +1,6 @@
 #include "config.h"
 
-#define CONFIGPATH "/media/card/StixServerConfig.txt"
+#define CONFIGPATH "/etc/SEASServer/config.txt"
 #define MAXCONFIGLINE 128
 
 static pthread_mutex_t writeConfigMutex = PTHREAD_MUTEX_INITIALIZER;
