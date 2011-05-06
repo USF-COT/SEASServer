@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <syslog.h>
+#include "sqlite3.h"
 
 #define DATAFILEPATH "/home/datauser/data/"
 

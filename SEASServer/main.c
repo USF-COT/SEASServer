@@ -123,7 +123,7 @@ int main(){
 
   umask(0);
 
-  printf("Daemon started.  Writing all further notices to daemon log: /var/log/messages\n");
+  printf("Daemon started.  Writing all further notices to daemon log: /var/log/daemon.log\n");
 
   // Enable Signal Handler
   signal(SIGTERM, catch_term);

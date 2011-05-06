@@ -1,18 +1,26 @@
 #include "dataFileManager.h"
 
-static FILE* currDataFile=NULL;
+static sqlite3* db = NULL;
+static pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
+
+void applyDBSchema(sqlite3* db){
+    // TODO: Create schema statements here
+}
 
 // File Management Functions
 void openDataFile(){
-    char filePath[64];
+    char filePath[128];
 
-    if(!currDataFile){
-        sprintf(filePath,"%sDATA%u.csv",DATAFILEPATH,(unsigned int)time(NULL));        
+    if(!db){
+        pthread_mutex_lock(&dataMutex);
+        sprintf(filePath,"%s%u.db",DATAFILEPATH,(unsigned int)time(NULL));        
         syslog(LOG_DAEMON|LOG_INFO,"Opening data file @: %s.",filePath);
-        currDataFile = fopen(filePath,"w+");
-        if(!currDataFile){
+        if(sqlite3_open(filePath,&db) != SQLITE_OK){
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to open data file @: %s.",filePath);
+        } else {
+            applyDBSchema(db);
         }
+        pthread_mutex_unlock(&dataMutex);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Tried to open a data file when one is already open.");
     }

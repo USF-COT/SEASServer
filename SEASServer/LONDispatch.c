@@ -44,12 +44,12 @@ int connect(char* port){
             // 1 Stop Bit
             settings.c_cflag &= ~CSTOPB;
             // Read returns when 1 byte is ready
-            settings.c_cc[VMIN] = 1;
-            settings.c_cc[VTIME] = 0;
+            //settings.c_cc[VMIN] = 1;
+            //settings.c_cc[VTIME] = 0;
             // Commit settings to open port
             if(tcsetattr(fd,TCSAFLUSH,&settings) == 0){
                 tcgetattr(fd,&settings);
-                syslog(LOG_DAEMON|LOG_INFO,"VMIN=%d, VTIME=%d.",settings.c_cc[VMIN],settings.c_cc[VTIME]);
+                //syslog(LOG_DAEMON|LOG_INFO,"VMIN=%d, VTIME=%d.",settings.c_cc[VMIN],settings.c_cc[VTIME]);
                 return fd;
             }
         }
