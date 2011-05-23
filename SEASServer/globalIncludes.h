@@ -19,7 +19,6 @@
 typedef enum bool{FALSE=0,TRUE=1}BOOL;
 #endif
 
-int milliSleep(unsigned int millisecondsToSleep);
 char* byteArrayToString(unsigned char* bytes, unsigned int length);
 void copyReverseBytes(void* dest, const void* src, unsigned int numBytes);
 void soundBeep();

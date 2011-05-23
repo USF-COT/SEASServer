@@ -24,6 +24,41 @@ void applyDBSchema(sqlite3* db){
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full_Spectrums Table Query Failed: %s", errMsg);
     }
+
+    query = "CREATE INDEX IF NOT EXISTS main.conf_ana ON configs (analyte_name);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Analyte Name Index Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.conc_depth ON concentrations (depth);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Depth Index Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.conc_temp ON concentrations (temperature);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Temperature Index Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.conc_sal ON concentrations (salinity);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Salinity Index Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.fs_depth ON full_spectrums (depth);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Depth Index Query Failed: %s",errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.fs_temp ON full_spectrums (temperature);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Temperature Index Query Failed: %s",errMsg);
+    }
+
+    query = "CREATE INDEX IF NOT EXISTS main.fs_sal ON full_spectrums (salinity);";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Salinity Index Query Failed: %s",errMsg);
+    }
 }
 
 // File Management Functions
@@ -58,8 +93,15 @@ void closeDataFile(){
 
 // Write Functions
 void writeConcData(){
+    time_t t;
+    float* heatTemp;
+    CTDreadings_s* ctd;    
+    float heaterTemp;
+
     if(db){
-        // Write Concentration Data Here
+        // Get data for row
+        t = time(NULL);
+        
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to write concentration data because no data file is open.");
     }
@@ -75,18 +117,18 @@ void writeFullSpec(){
 
 // Method Wrapper Functions
 void methodOpenDataFile(unsigned long argc, void* argv){
-
+    openDataFile();
 }
 
 void methodCloseDataFile(unsigned long argc, void* argv){
-
+    closeDataFile();
 }
 
 void methodWriteConcData(unsigned long argc, void* argv){
-
+    writeConcData();
 }
 
 void methodWriteFullSpec(unsigned long argc, void* argv){
-
+    writeFullSpec();
 }
 

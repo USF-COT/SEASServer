@@ -1,10 +1,5 @@
 #include "globalIncludes.h"
 
-int milliSleep(unsigned int millisecondsToSleep){
-    usleep(millisecondsToSleep);
-    return 1;
-}
-
 char* byteArrayToString(unsigned char* bytes, unsigned int length){
     int i;
     char byteValue[5];

@@ -8,6 +8,7 @@
 #include <syslog.h>
 #include "pthread.h"
 #include "sqlite3.h"
+#include "SEASPeripheralCommands.h"
 
 #define DATAFILEPATH "/home/datauser/data/"
 

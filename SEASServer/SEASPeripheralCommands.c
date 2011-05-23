@@ -360,7 +360,7 @@ void receiveSetPumpPercent(int connection, char* command){
 
     if(command[0] == PMW){
         pumpID = command[1];
-        percent = (command[2] << 8) + command[3];
+        percent = (command[3] << 8) + command[2]; // Received in little endian
         percent = percent * 10;
         syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d Power to: %d",pumpID,percent);
         setPumpPercent(pumpID,percent);

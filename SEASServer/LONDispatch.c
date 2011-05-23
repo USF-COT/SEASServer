@@ -44,10 +44,10 @@ int connect(char* port){
             // 1 Stop Bit
             settings.c_cflag &= ~CSTOPB;
             // Read returns when 1 byte is ready
-            //settings.c_cc[VMIN] = 1;
-            //settings.c_cc[VTIME] = 0;
+            settings.c_cc[VMIN] = 1;
+            settings.c_cc[VTIME] = 0;
             // Commit settings to open port
-            if(tcsetattr(fd,TCSAFLUSH,&settings) == 0){
+            if(tcsetattr(fd,TCSANOW,&settings) == 0){
                 tcgetattr(fd,&settings);
                 //syslog(LOG_DAEMON|LOG_INFO,"VMIN=%d, VTIME=%d.",settings.c_cc[VMIN],settings.c_cc[VTIME]);
                 return fd;
@@ -96,7 +96,7 @@ short readByte(unsigned char* buffer){
     bytesRead = read(portID,buffer,1);
 
     while(bytesRead <= 0 && tries < MAX_TRIES){
-        milliSleep(100);
+        usleep(250);
         bytesRead = read(portID,buffer,1);
         tries++;
     }
@@ -303,6 +303,8 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     free(commBuffer);
     commBuffer = readLONResponse();
     pthread_mutex_unlock(&LONportMutex);
+
+    usleep(200);
 
     response = createLONResponse(commBuffer);
     free(commBuffer);
