@@ -6,40 +6,59 @@ static const uint16_t pumpLONGPIO[MAX_NUM_PUMP_LON_NODES] = {PUMP_A_GPIO,PUMP_B_
 // Power Management Mutex
 static pthread_mutex_t periphPMMutex = PTHREAD_MUTEX_INITIALIZER;
 
+void setupGPIO(uint16_t GPIO){
+    char sysCmd[128];
+
+    sysCmd[0] = '\0';
+    sprintf(sysCmd,GPIO_EXP_FMT,GPIO);
+    system(sysCmd);
+
+    sysCmd[0] = '\0';
+    sprintf(sysCmd,GPIO_OUT_FMT,GPIO);
+    system(sysCmd);
+}
+
 void switchGPIO(BOOL powerOn, uint16_t GPIO){
     char sysCmd[128];
-    char* format = powerOn ? GPIO_SET_FMT : GPIO_CLEAR_FMT;
     
     sysCmd[0] = '\0';
-    sprintf(sysCmd,format,GPIO);
+    sprintf(sysCmd,GPIO_VAL_FMT,!powerOn,GPIO);
     system(sysCmd);
 }
 
 // Called in main.c to initialize the GPIO's to their default startup state
 void initPeripherals(){
-    int i;
+    int i,j;
 
     pthread_mutex_lock(&periphPMMutex);
     // CTD On
     status.CTDStatus = TRUE;
+    setupGPIO(CTD_NODE_GPIO);
     switchGPIO(status.CTDStatus,CTD_NODE_GPIO);
 
     // LON Gateway On
     status.LONHead = TRUE;
+    setupGPIO(LON_INT_GPIO);
     switchGPIO(status.LONHead,LON_INT_GPIO);
 
     // Pumps Off
     for(i=0; i < MAX_NUM_PUMP_LON_NODES; i++){
-        status.pumpStatus[NUM_PUMPS_PER_LON*i] = FALSE;
-        status.pumpStatus[NUM_PUMPS_PER_LON*i+1] = FALSE;
+        for(j=0; j < NUM_PUMPS_PER_LON; j++){
+            status.pumpStatus[NUM_PUMPS_PER_LON*i+j] = FALSE;
+            status.pumpPercents[NUM_PUMPS_PER_LON*i+j] = 0;
+        }
+        setupGPIO(pumpLONGPIO[i]);
         switchGPIO(FALSE,pumpLONGPIO[i]);
     }
 
     // Heater Off
     status.heaterStatus = FALSE;
+    status.heaterSetTemp = 0;
+    setupGPIO(HEAT_GPIO);
     switchGPIO(status.heaterStatus,HEAT_GPIO);
 
     // Spare Off
+    setupGPIO(SPARE_GPIO);
     switchGPIO(FALSE,SPARE_GPIO);
     pthread_mutex_unlock(&periphPMMutex);
 }
@@ -49,7 +68,7 @@ BOOL getPumpLONState(unsigned char pumpLONNode){
     BOOL LONState = FALSE;
 
     if(pumpLONNode < MAX_NUM_PUMP_LON_NODES){
-        for(i=pumpLONNode*NUM_PUMPS_PER_LON; i < pumpLONNode+NUM_PUMPS_PER_LON; i++){
+        for(i=pumpLONNode*NUM_PUMPS_PER_LON; i <= pumpLONNode*NUM_PUMPS_PER_LON+1; i++){
             LONState |= status.pumpStatus[i];
         }
     } else {
@@ -60,16 +79,20 @@ BOOL getPumpLONState(unsigned char pumpLONNode){
 
 // LON Node Switch Commands
 void switchPumpNode(unsigned char pumpID,BOOL powerOn){
-    unsigned char pumpLONNode = (unsigned char)pumpID/NUM_PUMPS_PER_LON;
+    unsigned char pumpLONNode;
+
     int i;
     BOOL currLONState = FALSE;
     BOOL nextLONState = FALSE;
     BOOL switchedOn = FALSE;
 
+    pumpID = pumpID - 1; // Decrement 1 based index
+    pumpLONNode = (unsigned char)floor(pumpID/NUM_PUMPS_PER_LON);
+
     if(pumpID < MAX_NUM_PUMPS && pumpLONNode < MAX_NUM_PUMP_LON_NODES){
         pthread_mutex_lock(&periphPMMutex);
         currLONState = getPumpLONState(pumpLONNode);
-        status.pumpStatus[pumpID] == powerOn;
+        status.pumpStatus[pumpID] = powerOn;
         nextLONState = getPumpLONState(pumpLONNode);
 
         if(currLONState == FALSE && nextLONState == TRUE){
@@ -82,7 +105,7 @@ void switchPumpNode(unsigned char pumpID,BOOL powerOn){
         }
         pthread_mutex_unlock(&periphPMMutex);
         
-        if(switchedOn) sleep(2);  // Done outside the mutex so that it is not held during sleep.
+        if(switchedOn) sleep(1);  // Done outside the mutex so that it is not held during sleep.
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Pump ID Out of Range.  Calculated pumpLONNode=%d",pumpLONNode);
     }
@@ -109,15 +132,21 @@ void pumpOn(unsigned char pumpID){
     LONresponse_s* response;
     unsigned char data[2] = {pumpID,ENA};
 
-    syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
-    //switchPumpNode(pumpID,TRUE);
-    response = sendLONCommand(PMP,PWR,2,data);
-    if(response->deviceID == ACK){
-        syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d enabled.  LON sent ACK.",pumpID);
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR, "ERROR: Pump %d not enabled.  LON sent NAK.",pumpID);
+    if(pumpID < MAX_NUM_PUMPS){
+        syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
+        switchPumpNode(pumpID,TRUE);
+
+        setPumpPercent(pumpID,status.pumpPercents[pumpID]);
+
+        // Send the LON Node the command to turn this pump on
+        response = sendLONCommand(PMP,PWR,2,data);
+        if(response->deviceID == ACK){
+            syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d enabled.  LON sent ACK.",pumpID);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR, "ERROR: Pump %d not enabled.  LON sent NAK.",pumpID);
+        }
+        freeLONResponse(response);
     }
-    freeLONResponse(response);
 }
 void pumpOff(unsigned char pumpID){
     LONresponse_s* response;
@@ -125,7 +154,7 @@ void pumpOff(unsigned char pumpID){
 
     syslog(LOG_DAEMON|LOG_INFO,"Disabling pump %d.",pumpID);
     response = sendLONCommand(PMP,PWR,2,data);
-    //switchPumpNode(pumpID,FALSE);
+    switchPumpNode(pumpID,FALSE);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d disabled.  LON sent ACK.",pumpID);
     } else {
@@ -134,22 +163,33 @@ void pumpOff(unsigned char pumpID){
     freeLONResponse(response);
 }
 
-void setPumpPercent(unsigned char pumpID,unsigned int percent){
+void setPumpPercent(unsigned char pumpID, uint16_t percent){
     LONresponse_s* response;
     unsigned char data[3];
 
-    data[0] = pumpID;
-    data[1] = (unsigned char)((percent & 0xFF00) >> 8);
-    data[2] = (unsigned char)(percent & 0xFF);
+    BOOL isOn = getPumpLONState((unsigned char)pumpID/NUM_PUMPS_PER_LON);
 
-    syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d percent to: %d/1000.",pumpID,percent);
-    response = sendLONCommand(PMP,PWL,3,data);
-    if(response->deviceID == ACK){
-        syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d percent set to: %d/1000.",pumpID,percent);
+    if(pumpID < MAX_NUM_PUMPS && percent <= MAX_PUMP_PERCENT){
+        status.pumpPercents[pumpID] = percent;
+
+        if(isOn){
+            data[0] = pumpID;
+            data[1] = (unsigned char)((percent & 0xFF00) >> 8);
+            data[2] = (unsigned char)(percent & 0xFF);
+
+            syslog(LOG_DAEMON|LOG_INFO,"Setting pump %d percent to: %d/%d.",pumpID,percent,MAX_PUMP_PERCENT);
+
+            response = sendLONCommand(PMP,PWL,3,data);
+            if(response->deviceID == ACK){
+                syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d percent set to: %d/%d.",pumpID,percent,MAX_PUMP_PERCENT);
+            } else {
+                syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d percent NOT set to: %d/%d.",pumpID,percent,MAX_PUMP_PERCENT);
+            }
+            freeLONResponse(response);
+        }
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d percent NOT set to: %d/1000.",pumpID,percent);
+        syslog(LOG_DAEMON|LOG_ERR,"Invalid Pump ID (%d) or out of range (%d) percent (%d) passed to setPumpPercent.",pumpID,MAX_PUMP_PERCENT,percent);
     }
-    freeLONResponse(response);
 }
 
 void lampOn(){
@@ -185,7 +225,8 @@ void heaterOn(unsigned char heaterID){
     unsigned char data[2] = {heaterID,ENA};
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning on Heater %d.",heaterID);
-    //switchHeaterNode(TRUE);
+    switchHeaterNode(TRUE);
+    setHeaterTemp(heaterID,status.heaterSetTemp);
     response = sendLONCommand(HTR,PWR,2,data);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned on.",heaterID); 
@@ -201,7 +242,7 @@ void heaterOff(unsigned char heaterID){
 
     syslog(LOG_DAEMON|LOG_INFO,"Turning off Heater %d.",heaterID);
     response = sendLONCommand(HTR,PWR,2,data);
-    //switchHeaterNode(FALSE);
+    switchHeaterNode(FALSE);
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d turned off.",heaterID);
     } else {
@@ -214,18 +255,22 @@ void setHeaterTemp(unsigned char heaterID, float temperature){
     LONresponse_s* response;
     unsigned char data[5];
 
-    data[0] = heaterID;
-    copyReverseBytes(data+1,(void*)&temperature,4);
+    status.heaterSetTemp = temperature;
     
-    syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to: %f.",heaterID,temperature);
-    switchHeaterNode(TRUE);
-    response = sendLONCommand(HTR,TMP,5,data);
-    if(response->deviceID == ACK){
-        syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d temperature set to: %f.",heaterID,temperature);
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d temperature NOT set to: %f.",heaterID,temperature);
+    if(status.heaterStatus){
+        data[0] = heaterID;
+        copyReverseBytes(data+1,(void*)&temperature,4);
+    
+        syslog(LOG_DAEMON|LOG_INFO,"Setting heater %d temperature to: %f.",heaterID,temperature);
+        switchHeaterNode(TRUE);
+        response = sendLONCommand(HTR,TMP,5,data);
+        if(response->deviceID == ACK){
+            syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Heater %d temperature set to: %f.",heaterID,temperature);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Heater %d temperature NOT set to: %f.",heaterID,temperature);
+        }
+        freeLONResponse(response);
     }
-    freeLONResponse(response);
 }
 
 // Status Functions
@@ -302,22 +347,6 @@ unsigned char getLampStatus(){
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for status of lamp.");
     }
     return status;
-}
-
-float getBatteryVoltage(){
-    float voltage = 0;
-    LONresponse_s* response = sendLONCommand(BAT,BVR,0,NULL);
-    if(response){
-        if(response->data && response->deviceID == BAT){
-            copyReverseBytes(&voltage,response->data,4);
-        } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for battery voltage.");
-        }
-        freeLONResponse(response);
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for battery voltage.");
-    }
-    return voltage;
 }
 
 CTDreadings_s* getCTDValues(){
@@ -475,22 +504,6 @@ void receiveGetLampStatus(int connection, char* command){
         send(connection,sendBuffer,2,0);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveGetLampStatus method.");
-    }
-}
-
-void receiveGetBatteryVoltage(int connection, char* command){
-    unsigned char sendBuffer[5];
-    float batteryVoltage;
-
-    syslog(LOG_DAEMON|LOG_INFO,"Getting battery voltage.");
-    if(command[0] == RBS){
-        batteryVoltage = getBatteryVoltage();
-        syslog(LOG_DAEMON|LOG_INFO,"Retrieved battery voltage as: %f.",batteryVoltage);
-        sendBuffer[0] = RBS;
-        memcpy(sendBuffer+1,&batteryVoltage,4);
-        send(connection,sendBuffer,5,0);
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command sent to receiveBatteryVoltage method.");
     }
 }
 

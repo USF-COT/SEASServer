@@ -14,6 +14,7 @@
 #include "methodFileManager.h"
 #include "configManager.h"
 #include "SEASPeripheralCommands.h"
+#include "overoADC.h"
 
 #ifndef _PARSEGUI_H
 #define	_PARSEGUI_H

@@ -195,7 +195,7 @@ int main(){
   }
 
   // Init Power Management GPIOs (See SEASPeriperalCommands.c)
-  //initPeripherals();
+  initPeripherals();
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */

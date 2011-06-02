@@ -10,6 +10,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <math.h>
 #include "GUIprotocol.h"
 #include "LONprotocol.h"
 #include "LONDispatch.h"
@@ -18,18 +19,19 @@
 #define MAX_NUM_PUMPS 6
 #define MAX_NUM_PUMP_LON_NODES 3
 #define NUM_PUMPS_PER_LON 2
-#define MAXPUMPFREQHZ 1200
+#define MAX_PUMP_PERCENT 1000
 
-#define GPIO_SET_FMT "echo \"GPIO out set\" > /proc/gpio/GPIO%d"
-#define GPIO_CLEAR_FMT "echo \"GPIO out clear\" > /proc/gpio/GPIO%d"
+#define GPIO_EXP_FMT "echo %d > /sys/class/gpio/export"
+#define GPIO_OUT_FMT "echo out > /sys/class/gpio/gpio%d/direction"
+#define GPIO_VAL_FMT "echo %d > /sys/class/gpio/gpio%d/value"
 
 #define CTD_NODE_GPIO 186 
 #define LON_INT_GPIO 170
 #define PUMP_A_GPIO 146
 #define PUMP_B_GPIO 147
 #define PUMP_C_GPIO 144
-#define HEAT_GPIO 28
-#define SPARE_GPIO 18
+#define HEAT_GPIO 145
+#define SPARE_GPIO 10
 
 typedef enum PMPERIPH{PMCTD,PMLONHEAD,PMPUMP,PMHEAT}pmPeriph;
 
@@ -57,7 +59,9 @@ typedef struct PERIPHSTATUSES{
     BOOL CTDStatus;
     BOOL LONHead;
     BOOL pumpStatus[MAX_NUM_PUMPS];
+    uint16_t pumpPercents[MAX_NUM_PUMPS];
     BOOL heaterStatus;
+    float heaterSetTemp;
 }periphStatuses_s;
 
 void initPeripherals();
@@ -65,7 +69,7 @@ void initPeripherals();
 // Base Functions
 void pumpOn(unsigned char pumpID);
 void pumpOff(unsigned char pumpID);
-void setPumpPercent(unsigned char pumpID, unsigned int percent);
+void setPumpPercent(unsigned char pumpID, uint16_t percent);
 void lampOn();
 void lampOff();
 void heaterOn(unsigned char heaterID);
@@ -79,7 +83,6 @@ pumpStatus_s* getPumpStatus(unsigned char pumpID);
 float getHeaterCurrentTemperature(unsigned char heaterID);
 heaterStatus_s* getHeaterStatus(unsigned char heaterID);
 unsigned char getLampStatus();
-float getBatteryVoltage();
 CTDreadings_s* getCTDValues();
 
 // GUI Protocol Wrappers
@@ -92,7 +95,6 @@ void receiveSetHeaterTemp(int connection, char* command);
 void receiveGetPumpStatus(int connection, char* command);
 void receiveGetHeaterStatus(int connection, char* command);
 void receiveGetLampStatus(int connection, char* command);
-void receiveGetBatteryVoltage(int connection, char* command);
 void receiveGetCTDValues(int connection, char* command);
 void receiveGetTemperatureValue(int connection, char* command);
 

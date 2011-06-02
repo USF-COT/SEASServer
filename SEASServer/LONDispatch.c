@@ -96,7 +96,7 @@ short readByte(unsigned char* buffer){
     bytesRead = read(portID,buffer,1);
 
     while(bytesRead <= 0 && tries < MAX_TRIES){
-        usleep(250);
+        usleep(30000);
         bytesRead = read(portID,buffer,1);
         tries++;
     }
