@@ -102,12 +102,11 @@ float getChannelVoltage(int channel){
     }
 }
 
-#define BATT_MAX 30 
 float getBatteryVoltage(){
     float rawVoltage = getChannelVoltage(3);
 
     if(rawVoltage != -1){
-        return (rawVoltage * BATT_MAX)/2.5;
+        return rawVoltage * 12;
     } else {
         return -1;
     }

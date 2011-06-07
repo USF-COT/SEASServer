@@ -81,6 +81,49 @@ void sendCalCos(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Retrieved calibration coefficients. Returning.");
 }
 
+// Utility methods
+specSample* getRefSample(char specNumber){
+    specSample* refSample = NULL;
+
+    syslog(LOG_DAEMON|LOG_INFO,"Reading ref sample for spectrometer %d. Number of pixels = %d",specNumber,spectrometers[specNumber]->status->numPixels);
+
+    if(specNumber < NUM_SPECS){
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        if(spectrometers[specNumber]->refSample){
+            refSample = copySample(spectrometers[specNumber]->refSample,spectrometers[specNumber]->status->numPixels);
+        }
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    }
+
+    return refSample;
+}
+
+specSample* getLastSample(char specNumber){
+    specSample* lastSample = NULL;
+
+    if(specNumber < NUM_SPECS){
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        if(spectrometers[specNumber]->sample){
+            lastSample = copySample(spectrometers[specNumber]->sample,spectrometers[specNumber]->status->numPixels);
+        }
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    }
+
+    return lastSample;
+}
+
+void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
+    int i;
+    if(sample){
+        for(i=0; i < numPixels; i++){
+            dest[i] = ((float*)sample->pixels)[i];
+        }
+        deallocateSample(sample);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Cannot move sample to floats, sample is NULL.");
+    }
+}
+
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
     pthread_mutex_lock(&specsMutex[specNumber]);
     if(specNumber == 0 || specNumber == 1)
@@ -151,6 +194,30 @@ unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavele
     }
     return pixel;
 }       
+
+float* getRawCounts(unsigned char specNumber){
+    uint8_t i;
+    float* countValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    unsigned short* absPixels = getAbsorbancePixels(specNumber);
+    unsigned short nonAbsPixel = getNonAbsorbancePixel(specNumber);
+    specSample* sample = getLastSample(specNumber); 
+
+    if(!countValues){
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for counts array.");         
+    }
+    
+    if(specNumber < NUM_SPECS && absPixels && sample){
+        for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++){
+            countValues[i] = sample->pixels[absPixels[i]];
+        }
+        countValues[i] = sample->pixels[nonAbsPixel];
+
+        // housekeeping!
+        free(absPixels);
+        deallocateSample(sample);
+    }
+    return countValues;
+}
 
 float* getAbsorbance(unsigned char specNumber)
 {
@@ -352,48 +419,6 @@ void receiveRecordSpecSample(int connection, char* command){
 }
 
 // Run Protocol Methods
-specSample* getRefSample(char specNumber){
-    specSample* refSample = NULL;
-
-    syslog(LOG_DAEMON|LOG_INFO,"Reading ref sample for spectrometer %d. Number of pixels = %d",specNumber,spectrometers[specNumber]->status->numPixels);
-
-    if(specNumber < NUM_SPECS){
-        pthread_mutex_lock(&specsMutex[specNumber]);
-        if(spectrometers[specNumber]->refSample){
-            refSample = copySample(spectrometers[specNumber]->refSample,spectrometers[specNumber]->status->numPixels);
-        }
-        pthread_mutex_unlock(&specsMutex[specNumber]);
-    }
-
-    return refSample;
-}
-
-specSample* getLastSample(char specNumber){
-    specSample* lastSample = NULL;
-
-    if(specNumber < NUM_SPECS){
-        pthread_mutex_lock(&specsMutex[specNumber]);
-        if(spectrometers[specNumber]->sample){
-            lastSample = copySample(spectrometers[specNumber]->sample,spectrometers[specNumber]->status->numPixels);
-        }
-        pthread_mutex_unlock(&specsMutex[specNumber]);
-    }
-
-    return lastSample;
-}
-
-void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
-    int i;
-    if(sample){
-        for(i=0; i < numPixels; i++){
-            dest[i] = ((float*)sample->pixels)[i];
-        } 
-        deallocateSample(sample);
-    } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Cannot move sample to floats, sample is NULL.");
-    }
-}
-
 void readRefRunResponse(int connection, s_node* node){
     int i;
     unsigned short numPixels = 0; // for readability

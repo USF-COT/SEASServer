@@ -9,6 +9,7 @@
 #include "pthread.h"
 #include "sqlite3.h"
 #include "SEASPeripheralCommands.h"
+#include "USB4000Manager.h"
 
 #define DATAFILEPATH "/home/datauser/data/"
 
@@ -17,6 +18,7 @@ void openDataFile();
 void closeDataFile();
 
 // Write Functions
+void writeConfig();
 void writeConcData();
 void writeFullSpec();
 

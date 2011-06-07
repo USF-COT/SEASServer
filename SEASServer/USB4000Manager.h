@@ -36,6 +36,7 @@ void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned 
 
 // Get Methods
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+float* getRawCounts(unsigned char specNumber);
 float* getAbsorbance(unsigned char specNumber);
 float* getCorrectionAbsorbance(unsigned char origSpecNumber, unsigned char corrSpecNumber);
 float* getAbsorbanceSpectrum(unsigned char specNumber);

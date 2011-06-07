@@ -1,6 +1,7 @@
 #include "dataFileManager.h"
 
 static sqlite3 *db = NULL;
+static uint32_t currConfigID[NUM_SPECS];
 static pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void applyDBSchema(sqlite3* db){
@@ -8,13 +9,13 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"time\" INTEGER PRIMARY KEY NOT NULL  UNIQUE, \"analyte_name\" TEXT NOT NULL , \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB NOT NULL , \"absorbance_wavelength_1\" REAL NOT NULL , \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL NOT NULL )";
+    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL  UNIQUE, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB NOT NULL , \"absorbance_wavelength_1\" REAL NOT NULL , \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL NOT NULL )";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
 
     // Create concentrations table
-    query = "CREATE TABLE IF NOT EXISTS \"main\".\"concentrations\" (\"time\" INTEGER PRIMARY KEY NOT NULL UNIQUE, \"integration_time\" INTEGER NOT NULL, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measure_absorbance_non_absorbing\" REAL NOT NULL,\"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL )";
+    query = "CREATE TABLE IF NOT EXISTS \"main\".\"concentrations\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL, \"integration_time\" INTEGER NOT NULL, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measured_absorbance_non_absorbing\" REAL NOT NULL,\"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time,config_id) )";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Table Query Failed: %s", errMsg);
     }
@@ -92,16 +93,27 @@ void closeDataFile(){
 }
 
 // Write Functions
+void writeConfig(){
+    
+}
+
 void writeConcData(){
     time_t t;
-    float* heatTemp;
+    float heatTemp;
     CTDreadings_s* ctd;    
-    float heaterTemp;
+    float* conc;
+    float* abs;
+    float* counts;
 
     if(db){
         // Get data for row
         t = time(NULL);
+        heatTemp = getHeaterCurrentTemperature(1);
+        ctd = getCTDValues();
         
+        
+
+        free(ctd);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to write concentration data because no data file is open.");
     }
