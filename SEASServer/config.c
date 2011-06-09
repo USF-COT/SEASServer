@@ -318,6 +318,27 @@ wavelengthParameters* getWaveParameters(int specIndex){
 }
 
 // Get Methods
+specConfig* getConfigCopy(int specIndex){
+    specConfig* retVal = NULL;
+	
+    if(specIndex < NUM_SPECS){
+        retVal = malloc(sizeof(specConfig));
+        if(retVal){
+            pthread_mutex_lock(&writeConfigMutex);
+            memcpy(retVal,&config[specIndex],sizeof(specConfig));
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate enough memory to copy spectrometer #%d config.",specIndex);
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Out of Bounds Spectrometer Index (%d) Passed to getConfigCopy.",specIndex);
+    }
+}
+
+// This method is very simple at the moment, but is here just in case spec config becomes any more complicated
+void freeSpecConfig(specConfig* config){
+    free(config);
+}
+
 systemMode getMode(){
     systemMode retVal = mode; // Make a copy to return
     return retVal;

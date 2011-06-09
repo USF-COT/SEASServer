@@ -9,54 +9,54 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL  UNIQUE, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB NOT NULL , \"absorbance_wavelength_1\" REAL NOT NULL , \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL NOT NULL )";
+    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"integration_time\" INTEGER NOT NULL, \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB NOT NULL , \"absorbance_wavelength_1\" REAL NOT NULL , \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL NOT NULL )";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
 
     // Create concentrations table
-    query = "CREATE TABLE IF NOT EXISTS \"main\".\"concentrations\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL, \"integration_time\" INTEGER NOT NULL, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measured_absorbance_non_absorbing\" REAL NOT NULL,\"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time,config_id) )";
+    query = "CREATE TABLE IF NOT EXISTS \"main\".\"concentrations\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measured_absorbance_non_absorbing\" REAL NOT NULL,\"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time,config_id) )";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Table Query Failed: %s", errMsg);
     }
 
     // Create full_spectrums table
-    query = "CREATE TABLE IF NOT EXISTS \"main\".\"full_spectrums\" (\"time\" INTEGER PRIMARY KEY NOT NULL UNIQUE, \"integration_time\" INTEGER NOT NULL, \"sample_spectrum\" BLOB NOT NULL, \"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL )";
+    query = "CREATE TABLE IF NOT EXISTS \"main\".\"full_spectrums\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"sample_spectrum\" BLOB NOT NULL, \"conductivity\" REAL NOT NULL, \"temperature\" REAL NOT NULL, \"depth\" REAL NOT NULL,\"salinity\" REAL NOT NULL,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time, config_id))";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full_Spectrums Table Query Failed: %s", errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.conf_ana ON configs (analyte_name);";
+    query = "CREATE INDEX IF NOT EXISTS main.conf_ana ON configs (analyte_name)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Analyte Name Index Query Failed: %s", errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.conc_depth ON concentrations (depth);";
+    query = "CREATE INDEX IF NOT EXISTS main.conc_depth ON concentrations (depth)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Depth Index Query Failed: %s", errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.conc_temp ON concentrations (temperature);";
+    query = "CREATE INDEX IF NOT EXISTS main.conc_temp ON concentrations (temperature)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Temperature Index Query Failed: %s", errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.conc_sal ON concentrations (salinity);";
+    query = "CREATE INDEX IF NOT EXISTS main.conc_sal ON concentrations (salinity)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Salinity Index Query Failed: %s", errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.fs_depth ON full_spectrums (depth);";
+    query = "CREATE INDEX IF NOT EXISTS main.fs_depth ON full_spectrums (depth)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Depth Index Query Failed: %s",errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.fs_temp ON full_spectrums (temperature);";
+    query = "CREATE INDEX IF NOT EXISTS main.fs_temp ON full_spectrums (temperature)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Temperature Index Query Failed: %s",errMsg);
     }
 
-    query = "CREATE INDEX IF NOT EXISTS main.fs_sal ON full_spectrums (salinity);";
+    query = "CREATE INDEX IF NOT EXISTS main.fs_sal ON full_spectrums (salinity)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full Spectrums Salinity Index Query Failed: %s",errMsg);
     }
@@ -94,7 +94,22 @@ void closeDataFile(){
 
 // Write Functions
 void writeConfig(){
-    
+    int i, configIndex=0;
+    time_t t;
+    specConfig* config = NULL;
+    char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum,absorbance_wavelength_1,absorbance_wavelength_2,absorbance_wavelength_3,absorbance_wavelength_4,absorbance_wavelength_5,absorbance_wavelength_6,absorbance_wavelength_7,absorbance_wavelength_8,absorbance_wavelength_9,non-absorbing_wavelength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	
+    for(i=0; i < NUM_SPECS; i++){
+        config = getConfigCopy(i);
+        if(config){
+            t = time(NULL);
+            
+            freeSpecConfig(config);
+        } else {
+            syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);
+        }
+        currConfigID[i] = configIndex;
+	}
 }
 
 void writeConcData(){
