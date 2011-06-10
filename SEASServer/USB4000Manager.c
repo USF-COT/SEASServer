@@ -47,6 +47,20 @@ void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime){
     setIntegrationTime(spectrometers[specID],integrationTime*1000);
 }
 
+unsigned short getNumPixels(char specNumber){
+    unsigned short numPixels = 0;
+    
+    if(specNumber < NUM_SPECS){
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        numPixels = spectrometers[specNumber]->status->numPixels;
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Invalide spectrometer index (%d) passed to getNumPixels.",specNumber);
+    }
+    
+    return numPixels;
+}
+
 calibrationCoefficients* getCalCos(char specNumber){
     int i;
     calibrationCoefficients* calCos = NULL;

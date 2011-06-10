@@ -21,6 +21,7 @@ extern "C" {
 #include <sys/syslog.h>
 #include <pthread.h>
 
+// If MAX_ABS_WAVES is changed, check dataFileManager.c insertStmt
 #define MAX_ABS_WAVES 9
 #define MAX_ANA_NAME 24
 

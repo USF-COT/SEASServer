@@ -1,7 +1,7 @@
 #include "dataFileManager.h"
 
 static sqlite3 *db = NULL;
-static uint32_t currConfigID[NUM_SPECS];
+static uint64_t currConfigID[NUM_SPECS];
 static pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void applyDBSchema(sqlite3* db){
@@ -9,7 +9,7 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"integration_time\" INTEGER NOT NULL, \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB NOT NULL , \"absorbance_wavelength_1\" REAL NOT NULL , \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL NOT NULL )";
+    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"integration_time\" INTEGER NOT NULL, \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB , \"absorbance_wavelength_1\" REAL, \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
@@ -94,22 +94,74 @@ void closeDataFile(){
 
 // Write Functions
 void writeConfig(){
-    int i, configIndex=0;
-    time_t t;
+    int i,j,configIndex=0;
+    
     specConfig* config = NULL;
-    char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum,absorbance_wavelength_1,absorbance_wavelength_2,absorbance_wavelength_3,absorbance_wavelength_4,absorbance_wavelength_5,absorbance_wavelength_6,absorbance_wavelength_7,absorbance_wavelength_8,absorbance_wavelength_9,non-absorbing_wavelength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    specSample* refSample = NULL;
+    // If MAX_ABS_WAVES in config.h is changed, this line must be changed manually!
+    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum,absorbance_wavelength_1,absorbance_wavelength_2,absorbance_wavelength_3,absorbance_wavelength_4,absorbance_wavelength_5,absorbance_wavelength_6,absorbance_wavelength_7,absorbance_wavelength_8,absorbance_wavelength_9,non-absorbing_wavelength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    sqlite3_stmt* pStmt = NULL;
 	
-    for(i=0; i < NUM_SPECS; i++){
-        config = getConfigCopy(i);
-        if(config){
-            t = time(NULL);
-            
-            freeSpecConfig(config);
-        } else {
-            syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);
+    // Do nothing if a data file is not currently open
+    if(!db){
+        syslog(LOG_DAEMON|LOG_INFO,"Configuration change will not be logged because a data file is not currently open.");
+        return;
+    }
+    
+    if(sqlite3_prepare(db,insertStmt,1024,&pStmt) == SQLITE_OK){
+        for(i=0; i < NUM_SPECS; i++){
+            config = getConfigCopy(i);
+            refSample = getRefSample(i);
+            if(config){
+                // Fill prepared statement
+                sqlite3_bind_int64(pStmt,1,(int)time(NULL));
+                sqlite3_bind_int(pStmt,2,i);
+                sqlite3_bind_text(pStmt,3,config->waveParameters.analyteName,strlen(config->waveParameters.analyteName),SQLITE_TRANSIENT);
+                sqlite3_bind_int(pStmt,4,config->specParameters.integrationTime);
+                sqlite3_bind_int64(pStmt,5,config->dwell);
+                sqlite3_bind_int(pStmt,6,config->specParameters.scansPerSample);
+                sqlite3_bind_int(pStmt,7,config->specParameters.boxcarSmoothing);
+                if(refSample){
+                    sqlite3_bind_blob(pStmt,8,refSample->pixels,getNumPixels(i)*sizeof(float),SQLITE_TRANSIENT);
+                } else {
+                    sqlite3_bind_null(pStmt,8);
+                }
+                
+                for(j=0; j < MAX_ABS_WAVES; j++){
+                    if(config->waveParameters.absorbingWavelength[j] > 0){
+                        sqlite3_bind_double(pStmt,9+j,(double)config->waveParameters.absorbingWavelength[j]);
+                    } else {
+                        sqlite3_bind_null(pStmt,9+j);
+                    }
+                } 
+                
+                if(config->waveParameters.nonAbsorbingWavelength > 0){
+                    sqlite3_bind_double(pStmt,9+j,(double)config->waveParameters.nonAbsorbingWavelength);
+                } else {
+                    sqlite3_bind_null(pStmt,9+j);
+                }
+                
+                // Run Prepared Statement
+                if(sqlite3_step(pStmt) == SQLITE_ERROR){
+                    syslog(LOG_DAEMON|LOG_ERR,"Unable to log to SQLite database for spectrometer %d.  Error: %s",i,sqlite3_errmsg(db));
+                }
+                
+                // Reset Prepared Statement for Next Call
+                sqlite3_reset(pStmt);
+                
+                // housekeeping!
+                deallocateSample(refSample);
+                freeSpecConfig(config);
+            } else {
+                syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);
+            }
+            currConfigID[i] = sqlite3_last_insert_rowid(db);
         }
-        currConfigID[i] = configIndex;
-	}
+        sqlite3_finalize(pStmt);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to create prepared statement in writeConfig() method.");
+    }
+    
 }
 
 void writeConcData(){

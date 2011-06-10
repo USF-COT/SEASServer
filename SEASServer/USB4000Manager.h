@@ -28,6 +28,7 @@ int connectSpectrometers(char* serialNumber[]);
 void sleepSpectrometer(short specID);
 void wakeSpectrometer(short specID);
 
+unsigned short getNumPixels(char specNumber);
 void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);
 void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
@@ -35,6 +36,7 @@ void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned i
 void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
 
 // Get Methods
+
 specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
 float* getRawCounts(unsigned char specNumber);
 float* getAbsorbance(unsigned char specNumber);
@@ -42,6 +44,10 @@ float* getCorrectionAbsorbance(unsigned char origSpecNumber, unsigned char corrS
 float* getAbsorbanceSpectrum(unsigned char specNumber);
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength);
 float* getConcentrations(unsigned char specNumber);
+
+// Get last methods
+specSample* getRefSample(char specNumber);
+specSample* getLastSample(char specNumber);
 
 void sendSpecSample(int connection, char* command);
 void sendCalCos(int connection, char* command);
