@@ -197,6 +197,10 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
     return sample;
 }
 
+specSample* getDefaultSample(char specNumber){
+    return getSpecSample(specNumber,getScansPerSample(specNumber),100);
+}
+
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength)
 {
     unsigned short pixel = 0;

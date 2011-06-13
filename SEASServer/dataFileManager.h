@@ -10,6 +10,7 @@
 #include "sqlite3.h"
 #include "SEASPeripheralCommands.h"
 #include "USB4000Manager.h"
+#include "salinity.h"
 
 #define DATAFILEPATH "/home/datauser/data/"
 
