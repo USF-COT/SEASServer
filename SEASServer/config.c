@@ -228,6 +228,10 @@ void writeConfigFile(){
         }
         fclose(configFile);
         pthread_mutex_unlock(&writeConfigMutex);
+
+        // If DB is open, log the configuration change
+        writeConfigToDB();
+
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Cannot open config file @: %s.",CONFIGPATH);
     }

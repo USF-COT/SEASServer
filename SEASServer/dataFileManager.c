@@ -74,6 +74,7 @@ void openDataFile(){
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to open data file @: %s.",filePath);
         } else {
             applyDBSchema(db);
+            writeConfigToDB();
         }
         pthread_mutex_unlock(&dataMutex);
     } else {
@@ -93,7 +94,7 @@ void closeDataFile(){
 }
 
 // Write Functions
-void writeConfig(){
+void writeConfigToDB(){
     int i,j,configIndex=0;
     
     specConfig* config = NULL;
@@ -108,7 +109,7 @@ void writeConfig(){
         return;
     }
     
-    if(sqlite3_prepare(db,insertStmt,1024,&pStmt) == SQLITE_OK){
+    if(sqlite3_prepare(db,insertStmt,1024,&pStmt,NULL) == SQLITE_OK){
         for(i=0; i < NUM_SPECS; i++){
             config = getConfigCopy(i);
             refSample = getRefSample(i);
@@ -128,8 +129,8 @@ void writeConfig(){
                 }
                 
                 for(j=0; j < MAX_ABS_WAVES; j++){
-                    if(config->waveParameters.absorbingWavelength[j] > 0){
-                        sqlite3_bind_double(pStmt,9+j,(double)config->waveParameters.absorbingWavelength[j]);
+                    if(config->waveParameters.absorbingWavelengths[j] > 0){
+                        sqlite3_bind_double(pStmt,9+j,(double)config->waveParameters.absorbingWavelengths[j]);
                     } else {
                         sqlite3_bind_null(pStmt,9+j);
                     }

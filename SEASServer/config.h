@@ -14,6 +14,7 @@ extern "C" {
 
 #include "USB4000Manager.h"
 #include "methodFileRunner.h"
+#include "dataFileManager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

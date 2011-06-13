@@ -18,7 +18,7 @@ void openDataFile();
 void closeDataFile();
 
 // Write Functions
-void writeConfig();
+void writeConfigToDB();
 void writeConcData();
 void writeFullSpec();
 
