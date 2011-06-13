@@ -194,11 +194,11 @@ uint64_t writeCTDData(){
             if(sqlite3_step(pStmt) == SQLITE_ERROR){
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to log CTD values to SQLite database.  Error: %s",sqlite3_errmsg(db));
             } else {
-                retVal = sqlite3_last_insert_row_id(db);
+                retVal = sqlite3_last_insert_rowid(db);
             }
             
             free(ctd);
-            sqlite3_finalize(pStmt)
+            sqlite3_finalize(pStmt);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"Cannot create prepared statement for writeCTDData() method.  Error: %s",sqlite3_errmsg(db));
         }
@@ -242,7 +242,7 @@ void writeConcData(){
                         if(conc[j] != 0){
                             sqlite3_bind_double(pStmt,stmtI++,(double)conc[j]);
                         } else {
-                            sqlite3_bind_null(pStmt,stmtI++)
+                            sqlite3_bind_null(pStmt,stmtI++);
                         }
                     }
                 } else {
@@ -358,7 +358,7 @@ void writeFullSpec(){
             }
             sqlite3_finalize(pStmt);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"Unable to create prepared statement for full spectrum table.  Error: %s"sqlite3_errmsg(db));
+            syslog(LOG_DAEMON|LOG_ERR,"Unable to create prepared statement for full spectrum table.  Error: %s",sqlite3_errmsg(db));
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to write full spectrum data because no data file is open.");

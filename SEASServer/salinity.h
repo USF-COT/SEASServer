@@ -8,6 +8,9 @@
  * Center for Ocean Technology
  */
 
+#ifndef SALINITY_H
+#define SALINITY_H
+
 #include <math.h>
 
 /* Salinity calculation constants */
@@ -51,3 +54,5 @@ typedef  struct   {
 }SALINTIY_EXPONENTS;
 
 double computeSalinity(double conductivity, double temperature, double pressure);
+
+#endif
