@@ -234,7 +234,7 @@ void writeConcData(){
                 conc = getConcentrations(i);
                 if(!conc){
                     syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
-                    conc = calloc(MAX_ABS_WAVES,sizeof(float));
+                    conc = calloc(MAX_ABS_WAVES+1,sizeof(float));
                 }
                 
                 if(conc){
@@ -256,7 +256,7 @@ void writeConcData(){
                 abs = getAbsorbance(i);
                 if(!abs){
                     syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance.  Creating zero padded array.");
-                    abs = calloc(MAX_ABS_WAVES,sizeof(float));
+                    abs = calloc(MAX_ABS_WAVES+1,sizeof(float));
                 }
                 
                 if(abs){
@@ -277,7 +277,7 @@ void writeConcData(){
                 counts = getRawCounts(i);
                 if(!counts){
                     syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
-                    counts = calloc(MAX_ABS_WAVES,sizeof(float));
+                    counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
                 }    
                 
                 if(counts){

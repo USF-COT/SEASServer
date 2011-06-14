@@ -172,6 +172,11 @@ int main(){
 #ifdef DEBUG
   syslog(LOG_DAEMON|LOG_INFO,"Opening Spectrometers.");
 #endif
+  // Power Cycle GPIO for USB Hub to make sure USB ports initialized correctly
+  system("echo 0 > /sys/class/gpio/gpio168/value");
+  sleep(3);
+  system("echo 1 > /sys/class/gpio/gpio168/value");
+  sleep(3);
   // Connect the USB Spectrometers
   char *serialNumbers[NUM_SPECS] = {getSerialNumber(0),getSerialNumber(1)};
   if(connectSpectrometers(serialNumbers) == CONNECT_ERR)
