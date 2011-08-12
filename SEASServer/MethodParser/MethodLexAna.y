@@ -73,7 +73,7 @@ beep { debug("Beep keyword.\n"); return BEEP;}
 
 [+-]?{DIGIT}+"."?{DIGIT}* {printf("Value: %s\n",yytext); yylval.doubleVal=atof(yytext); return VAL; }
 
-"#"[a-z0-9 \t]*|"//"[a-z0-9 \t]*"\n"|"/*"[a-z0-9 \t\n]*"*/" /* eat up comments */
+"#"[a-z0-9 \t]*|"//"[a-z0-9 \t]*"\n"|"/*"[a-z0-9 \t\n]*"*/"|com[a-z0-9 \t]* /* eat up comments */
 
 \n {return '\n';}
 

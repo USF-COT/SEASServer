@@ -64,6 +64,10 @@
 #define     RTD         0x25     // Report CTD Values
 #define     RHT         0x26     // Read Temperature
 
+/* Benchtop Configuration Mnemonics */
+#define  SBC      0x27           // Save Benchtop Configuration
+#define  RBC      0x28           // Read Benchtop Configuration
+
 
 /* Mini SEAS to GUI commands */
 

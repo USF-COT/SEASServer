@@ -29,6 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include "benchConfig.h"
 #include "config.h"
 #include "parseGUI.h"
 #include "USB4000Manager.h"
@@ -199,7 +200,8 @@ int main(){
     syslog(LOG_DAEMON|LOG_INFO,"LON Connection Started.");
   }
 
-  // Init Power Management GPIOs (See SEASPeriperalCommands.c)
+  // Init Bench Config and Power Management GPIOs (See SEASPeriperalCommands.c)
+  readBenchConfig();
   initPeripherals();
 
   /*  Bind our socket addresss to the

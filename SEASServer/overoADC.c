@@ -87,6 +87,7 @@ float getChannelVoltage(int channel){
         result = ((unsigned int)par->result) / 1024.f; // 10 bit ADC -> 1024
 
         free(par);
+        close(dev);
 
         if(ret == 0 && par->status != -1){
             result = result * selected->input_range;

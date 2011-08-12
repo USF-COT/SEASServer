@@ -29,6 +29,7 @@ void switchGPIO(BOOL powerOn, uint16_t GPIO){
 // Called in main.c to initialize the GPIO's to their default startup state
 void initPeripherals(){
     int i,j;
+    uint8_t pumpID;
 
     pthread_mutex_lock(&periphPMMutex);
     // CTD On
@@ -44,8 +45,9 @@ void initPeripherals(){
     // Pumps Off
     for(i=0; i < MAX_NUM_PUMP_LON_NODES; i++){
         for(j=0; j < NUM_PUMPS_PER_LON; j++){
-            status.pumpStatus[NUM_PUMPS_PER_LON*i+j] = FALSE;
-            status.pumpPercents[NUM_PUMPS_PER_LON*i+j] = 0;
+            pumpID = NUM_PUMPS_PER_LON*i+j;
+            status.pumpStatus[pumpID] = FALSE;
+            status.pumpPercents[pumpID] = getBenchPumpRPM(pumpID);
         }
         setupGPIO(pumpLONGPIO[i]);
         switchGPIO(FALSE,pumpLONGPIO[i]);
@@ -53,7 +55,7 @@ void initPeripherals(){
 
     // Heater Off
     status.heaterStatus = FALSE;
-    status.heaterSetTemp = 0;
+    status.heaterSetTemp = getBenchHeaterSetPoint();
     setupGPIO(HEAT_GPIO);
     switchGPIO(status.heaterStatus,HEAT_GPIO);
 
@@ -74,6 +76,7 @@ BOOL getPumpLONState(unsigned char pumpLONNode){
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"pumpLONNode index (%d) passed to getPumpLONState out of bounds.",pumpLONNode);
     }
+    syslog(LOG_DAEMON|LOG_INFO,"pumpLONNode (%d) found to be %s.",pumpLONNode,LONState ? "ON" : "OFF");
     return LONState;
 }
 
@@ -136,7 +139,7 @@ void pumpOn(unsigned char pumpID){
         syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
         switchPumpNode(pumpID,TRUE);
 
-        setPumpPercent(pumpID,status.pumpPercents[pumpID]);
+        setPumpPercent(pumpID,status.pumpPercents[pumpID-1]);
 
         // Send the LON Node the command to turn this pump on
         response = sendLONCommand(PMP,PWR,2,data);
@@ -167,10 +170,10 @@ void setPumpPercent(unsigned char pumpID, uint16_t percent){
     LONresponse_s* response;
     unsigned char data[3];
 
-    BOOL isOn = getPumpLONState((unsigned char)pumpID/NUM_PUMPS_PER_LON);
+    BOOL isOn = getPumpLONState((unsigned char)(pumpID-1)/NUM_PUMPS_PER_LON);
 
     if(pumpID < MAX_NUM_PUMPS && percent <= MAX_PUMP_PERCENT){
-        status.pumpPercents[pumpID] = percent;
+        status.pumpPercents[pumpID-1] = percent;
 
         if(isOn){
             data[0] = pumpID;
