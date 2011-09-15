@@ -23,6 +23,7 @@ void switchGPIO(BOOL powerOn, uint16_t GPIO){
     
     sysCmd[0] = '\0';
     sprintf(sysCmd,GPIO_VAL_FMT,!powerOn,GPIO);
+    if(GPIO == LON_INT_GPIO) syslog(LOG_DAEMON|LOG_INFO,"Following System Command Called on Gateway: %s",sysCmd);
     system(sysCmd);
 }
 
@@ -119,15 +120,16 @@ void switchHeaterNode(BOOL powerOn){
 
     pthread_mutex_lock(&periphPMMutex);
     syslog(LOG_DAEMON|LOG_INFO,"Switching heater LON node %s.",powerOn ? "ON":"OFF");
-    if(status.heaterStatus == FALSE && powerOn){
+    if(!status.heaterStatus && powerOn){ // If heater is currently off and powerOn is true, switch the heater GPIO on
         switchGPIO(TRUE,HEAT_GPIO);
         switchedOn = TRUE;
-    } else if(status.heaterStatus == TRUE && !powerOn){
+    } else if (status.heaterStatus && !powerOn){ // If heater is currently on and powerOn is false, switch the heater GPIO off
         switchGPIO(FALSE,HEAT_GPIO);
     }
     pthread_mutex_unlock(&periphPMMutex);
 
-    if(switchedOn) sleep(2);  // Done outside the mutex so that it is not held during sleep.
+    status.heaterStatus = powerOn; // Log this change
+    if(switchedOn) sleep(1);  // Done outside the mutex so that it is not held during sleep.
 }
 
 // Base Functions
@@ -135,7 +137,7 @@ void pumpOn(unsigned char pumpID){
     LONresponse_s* response;
     unsigned char data[2] = {pumpID,ENA};
 
-    if(pumpID < MAX_NUM_PUMPS){
+    if(pumpID < (MAX_NUM_PUMPS + 1)){
         syslog(LOG_DAEMON|LOG_INFO,"Enabling pump %d.",pumpID);
         switchPumpNode(pumpID,TRUE);
 
@@ -172,7 +174,7 @@ void setPumpPercent(unsigned char pumpID, uint16_t percent){
 
     BOOL isOn = getPumpLONState((unsigned char)(pumpID-1)/NUM_PUMPS_PER_LON);
 
-    if(pumpID < MAX_NUM_PUMPS && percent <= MAX_PUMP_PERCENT){
+    if(pumpID < (MAX_NUM_PUMPS+1) && percent <= MAX_PUMP_PERCENT){
         status.pumpPercents[pumpID-1] = percent;
 
         if(isOn){

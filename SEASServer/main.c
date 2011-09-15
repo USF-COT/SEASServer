@@ -249,7 +249,11 @@ int main(){
     
   }
   
-  disconnectSpectrometers();
+  if(disconnectSpectrometers() == CONNECT_OK)
+    syslog(LOG_DAEMON|LOG_INFO,"Spectrometers Successfully Disconnected");
+  else
+    syslog(LOG_DAEMON|LOG_ERR,"Unable to Disconnect Spectrometers");
+
   syslog(LOG_DAEMON|LOG_INFO,"Daemon Exited Politely.");
   exit(EXIT_SUCCESS);
 
