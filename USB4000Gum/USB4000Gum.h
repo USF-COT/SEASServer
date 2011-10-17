@@ -75,6 +75,7 @@ typedef struct SPECTROMETER{
 spectrometer* openUSB4000(const char* serialNumber);
 BOOL isConnected(spectrometer* USB4000);
 STATUS closeUSB4000(spectrometer* USB4000);
+void deallocateSample(specSample** sample);
 
 // USB Commands
 STATUS initDevice(spectrometer* USB4000); // 0x01

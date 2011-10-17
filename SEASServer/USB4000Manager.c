@@ -132,7 +132,7 @@ void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
         for(i=0; i < numPixels; i++){
             dest[i] = ((float*)sample->pixels)[i];
         }
-        deallocateSample(sample);
+        deallocateSample(&sample);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Cannot move sample to floats, sample is NULL.");
     }
@@ -185,7 +185,9 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
         original = getSample(spectrometers[specNumber], numScansPerSample, delayBetweenScansInMicroSeconds);
+        syslog(LOG_DAEMON|LOG_INFO,"Original sample retrieved.");
         sample = copySample(original,spectrometers[specNumber]->status->numPixels);
+        syslog(LOG_DAEMON|LOG_INFO,"Original copied.");
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
     else
@@ -232,7 +234,7 @@ float* getRawCounts(unsigned char specNumber){
 
         // housekeeping!
         free(absPixels);
-        deallocateSample(sample);
+        deallocateSample(&sample);
     }
     return countValues;
 }
@@ -356,13 +358,19 @@ float* getConcentrations(unsigned char specNumber){
 }
 
 void sendSpecSample(int connection, char* command){
+    unsigned short scans = 0;
     specSample* sample;
 
-    syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000");
+    syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000[%d]",command[1]);
+    scans = getScansPerSample(command[1]);
     sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
-    send(connection,(void*)sample->pixels,sizeof(float)*3840,0);
-    deallocateSample(sample);
-    syslog(LOG_DAEMON|LOG_INFO,"Sent wavelength.");
+    if(sample){
+        send(connection,(void*)(sample->pixels),sizeof(float)*3840,0);
+        deallocateSample(&sample);
+        syslog(LOG_DAEMON|LOG_INFO,"Sample sent.");
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve sample from spectrometer %d for %d scans.",command[1],scans);
+    }
 }
 
 void sendAbsorbance(int connection, char* command){

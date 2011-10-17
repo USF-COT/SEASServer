@@ -18,9 +18,9 @@ specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPix
     return sample;
 }
 
-void deallocateSample(specSample* sample){
-    free(sample->pixels);
-    free(sample);
+void deallocateSample(specSample** sample){
+    free((*sample)->pixels);
+    free(*sample);
 }
 
 
@@ -40,13 +40,13 @@ spectrometer* allocateSpec(){
 void deallocateSpec(spectrometer* USB4000){
     
     if(USB4000->darkSample != NULL)
-        deallocateSample(USB4000->darkSample);
+        deallocateSample(&(USB4000->darkSample));
 
     if(USB4000->refSample != NULL)
-        deallocateSample(USB4000->refSample);
+        deallocateSample(&(USB4000->refSample));
 
     if(USB4000->sample != NULL)
-        deallocateSample(USB4000->sample);
+        deallocateSample(&(USB4000->sample));
 
     if(USB4000->lambdaValues !=NULL)
         free(USB4000->lambdaValues);
@@ -445,7 +445,7 @@ specSample* copySample(specSample* source,unsigned short numPixels){
     for(i=0; i < numPixels; i++)
         newSample->pixels[i] = source->pixels[i];
 
-    return;
+    return newSample;
 }
 
 void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
@@ -470,7 +470,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     // Setup variables
     numRead = 0;
     if(USB4000->sample != NULL){
-        deallocateSample(USB4000->sample);
+        deallocateSample(&(USB4000->sample));
         USB4000->sample = NULL;
     }
     sample = allocateSample(numScansPerSample, USB4000->status->numPixels);
@@ -511,7 +511,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
                 #ifdef DEBUG
                     fprintf(stderr, "Unable to read response.\n");
                 #endif
-               deallocateSample(sample);
+               deallocateSample(&sample);
                return NULL;
             }
             usleep(delayBetweenScansInMicroSeconds);
@@ -520,7 +520,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
             #ifdef DEBUG
                 fprintf(stderr, "Unable to send command to USB4000.  Check connection.\n");
             #endif
-            deallocateSample(sample);
+            deallocateSample(&sample);
             return NULL;
         }
     }

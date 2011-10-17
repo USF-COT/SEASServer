@@ -36,7 +36,7 @@
 #include "LONDispatch.h"
 #include "SEASPeripheralCommands.h"
 
-#define LONPORT "/dev/ttyS0"
+#define LONPORT "/dev/ttyO0"
 
 #define NUM_THREADS 10
 #define MAXBUF 512

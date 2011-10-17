@@ -526,6 +526,7 @@ void receiveGetCTDValues(int connection, char* command){
             memcpy(sendBuffer+9,&(readings->pressure),4);
             memcpy(sendBuffer+13,&(readings->soundVelocity),4);
             send(connection,sendBuffer,17,0);
+            free(readings);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"ERROR: Could not read CTD readings from LON.");
             sendErrorMessageBack(connection,"ERROR: Could not read CTD readings from LON.");

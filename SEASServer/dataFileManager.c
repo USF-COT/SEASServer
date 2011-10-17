@@ -156,7 +156,7 @@ void writeConfigToDB(){
                 }
                 
                 // housekeeping!
-                deallocateSample(refSample);
+                deallocateSample(&refSample);
                 freeSpecConfig(config);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);
@@ -350,7 +350,7 @@ void writeFullSpec(){
                     if(sqlite3_step(pStmt) == SQLITE_ERROR){
                         syslog(LOG_DAEMON|LOG_ERR,"Error logging full spectrum prepared statement for spectrometer #%d.  Error: %s",i,sqlite3_errmsg(db));
                     }
-                    deallocateSample(sample);
+                    deallocateSample(&sample);
                 } else {
                     syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve sample from spectrometer #%d.",i);
                 }

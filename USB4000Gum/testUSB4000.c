@@ -11,11 +11,12 @@
 #include <unistd.h>
 #include "libUSB4000.h"
 
-#define SPECID 1
+#define NUM_SPECS 2
 
 int main(){
 
     int i;
+    int specID;
     spectrometer* spectrometers[2];
     specSample* sample;
     char* response;
@@ -24,15 +25,15 @@ int main(){
     
     printf("Opening Device\n");
     spectrometers[0] = openUSB4000("USB4F02570");
-    spectrometers[1] = openUSB4000("USB4F02572");
+    spectrometers[1] = openUSB4000("USB4F02571");
 
-    if(spectrometers[SPECID] != NULL){
+    for(specID=0; specID < NUM_SPECS; specID++){
         printf("Opened.\n");
 
-        setIntegrationTime(spectrometers[SPECID],10);
+        setIntegrationTime(spectrometers[specID],10);
 
         // Test Query Config
-        response = queryConfig(spectrometers[SPECID],2);
+        response = queryConfig(spectrometers[specID],2);
 
         printf("Config Response: ");
         for(i=2; i < 18; i++)
@@ -40,18 +41,18 @@ int main(){
         printf("\n");
 
         // Trigger Mode
-        setTriggerMode(spectrometers[SPECID],NORMAL);
+        setTriggerMode(spectrometers[specID],NORMAL);
         
         usleep(4000);
         
         printf("Getting Sample.\n");
-        sample = getSample(spectrometers[SPECID],1,100);
+        sample = getSample(spectrometers[specID],10,100);
         printf("Got'em!\n");
         
 
         printf("Spectrometer Status\n");
         printf("-------------------\n");
-        printStatus(spectrometers[SPECID]);
+        printStatus(spectrometers[specID]);
         printf("-------------------\n");
 
         printf("Shutdown Spectrometers\n");
@@ -69,15 +70,12 @@ int main(){
         setShutdownMode(spectrometers[1],TRUE);
         printf("-------------------\n");
 
-        printf("Closing Device\n");
-        closeUSB4000(spectrometers[0]);
-        closeUSB4000(spectrometers[1]);
-        printf("Closed.\n");
-    }
-    else{
-        printf("Unable to connect to device.\n");
     }
 
+    printf("Closing Device\n");
+    closeUSB4000(spectrometers[0]);
+    closeUSB4000(spectrometers[1]);
+    printf("Closed.\n");
     
     return 0;
 }
