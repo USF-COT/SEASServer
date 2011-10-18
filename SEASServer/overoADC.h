@@ -9,19 +9,12 @@
 #ifndef OVEROADC_H
 #define OVEROADC_H
 
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
+#include <string.h>
 #include <syslog.h>
+#include <pthread.h>
 
-#include "twl4030-madc.h"
 
 #include "GUIprotocol.h"
 

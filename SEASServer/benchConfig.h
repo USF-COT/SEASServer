@@ -28,8 +28,10 @@ typedef  struct   {
 /* Absorbance range data */
 typedef  struct   {
 
-  double         Minimum;
-  double         Maximum;
+  double         TraceMinimum;
+  double         TraceMaximum;
+  double	 SpectraMinimum;
+  double	 SpectraMaximum;
 
 }__attribute__((packed)) ABSORBANCE_RANGE_DATA;
 
@@ -59,5 +61,7 @@ uint16_t getBenchPumpRPM(uint8_t pumpID);
 float getBenchHeaterSetPoint();
 float getBenchAbsRangeMin(uint8_t specID);
 float getBenchAbsRangeMax(uint8_t specID);
+float getBenchSpectraRangeMin(uint8_t specID);
+float getBenchSpectraRangeMax(uint8_t specID);
 
 #endif

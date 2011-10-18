@@ -15,8 +15,10 @@ void initBenchConfig(){
     }
     benchConfig.HeaterSetPointTemperature = 0;
     for(i=0; i < NUM_SPECS; i++){
-        benchConfig.RangeData[i].Minimum = 0;
-        benchConfig.RangeData[i].Maximum = 0;
+        benchConfig.RangeData[i].TraceMinimum = -0.12;
+        benchConfig.RangeData[i].TraceMaximum = 2;
+        benchConfig.RangeData[i].SpectraMinimum = -1;
+        benchConfig.RangeData[i].SpectraMaximum = 2;
     }
     pthread_mutex_unlock(&benchConfigMutex);
 }
@@ -30,7 +32,7 @@ void syslogBenchConfig(const char* header, BENCH_CONFIG_DATA* config){
     }
     syslog(LOG_DAEMON|LOG_INFO,"HEAT.%d=%f",0,config->HeaterSetPointTemperature);
     for(i=0; i < NUM_SPECS; i++){
-        syslog(LOG_DAEMON|LOG_INFO,"ABSRANGE.%d=%f,%f",i,config->RangeData[i].Minimum,config->RangeData[i].Maximum);
+        syslog(LOG_DAEMON|LOG_INFO,"ABSRANGE.%d=%f,%f",i,config->RangeData[i].TraceMinimum,config->RangeData[i].TraceMaximum);
     }
 }
 
@@ -47,8 +49,10 @@ void writeBenchConfig(){
         }
         fprintf(f,"HEAT.%d=%f\n",0,benchConfig.HeaterSetPointTemperature);
         for(i=0; i < NUM_SPECS; i++){
-            fprintf(f,"ABSRANGEMIN.%d=%f\n",i,benchConfig.RangeData[i].Minimum);
-            fprintf(f,"ABSRANGEMAX.%d=%f\n",i,benchConfig.RangeData[i].Maximum);
+            fprintf(f,"ABSRANGEMIN.%d=%f\n",i,benchConfig.RangeData[i].TraceMinimum);
+            fprintf(f,"ABSRANGEMAX.%d=%f\n",i,benchConfig.RangeData[i].TraceMaximum);
+            fprintf(f,"SPECTRARANGEMIN.%d=%f\n",i,benchConfig.RangeData[i].SpectraMinimum);
+            fprintf(f,"SPECTRARANGEMAX.%d=%f\n",i,benchConfig.RangeData[i].SpectraMaximum);
         }
         fclose(f);
     } else {
@@ -91,9 +95,13 @@ void readBenchConfig(){
             } else if(strcmp(device,"HEAT") == 0){
                 benchConfig.HeaterSetPointTemperature = value;
             } else if(strcmp(device,"ABSRANGEMIN") == 0){
-                benchConfig.RangeData[devID].Minimum = value;
+                benchConfig.RangeData[devID].TraceMinimum = value;
             } else if(strcmp(device,"ABSRANGEMAX") == 0){
-                benchConfig.RangeData[devID].Maximum = value;
+                benchConfig.RangeData[devID].TraceMaximum = value;
+            } else if(strcmp(device,"SPECTRARANGEMIN") == 0){
+                benchConfig.RangeData[devID].SpectraMinimum = value;
+            } else if(strcmp(device,"SPECTRARANGEMAX") == 0){
+                benchConfig.RangeData[devID].SpectraMaximum = value;
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Did not recognize line in bench config: %s.%i=%f",device,devID,value);
             }
@@ -117,8 +125,10 @@ void copyBenchConfig(BENCH_CONFIG_DATA* dest, BENCH_CONFIG_DATA* src){
     }
     dest->HeaterSetPointTemperature = src->HeaterSetPointTemperature;
     for(i=0; i < NUM_SPECS; i++){
-        dest->RangeData[i].Minimum = src->RangeData[i].Minimum;
-        dest->RangeData[i].Maximum = src->RangeData[i].Maximum;
+        dest->RangeData[i].TraceMinimum = src->RangeData[i].TraceMinimum;
+        dest->RangeData[i].TraceMaximum = src->RangeData[i].TraceMaximum;
+        dest->RangeData[i].SpectraMinimum = src->RangeData[i].SpectraMinimum;
+        dest->RangeData[i].SpectraMaximum = src->RangeData[i].SpectraMaximum;
     }
 }
 
@@ -178,7 +188,7 @@ float getBenchAbsRangeMin(uint8_t specID){
     float absMin = 0;
 
     pthread_mutex_lock(&benchConfigMutex);
-    absMin = benchConfig.RangeData[specID].Minimum;
+    absMin = benchConfig.RangeData[specID].TraceMinimum;
     pthread_mutex_unlock(&benchConfigMutex);
     
     return absMin;
@@ -188,9 +198,29 @@ float getBenchAbsRangeMax(uint8_t specID){
     float absMax = 0;
     
     pthread_mutex_lock(&benchConfigMutex);
-    absMax = benchConfig.RangeData[specID].Maximum;
+    absMax = benchConfig.RangeData[specID].TraceMaximum;
     pthread_mutex_unlock(&benchConfigMutex);
 
     return absMax;
+}
+
+float getBenchSpectraRangeMin(uint8_t specID){
+    float spectraMin = 0;
+
+    pthread_mutex_lock(&benchConfigMutex);
+    spectraMin = benchConfig.RangeData[specID].SpectraMinimum;
+    pthread_mutex_unlock(&benchConfigMutex);
+
+    return spectraMin;
+}
+
+float getBenchSpectraRangeMax(uint8_t specID){
+    float spectraMax = 0;
+
+    pthread_mutex_lock(&benchConfigMutex);
+    spectraMax = benchConfig.RangeData[specID].SpectraMaximum;
+    pthread_mutex_unlock(&benchConfigMutex);
+
+    return spectraMax;
 }
 
