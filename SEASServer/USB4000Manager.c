@@ -185,9 +185,7 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
         original = getSample(spectrometers[specNumber], numScansPerSample, delayBetweenScansInMicroSeconds);
-        syslog(LOG_DAEMON|LOG_INFO,"Original sample retrieved.");
         sample = copySample(original,spectrometers[specNumber]->status->numPixels);
-        syslog(LOG_DAEMON|LOG_INFO,"Original copied.");
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
     else
@@ -379,7 +377,6 @@ void sendAbsorbance(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Retrieving Spec %d Absorbance for %d Wavelengths.",command[1],getAbsorbingWavelengthCount(command[1]));
     absorbance = getAbsorbance(command[1]);
     if(absorbance){
-        syslog(LOG_DAEMON|LOG_INFO,"Sending Absorbance. Value 1=%f .",absorbance[0]);
         send(connection,(void*)absorbance,sizeof(float)*(MAX_ABS_WAVES+1),0);
         free(absorbance);
     } else {
@@ -471,7 +468,7 @@ void readRefRunResponse(int connection, s_node* node){
                 send(connection,(void*)&data,sizeof(READ_REFERENCE_RUNTIME_DATA),0);
                 //send(connection,(void*)header,sizeof(unsigned char)*3,0);
                 //send(connection,(void*)refSample->pixels,sizeof(float)*numPixels,0);
-                //deallocateSample(refSample);
+                deallocateSample(&refSample);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to read reference spectrum.  Have you initialized it?");
             }
@@ -520,14 +517,12 @@ void readSampRunResponse(int connection, s_node* node){
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve data for read sample runtime response.");
             }
 
+            // RISKY: This caused a problem before 
             // Free Utilized Memory
-            /*
             if(sample){
-                free(sample->pixels);
-                free(sample);
+                deallocateSample(&sample);
             }
             syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the sample.");
-            */
             if(abs){
                 free(abs);
             } else {              
