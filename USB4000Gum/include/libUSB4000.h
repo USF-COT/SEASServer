@@ -25,6 +25,13 @@
 #define NUMPIXELS 3840
 #define BYTESPERPIXEL 2
 
+/* Number of pixels used to compute the dark value */
+#define START_DARK 5
+#define MAX_DARK_PIXEL 18
+
+/* Non-linear coefficient count */
+#define  NONLINEAR_COEFFICIENT_COUNT         8
+
 // End Point Definitions
 #define EP1IN 0x81
 #define EP1OUT 0x01
@@ -107,10 +114,10 @@ extern void printStatus(spectrometer* USB4000);
 
 // Data Read and Calibration Functions
 extern STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
-extern void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
-extern void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+extern void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds, unsigned short boxcar);
+extern void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar);
 extern specSample* copySample(specSample* source,unsigned short numPixels);
-extern specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
+extern specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar); // 0x09
 
 #endif
 

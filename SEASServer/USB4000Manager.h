@@ -31,12 +31,12 @@ void wakeSpectrometer(short specID);
 unsigned short getNumPixels(char specNumber);
 void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime);
 calibrationCoefficients* getCalCos(char specNumber);
-void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
-void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
-void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds);
+void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds, unsigned short boxcar);
+void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds, unsigned short boxcar);
+void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds,unsigned short boxcar);
 
 // Get Methods
-specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+specSample* getSpecSample(char specNumber,unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar);
 specSample* getDefaultSample(char specNumber);
 float* getRawCounts(unsigned char specNumber);
 float* getAbsorbance(unsigned char specNumber);

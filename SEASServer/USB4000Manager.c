@@ -138,11 +138,11 @@ void moveSpecSampleToFloats(float* dest, specSample* sample,int numPixels){
     }
 }
 
-void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
+void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds, unsigned short boxcar){
     pthread_mutex_lock(&specsMutex[specNumber]);
     if(specNumber == 0 || specNumber == 1)
     {
-        readDarkSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
+        readDarkSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds,boxcar);
         if(spectrometers[specNumber]->darkSample == NULL)
             syslog(LOG_DAEMON|LOG_INFO,"Dark sample NULL after attempted read.");
         else
@@ -151,11 +151,11 @@ void recordDarkSample(char specNumber, unsigned int numScansPerSample, unsigned 
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
 
-void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
+void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds,unsigned short boxcar){
     pthread_mutex_lock(&specsMutex[specNumber]);
     if(specNumber == 0 || specNumber == 1)
     {
-        readRefSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds);
+        readRefSpectra(spectrometers[specNumber],numScansPerSample,delayBetweenInMicroSeconds,boxcar);
         if(spectrometers[specNumber]->refSample == NULL)
             syslog(LOG_DAEMON|LOG_INFO,"Reference sample NULL after attempted read.");
         else
@@ -164,11 +164,11 @@ void recordRefSample(char specNumber, unsigned int numScansPerSample, unsigned i
     pthread_mutex_unlock(&specsMutex[specNumber]);
 }
 
-void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds){
+void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenInMicroSeconds, unsigned short boxcar){
     if(specNumber < NUM_SPECS)
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
-        getSample(spectrometers[specNumber], numScansPerSample, delayBetweenInMicroSeconds);
+        getSample(spectrometers[specNumber], numScansPerSample, delayBetweenInMicroSeconds,boxcar);
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
     else
@@ -177,14 +177,14 @@ void recordSpecSample(char specNumber, unsigned int numScansPerSample, unsigned 
     }
 }
 
-specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
+specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds, unsigned short boxcar){
     specSample* sample = NULL;
     specSample* original = NULL;
 
     if(specNumber < NUM_SPECS)
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
-        original = getSample(spectrometers[specNumber], numScansPerSample, delayBetweenScansInMicroSeconds);
+        original = getSample(spectrometers[specNumber], numScansPerSample, delayBetweenScansInMicroSeconds,boxcar);
         sample = copySample(original,spectrometers[specNumber]->status->numPixels);
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
@@ -198,7 +198,7 @@ specSample* getSpecSample(char specNumber, unsigned int numScansPerSample, unsig
 }
 
 specSample* getDefaultSample(char specNumber){
-    return getSpecSample(specNumber,getScansPerSample(specNumber),100);
+    return getSpecSample(specNumber,getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
 }
 
 unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavelength)
@@ -255,6 +255,7 @@ float* getAbsorbance(unsigned char specNumber)
         for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++)
         {
             absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel);
+            syslog(LOG_DAEMON|LOG_INFO,"%d: Absorbance=%g, @Pixel=%d",i,absorbanceValues[i],absPixels[i]);
         }
         absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel);
         pthread_mutex_unlock(&specsMutex[specNumber]);
@@ -302,7 +303,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
         absValues = malloc(sizeof(float) * spectrometers[specNumber]->status->numPixels);
-        getSample(spectrometers[specNumber],getScansPerSample(specNumber),100);
+        getSample(spectrometers[specNumber],getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
         for(i=0; i < spectrometers[specNumber]->status->numPixels; i++)
         {
             absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel);
@@ -356,12 +357,14 @@ float* getConcentrations(unsigned char specNumber){
 }
 
 void sendSpecSample(int connection, char* command){
-    unsigned short scans = 0;
+    unsigned int scans = 0;
+    unsigned short boxcar = 0;
     specSample* sample;
 
-    syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000[%d]",command[1]);
     scans = getScansPerSample(command[1]);
-    sample = getSpecSample(command[1],getScansPerSample(command[1]),100);
+    boxcar = getBoxcarSmoothing(command[1]);
+    syslog(LOG_DAEMON|LOG_INFO,"Sending wavelength sample from USB4000[%d] over %d samples",command[1],scans);
+    sample = getSpecSample(command[1],scans,100,boxcar);
     if(sample){
         send(connection,(void*)(sample->pixels),sizeof(float)*3840,0);
         deallocateSample(&sample);
@@ -421,7 +424,7 @@ void receiveRecordDarkSample(int connection, char* command){
     char response[1] = {RDS};
 
     syslog(LOG_DAEMON|LOG_INFO,"Recording Dark Sample...");
-    recordDarkSample(command[1],getScansPerSample(command[1]),100);
+    recordDarkSample(command[1],getScansPerSample(command[1]),100,getBoxcarSmoothing(command[1]));
     send(connection,(void*)response,1,0);    
     syslog(LOG_DAEMON|LOG_INFO,"Dark Sample Recorded.");
 }
@@ -430,14 +433,14 @@ void receiveRecordRefSample(int connection, char* command){
     char response[1] = {RRS};
     
     syslog(LOG_DAEMON|LOG_INFO,"Recording Reference Sample...");
-    recordRefSample(command[1],getScansPerSample(command[1]),100);
+    recordRefSample(command[1],getScansPerSample(command[1]),100,getBoxcarSmoothing(command[1]));
     send(connection,(void*)response,1,0);
     syslog(LOG_DAEMON|LOG_INFO,"Reference Sample Recorded.");
 }
 
 void receiveRecordSpecSample(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Recording Sample.");
-    recordSpecSample(command[1],getScansPerSample(command[1]),100);
+    recordSpecSample(command[1],getScansPerSample(command[1]),100,getBoxcarSmoothing(command[1]));
     syslog(LOG_DAEMON|LOG_INFO,"Sample Recorded");
 }
 
@@ -549,7 +552,7 @@ void methodReadReference(unsigned long argc, void* argv){
     double* args = (double*)argv;
     char specNumber = (char)args[0]-1;
     
-    recordRefSample(specNumber,getScansPerSample(specNumber),100);
+    recordRefSample(specNumber,getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
 
     // TODO: Write Reference to Data File?
 }
@@ -559,7 +562,7 @@ void methodReadSample(unsigned long argc, void* argv){
     char specNumber = (char)args[0]-1;
     float* absorbance = NULL;
     
-    recordSpecSample(specNumber, getScansPerSample(specNumber), 100);
+    recordSpecSample(specNumber, getScansPerSample(specNumber), 100,getBoxcarSmoothing(specNumber));
     absorbance = getAbsorbance(specNumber);
 
     if(absorbance){
@@ -574,7 +577,7 @@ void methodReadFullSpec(unsigned long argc, void* argv){
     char specNumber = (char)args[0]-1;
 
     syslog(LOG_DAEMON|LOG_INFO,"METHOD: Recording Full Spectrum.");
-    recordSpecSample(specNumber,getScansPerSample(specNumber),100);
+    recordSpecSample(specNumber,getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
    
 
     // TODO: Write Sample to Data File

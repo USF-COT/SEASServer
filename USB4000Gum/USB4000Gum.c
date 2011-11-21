@@ -319,7 +319,7 @@ STATUS setIntegrationTime(spectrometer* USB4000,unsigned int time){
 
     updateStatus(USB4000);
 
-    getSample(USB4000,1,100);
+    getSample(USB4000,1,100,5);
 
     return USB4000OK;
 }
@@ -394,7 +394,7 @@ STATUS setTriggerMode(spectrometer* USB4000, TRIGGER triggerMode){
     updateStatus(USB4000);
 
     // Reset Array
-    getSample(USB4000,1,100);
+    getSample(USB4000,1,100,5);
     return USB4000OK;
 }
 
@@ -448,21 +448,83 @@ specSample* copySample(specSample* source,unsigned short numPixels){
     return newSample;
 }
 
-void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
-    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar){
+    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds,boxcar);
     USB4000->darkSample = copySample(USB4000->sample,USB4000->status->numPixels);
 }
 
-void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){
-    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds);
+void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar){
+    getSample(USB4000,numScansPerSample,delayBetweenScansInMicroSeconds,boxcar);
     USB4000->refSample = copySample(USB4000->sample,USB4000->status->numPixels);
 }
 
-specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds){ // 0x09
+void boxcarFilter(specSample* sample, unsigned short boxcar, unsigned short numPixels){
+     unsigned short i,j,M,start,n;
+     float sum;
+
+     if(boxcar > 0 && boxcar < numPixels - (MAX_DARK_PIXEL+1)){
+        M = (short)floor((float)boxcar/(float)2);
+        start = MAX_DARK_PIXEL+1;
+
+        // Special averaging for start
+        for(i=start; i < start+M; i++){
+            sum = 0;
+            n = 0;
+            for(j=i-M; j < i; j++){
+                if(j >= start){
+                    sum += sample->pixels[j];
+                    n++;
+                }
+            }
+            for(j=i+1; j <= j+M; j++){
+                sum += sample->pixels[j];
+                n++;
+            }
+            sum += sample->pixels[j];
+            n++;
+
+            sample->pixels[i] = sum/n;
+        }
+        
+        // Middle Portion
+        for(i=start+M; i < numPixels-M; i++){
+            sum = 0;
+            for(j=i-M; j < i; j++){
+                sum += sample->pixels[j];
+            }
+            for(j=i+1; j <= i+M; j++){
+                sum += sample->pixels[j];
+            }
+            sum += sample->pixels[i];
+            sample->pixels[i] = sum/boxcar; 
+        }
+
+        // Tail end
+        for(i=numPixels-M; i < numPixels; i++){
+            sum=0;
+            n=0;
+            for(j=i-M; j < i; j++){
+                sum += sample->pixels[j];
+                n++;
+            }
+            for(j=i+1; j <= i+M; j++){
+                if(j < numPixels){
+                    sum += sample->pixels[j];
+                    n++;
+                }
+            }
+            sum += sample->pixels[i];
+            n++;
+            sample->pixels[i] = sum/n;
+        }
+    }
+}
+
+specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds, unsigned short boxcar){ // 0x09
     specSample* sample;
     char command[1];
     char response[7681];
-    int i,j,k,numRead;
+    unsigned int i,j,k,numRead,M;
     short newPixel;
     float pixel;
     const float satScale = 65535.0/(float)USB4000->saturation_level;
@@ -524,6 +586,8 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
             return NULL;
         }
     }
+    
+    boxcarFilter(sample,boxcar,USB4000->status->numPixels);
 
     USB4000->sample = sample;
     return sample;

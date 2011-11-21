@@ -46,7 +46,7 @@ int main(){
         usleep(4000);
         
         printf("Getting Sample.\n");
-        sample = getSample(spectrometers[specID],10,100);
+        sample = getSample(spectrometers[specID],10,100,5);
         printf("Got'em!\n");
         
 

@@ -14,19 +14,21 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    float BaselineAbsorbance;
    float Numerator;
    float Denominator;
-   float DarkValue;
+   float RefDarkValue,SampDarkValue;
 
    if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
    
-   DarkValue = ComputeDarkValue(USB4000);
+   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample);
+   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample);
 
    /* Compute the numerator */
-   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - DarkValue);
+   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - RefDarkValue);
    
    /* Compute the denominator */
-   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - DarkValue);
+   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - SampDarkValue);
 
+   //syslog(LOG_DAEMON|LOG_INFO,"Dark: %g, log10f((%g-dark)/(%g-dark))",DarkValue,Numerator+DarkValue,Denominator+DarkValue);
    
    /* Compute the absorbance */
    Fraction = Numerator/Denominator; 
@@ -44,6 +46,7 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    
    /* Subtract baseline */
    Absorbance -= BaselineAbsorbance;
+   //syslog(LOG_DAEMON|LOG_INFO,"Baseline: %g, Absorbance: %g",BaselineAbsorbance,Absorbance);
 
    /* Return the absorbance */
    return( Absorbance );
@@ -60,18 +63,19 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsor
    float Denominator;
    float Fraction;
    float CorrectionAbsorbance;
-   float DarkValue;
+   float RefDarkValue,SampDarkValue;
    
    if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
 
-   DarkValue = ComputeDarkValue(USB4000);
+   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample);
+   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample);
 
    /* Compute the numerator */
-   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - DarkValue);
+   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - RefDarkValue);
    
    /* Compute the denominator */
-   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - DarkValue);
+   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - SampDarkValue);
    
    /* Compute the absorbance */
    Fraction = Numerator / Denominator;
@@ -85,16 +89,12 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsor
 }
 
 
-/* Number of pixels used to compute the dark value */
-#define START_DARK 5
-#define MAX_DARK_PIXEL 18
-
 /*
-   float ComputeDarkValue( int Spectrometer )
+   float ComputeDarkValue( spectrometer* USB4000, float* sample )
    
-   Computes the dark value for the spectrometer.
+   Computes the dark value for a sample.
 */
-float ComputeDarkValue(spectrometer* USB4000)
+float ComputeDarkValue(spectrometer* USB4000, specSample* sample)
 {
    float AverageDarkValue;
    float Accumulator;
@@ -105,18 +105,16 @@ float ComputeDarkValue(spectrometer* USB4000)
    
    /* Sum the dark pixels */
    for( i = (int) START_DARK; i < (int) MAX_DARK_PIXEL; i++ )
-      Accumulator += USB4000->sample->pixels[ i ];
+      Accumulator += sample->pixels[ i ];
    
    /* Compute the average dark value */
    AverageDarkValue = (float) ( Accumulator / (float) (MAX_DARK_PIXEL - START_DARK) );
+   //syslog(LOG_DAEMON|LOG_INFO,"AvgDark: %g",AverageDarkValue);
 
    /* Return the corrected average */
    return( NonLinearCountCorrection(USB4000, AverageDarkValue ) );
 }
 
-
-/* Non-linear coefficient count */
-#define  NONLINEAR_COEFFICIENT_COUNT         8
 
 /*
    float NonLinearCountCorrection( int Spectrometer, float Counts )
@@ -190,6 +188,7 @@ void  ComputeSpectrometerLambdaValues(spectrometer* USB4000)
       /* Compute the lambda value */      
       USB4000->lambdaValues[i] = 
          (double) ( Term3 + Term2 + Term1 + Intercept ); 
+      syslog(LOG_DAEMON|LOG_INFO,"Lambda %d/%d: %g",i,USB4000->status->numPixels,USB4000->lambdaValues[i]);
          
       }
 }

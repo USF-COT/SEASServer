@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include <math.h>
  
 #define STATUS char
 #define USB4000ERR 0
@@ -24,6 +25,13 @@
 
 #define NUMPIXELS 3840
 #define BYTESPERPIXEL 2
+
+/* Number of pixels used to compute the dark value */
+#define START_DARK 5
+#define MAX_DARK_PIXEL 18
+
+/* Non-linear coefficient count */
+#define  NONLINEAR_COEFFICIENT_COUNT         8
 
 // End Point Definitions
 #define EP1IN 0x81
@@ -107,10 +115,10 @@ void printStatus(spectrometer* USB4000);
 
 // Data Read and Calibration Functions
 STATUS updateWavelengthCalibrationCoefficients(spectrometer* USB4000);
-void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
-void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds);
+void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar);
+void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar);
 specSample* copySample(specSample* source,unsigned short numPixels);
-specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds); // 0x09
+specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar); // 0x09
 
 #endif
 
