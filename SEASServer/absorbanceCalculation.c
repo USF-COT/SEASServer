@@ -28,8 +28,6 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    /* Compute the denominator */
    Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - SampDarkValue);
 
-   //syslog(LOG_DAEMON|LOG_INFO,"Dark: %g, log10f((%g-dark)/(%g-dark))",DarkValue,Numerator+DarkValue,Denominator+DarkValue);
-   
    /* Compute the absorbance */
    Fraction = Numerator/Denominator; 
    if(Fraction > 0)
@@ -46,7 +44,6 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    
    /* Subtract baseline */
    Absorbance -= BaselineAbsorbance;
-   //syslog(LOG_DAEMON|LOG_INFO,"Baseline: %g, Absorbance: %g",BaselineAbsorbance,Absorbance);
 
    /* Return the absorbance */
    return( Absorbance );
@@ -109,7 +106,6 @@ float ComputeDarkValue(spectrometer* USB4000, specSample* sample)
    
    /* Compute the average dark value */
    AverageDarkValue = (float) ( Accumulator / (float) (MAX_DARK_PIXEL - START_DARK) );
-   //syslog(LOG_DAEMON|LOG_INFO,"AvgDark: %g",AverageDarkValue);
 
    /* Return the corrected average */
    return( NonLinearCountCorrection(USB4000, AverageDarkValue ) );
@@ -188,8 +184,6 @@ void  ComputeSpectrometerLambdaValues(spectrometer* USB4000)
       /* Compute the lambda value */      
       USB4000->lambdaValues[i] = 
          (double) ( Term3 + Term2 + Term1 + Intercept ); 
-      syslog(LOG_DAEMON|LOG_INFO,"Lambda %d/%d: %g",i,USB4000->status->numPixels,USB4000->lambdaValues[i]);
-         
       }
 }
 

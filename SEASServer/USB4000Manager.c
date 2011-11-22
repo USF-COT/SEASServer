@@ -55,7 +55,7 @@ unsigned short getNumPixels(char specNumber){
         numPixels = spectrometers[specNumber]->status->numPixels;
         pthread_mutex_unlock(&specsMutex[specNumber]);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Invalide spectrometer index (%d) passed to getNumPixels.",specNumber);
+        syslog(LOG_DAEMON|LOG_ERR,"Invalid spectrometer index (%d) passed to getNumPixels.",specNumber);
     }
     
     return numPixels;
@@ -255,7 +255,6 @@ float* getAbsorbance(unsigned char specNumber)
         for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++)
         {
             absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel);
-            syslog(LOG_DAEMON|LOG_INFO,"%d: Absorbance=%g, @Pixel=%d",i,absorbanceValues[i],absPixels[i]);
         }
         absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel);
         pthread_mutex_unlock(&specsMutex[specNumber]);

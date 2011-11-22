@@ -462,9 +462,9 @@ void boxcarFilter(specSample* sample, unsigned short boxcar, unsigned short numP
      unsigned short i,j,M,start,n;
      float sum;
 
-     if(boxcar > 0 && boxcar < numPixels - (MAX_DARK_PIXEL+1)){
+     if(boxcar > 2 && boxcar < numPixels - (MAX_DARK_PIXEL+1)){
         M = (short)floor((float)boxcar/(float)2);
-        start = MAX_DARK_PIXEL+1;
+        start = MAX_DARK_PIXEL + 1;
 
         // Special averaging for start
         for(i=start; i < start+M; i++){
@@ -476,7 +476,7 @@ void boxcarFilter(specSample* sample, unsigned short boxcar, unsigned short numP
                     n++;
                 }
             }
-            for(j=i+1; j <= j+M; j++){
+            for(j=i+1; j <= i+M; j++){
                 sum += sample->pixels[j];
                 n++;
             }
@@ -485,7 +485,7 @@ void boxcarFilter(specSample* sample, unsigned short boxcar, unsigned short numP
 
             sample->pixels[i] = sum/n;
         }
-        
+
         // Middle Portion
         for(i=start+M; i < numPixels-M; i++){
             sum = 0;
@@ -524,7 +524,8 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
     specSample* sample;
     char command[1];
     char response[7681];
-    unsigned int i,j,k,numRead,M;
+    int numRead;
+    unsigned int i,j;
     short newPixel;
     float pixel;
     const float satScale = 65535.0/(float)USB4000->saturation_level;
@@ -545,20 +546,20 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
             usleep(4100);
             // Handle Response Depending on USB Connection
             if(USB4000->status->isHighSpeed){
-                fprintf(stderr,"Handling High-Speed USB Connection.");
+                fprintf(stdout,"Handling High-Speed USB Connection.");
                 numRead = usb_bulk_read(USB4000->usbHandle, EP6IN,response,2048,1000);
                 numRead += usb_bulk_read(USB4000->usbHandle, EP2IN,response+2048,5633,1000);
             }
             else{
-                fprintf(stderr,"Handling Full Speed (Slower Speed) USB Connection.");
+                fprintf(stdout,"Handling Full Speed (Slower Speed) USB Connection.");
                 numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
 
-            fprintf(stderr,"Read %d Bytes.  Sync byte (0x69) is 0x%x.\n",numRead,response[7680]);
+            fprintf(stdout,"Read %d Bytes.  Sync byte (0x69) is 0x%x.\n",numRead,response[7680]);
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
                 #ifdef DEBUG
-                    fprintf(stderr,"Sync byte for sample %i correct!\n",i+1);
+                    fprintf(stdout,"Sync byte for sample %i correct!\n",i+1);
                 #endif
 
                 // Convert Each Pixel to Short
@@ -571,7 +572,7 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
             }
             else{
                 #ifdef DEBUG
-                    fprintf(stderr, "Unable to read response.\n");
+                    fprintf(stdout, "Unable to read response.\n");
                 #endif
                deallocateSample(&sample);
                return NULL;
@@ -580,13 +581,14 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
         }
         else{
             #ifdef DEBUG
-                fprintf(stderr, "Unable to send command to USB4000.  Check connection.\n");
+                fprintf(stdout, "Unable to send command to USB4000.  Check connection.\n");
             #endif
             deallocateSample(&sample);
             return NULL;
         }
     }
     
+    fprintf(stdout,"Applying %d point boxcar filter\n",boxcar);
     boxcarFilter(sample,boxcar,USB4000->status->numPixels);
 
     USB4000->sample = sample;

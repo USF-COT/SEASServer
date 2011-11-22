@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include <math.h>
  
 #define STATUS char
 #define USB4000ERR 0

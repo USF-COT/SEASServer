@@ -10,7 +10,7 @@ install: lib/libUSB4000.so
 	sudo ldconfig; \
 
 testUSB4000: lib/libUSB4000.so
-	gcc -Iinclude -lusb testUSB4000.c -o testUSB4000 -Llib -lUSB4000
+	gcc -Iinclude -lusb -lm testUSB4000.c -o testUSB4000 -Llib -lUSB4000
 
 lib/libUSB4000.so: USB4000.o
 	gcc -shared -o lib/libUSB4000.so USB4000.o
