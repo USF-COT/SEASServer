@@ -14,6 +14,7 @@
 #include "GUIprotocol.h"
 #include "MethodParser/MethodNodesTable.h"
 #include "runProtocol.h"
+#include "globalIncludes.h"
 
 #ifndef _USB4000MANAGER_H
 #define _USB4000MANAGER_H

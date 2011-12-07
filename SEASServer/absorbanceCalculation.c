@@ -7,7 +7,7 @@
    
    Computes the absorbance for the specified spectrometer.
 */
-float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel)
+float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel,BOOL nonLinearCorrect)
 {
    float Absorbance;
    float Fraction;
@@ -19,14 +19,18 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
    
-   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample);
-   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample);
+   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample,nonLinearCorrect);
+   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample,nonLinearCorrect);
 
    /* Compute the numerator */
-   Numerator = (float) (USB4000->refSample->pixels[absorbingPixel] - RefDarkValue);
+   Numerator = nonLinearCorrect ? NonLinearCountCorrection(USB4000,USB4000->refSample->pixels[absorbingPixel]) : USB4000->refSample->pixels[absorbingPixel];
+   Numerator -= RefDarkValue;
    
    /* Compute the denominator */
-   Denominator = (float) (USB4000->sample->pixels[absorbingPixel] - SampDarkValue);
+   Denominator = nonLinearCorrect ? NonLinearCountCorrection(USB4000,USB4000->sample->pixels[absorbingPixel]) : USB4000->sample->pixels[absorbingPixel];
+   Denominator -= SampDarkValue;
+
+   /* Apply Non-Linear Count Correction */
 
    /* Compute the absorbance */
    Fraction = Numerator/Denominator; 
@@ -40,7 +44,7 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    }
 
    /* Compute baseline absorbance */
-   BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel);
+   BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel,nonLinearCorrect);
    
    /* Subtract baseline */
    Absorbance -= BaselineAbsorbance;
@@ -54,7 +58,7 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    
    Computes the correction absorbance for the specified spectrometer.
 */
-float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel)
+float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel, BOOL nonLinearCorrect)
 {
    float Numerator;
    float Denominator;
@@ -65,19 +69,21 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsor
    if(USB4000->refSample == NULL || USB4000->sample == NULL)
       return -1;
 
-   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample);
-   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample);
+   RefDarkValue = ComputeDarkValue(USB4000,USB4000->refSample,nonLinearCorrect);
+   SampDarkValue = ComputeDarkValue(USB4000,USB4000->sample,nonLinearCorrect);
 
    /* Compute the numerator */
-   Numerator = (float) ( USB4000->refSample->pixels[nonAbsorbingPixel] - RefDarkValue);
-   
+   Numerator = nonLinearCorrect ? NonLinearCountCorrection(USB4000,USB4000->refSample->pixels[nonAbsorbingPixel]) : USB4000->refSample->pixels[nonAbsorbingPixel];
+   Numerator -= RefDarkValue;
+
    /* Compute the denominator */
-   Denominator = (float) ( USB4000->sample->pixels[nonAbsorbingPixel] - SampDarkValue);
-   
+   Denominator = nonLinearCorrect ? NonLinearCountCorrection(USB4000,USB4000->sample->pixels[nonAbsorbingPixel]) : USB4000->sample->pixels[nonAbsorbingPixel];
+   Denominator -= SampDarkValue;
+
    /* Compute the absorbance */
    Fraction = Numerator / Denominator;
    if(Fraction > 0)
-       CorrectionAbsorbance = log10f( Numerator / Denominator );
+       CorrectionAbsorbance = log10f( Fraction );
    else
        return 0;
 
@@ -91,7 +97,7 @@ float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsor
    
    Computes the dark value for a sample.
 */
-float ComputeDarkValue(spectrometer* USB4000, specSample* sample)
+float ComputeDarkValue(spectrometer* USB4000, specSample* sample, BOOL nonLinearCorrect)
 {
    float AverageDarkValue;
    float Accumulator;
@@ -101,14 +107,19 @@ float ComputeDarkValue(spectrometer* USB4000, specSample* sample)
    Accumulator = (float) 0;
    
    /* Sum the dark pixels */
-   for( i = (int) START_DARK; i < (int) MAX_DARK_PIXEL; i++ )
-      Accumulator += sample->pixels[ i ];
-   
+   if(nonLinearCorrect){
+      for( i = (int) START_DARK; i < (int) MAX_DARK_PIXEL; i++ )
+          Accumulator += NonLinearCountCorrection(USB4000,sample->pixels[ i ]);
+   } else {
+      for( i = (int) START_DARK; i < (int) MAX_DARK_PIXEL; i++ )
+          Accumulator += sample->pixels[ i ];
+   }
+
    /* Compute the average dark value */
    AverageDarkValue = (float) ( Accumulator / (float) (MAX_DARK_PIXEL - START_DARK) );
 
    /* Return the corrected average */
-   return( NonLinearCountCorrection(USB4000, AverageDarkValue ) );
+   return( AverageDarkValue );
 }
 
 

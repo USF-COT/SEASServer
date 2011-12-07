@@ -254,9 +254,9 @@ float* getAbsorbance(unsigned char specNumber)
         pthread_mutex_lock(&specsMutex[specNumber]);
         for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++)
         {
-            absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel);
+            absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel,TRUE);
         }
-        absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel);
+        absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel,TRUE);
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
 
@@ -305,7 +305,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
         getSample(spectrometers[specNumber],getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
         for(i=0; i < spectrometers[specNumber]->status->numPixels; i++)
         {
-            absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel);
+            absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel,FALSE);
         }
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }

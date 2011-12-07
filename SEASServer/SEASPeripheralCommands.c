@@ -163,7 +163,7 @@ void pumpOff(unsigned char pumpID){
     if(response->deviceID == ACK){
         syslog(LOG_DAEMON|LOG_INFO,"SUCCESS: Pump %d disabled.  LON sent ACK.",pumpID);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d not diabled.  LON sent NAK.",pumpID);
+        syslog(LOG_DAEMON|LOG_ERR,"ERROR: Pump %d not disabled.  LON sent NAK.",pumpID);
     }
     freeLONResponse(response);
 }
