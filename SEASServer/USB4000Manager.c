@@ -4,6 +4,7 @@
  * By: Michael Lindemuth
  */
 
+
 #include "USB4000Manager.h"
 
 spectrometer* spectrometers[NUM_SPECS];
