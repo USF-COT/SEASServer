@@ -1,5 +1,6 @@
 #include "LONDispatch.h"
 
+
 static int portID = -1;
 static volatile sig_atomic_t dispatching = 0;
 static pthread_mutex_t LONportMutex = PTHREAD_MUTEX_INITIALIZER;

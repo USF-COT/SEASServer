@@ -2,11 +2,6 @@
 
 void receiveWaveSetCommand(int connection, char* command){
     int specID;
-    char newAnaName[MAX_ANA_NAME];
-    unsigned char newUnits;
-    unsigned char absWaveCount;
-    float absWaves[9];
-    float nonAbsWave;
 
     syslog(LOG_DAEMON||LOG_INFO,"Setting Wavelength Configuration."); 
     specID = (int)command[1];

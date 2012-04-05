@@ -52,7 +52,7 @@ void receiveMethodFile(int connection, char* command){
     // Parse filename from first line
     char *filename = NULL;
     char defaultFilename[48] = {'\0'}; 
-    char response[1] = {LRM};
+    char response[1] = {ACK};
     FILE* methodFile = NULL;
     
     char receiveBuffer[MAXMETHRECVBUF+1];
@@ -90,6 +90,7 @@ void receiveMethodFile(int connection, char* command){
         }
 
         // Retrieve the rest of the file stream from the socket
+        send(connection,(void*)response,1,0);
         nBytesReceived = recv(connection,receiveBuffer,MAXMETHRECVBUF,0);
         while(nBytesReceived > 0){
             receiveBuffer[nBytesReceived] = '\0';
@@ -107,6 +108,7 @@ void receiveMethodFile(int connection, char* command){
                     fputc(receiveBuffer[i],methodFile);
                 }
             }
+            send(connection,(void*)response,1,0);
             nBytesReceived = recv(connection,receiveBuffer,MAXMETHRECVBUF,0);
         }
     } else {  // If a file was never created, return an error code.  This one is just a placeholder.

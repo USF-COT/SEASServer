@@ -254,9 +254,9 @@ float* getAbsorbance(unsigned char specNumber)
         pthread_mutex_lock(&specsMutex[specNumber]);
         for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++)
         {
-            absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel,TRUE);
+            absorbanceValues[i] = ComputeAbsorbance(spectrometers[specNumber],absPixels[i],nonAbsPixel,FALSE,FALSE);
         }
-        absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel,TRUE);
+        absorbanceValues[MAX_ABS_WAVES] = ComputeCorrectionAbsorbance(spectrometers[specNumber],nonAbsPixel,FALSE);
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
 
@@ -302,10 +302,9 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
         absValues = malloc(sizeof(float) * spectrometers[specNumber]->status->numPixels);
-        getSample(spectrometers[specNumber],getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
         for(i=0; i < spectrometers[specNumber]->status->numPixels; i++)
         {
-            absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel,FALSE);
+            absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel,FALSE,FALSE);
         }
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
@@ -470,7 +469,7 @@ void readRefRunResponse(int connection, s_node* node){
                 send(connection,(void*)&data,sizeof(READ_REFERENCE_RUNTIME_DATA),0);
                 //send(connection,(void*)header,sizeof(unsigned char)*3,0);
                 //send(connection,(void*)refSample->pixels,sizeof(float)*numPixels,0);
-                deallocateSample(&refSample);
+                //deallocateSample(&refSample); UNNECESSARY it is already free'd in moveSpecSampleToFloats
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to read reference spectrum.  Have you initialized it?");
             }
@@ -519,11 +518,6 @@ void readSampRunResponse(int connection, s_node* node){
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve data for read sample runtime response.");
             }
 
-            // RISKY: This caused a problem before 
-            // Free Utilized Memory
-            if(sample){
-                deallocateSample(&sample);
-            }
             syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the sample.");
             if(abs){
                 free(abs);

@@ -98,6 +98,18 @@ char readConfig(){
                 strncpy(config[specIndex].waveParameters.analyteName,tok,MAX_ANA_NAME-1);
                 config[specIndex].waveParameters.analyteName[MAX_ANA_NAME] = '\0';
             }
+            else if(strcmp(tok,"ALINDEX") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.analyteIndex = (unsigned char) atoi(tok);
+            }
+            else if(strcmp(tok,"CORRECTIONENABLE")){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.correctionEnabled = (unsigned char) atoi(tok);
+            }
+            else if(strcmp(tok,"PHINDICATOR")){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pHIndicator = (unsigned char) atoi(tok);
+            }
             else if(strcmp(tok,"UNITS") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.units = (char)atoi(tok);
@@ -106,17 +118,33 @@ char readConfig(){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.temperature = atof(tok);
             }
-            else if(strcmp(tok,"CTS1") == 0){
+            else if(strcmp(tok,"Ctb0") == 0){
                 tok = strtok(NULL,"\n");
-                config[specIndex].waveParameters.CtS1 = atof(tok);
+                config[specIndex].waveParameters.Ctb0 = atof(tok);
             }
-            else if(strcmp(tok,"PCO2S1") == 0){
+            else if(strcmp(tok,"Ctb1") == 0){
                 tok = strtok(NULL,"\n");
-                config[specIndex].waveParameters.pCO2S1 = atof(tok);
+                config[specIndex].waveParameters.Ctb1 = atof(tok);
             }
-            else if(strcmp(tok,"PCO2S2") == 0){
+            else if(strcmp(tok,"Ctb2") == 0){
                 tok = strtok(NULL,"\n");
-                config[specIndex].waveParameters.pCO2S2 = atof(tok);
+                config[specIndex].waveParameters.Ctb2 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2a0") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2a0 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2a1") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2a1 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2b0") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2b0 = atof(tok);
+            }
+            else if(strcmp(tok,"PCO2b1") == 0){
+                tok = strtok(NULL,"\n");
+                config[specIndex].waveParameters.pCO2b1 = atof(tok);
             }
             else if(strcmp(tok,"SYSMEASUREMODE") == 0){
                 tok = strtok(NULL,"\n");
@@ -126,19 +154,20 @@ char readConfig(){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.cMeasureMode = (unsigned char)atoi(tok);
             }
-            else if(strcmp(tok,"SLOPE") == 0){
+            else if(strcmp(tok,"SLOPES") == 0){
                 tok = strtok(NULL,",\n");
                 i=0;
                 while(tok != NULL && i < MAX_ABS_WAVES){
-                    config[specIndex].waveParameters.slope[wavelengthCount] = atof(tok);
+                    syslog(LOG_DAEMON|LOG_INFO,"Slope %d is %f",i,atof(tok));
+                    config[specIndex].waveParameters.slope[i++] = atof(tok);
                     tok = strtok(NULL,",\n");
                 }
             }
-            else if(strcmp(tok,"INTERCEPT") == 0){
+            else if(strcmp(tok,"INTERCEPTS") == 0){
                 tok = strtok(NULL,",\n");
                 i=0;
                 while(tok != NULL && i < MAX_ABS_WAVES){
-                    config[specIndex].waveParameters.intercept[wavelengthCount] = atof(tok);
+                    config[specIndex].waveParameters.intercept[i++] = atof(tok);
                     tok = strtok(NULL,",\n");
                 }
             }
@@ -201,14 +230,21 @@ void writeConfigFile(){
             }
             fprintf(configFile,"\nSPEC%d.NON_ABSORBING_WAVELENGTH=%f\n",i+1,config[i].waveParameters.nonAbsorbingWavelength);
             fprintf(configFile,"\nSPEC%d.ANALYTE=%s\n",i+1,config[i].waveParameters.analyteName);
+            fprintf(configFile,"SPEC%d.ALINDEX=%d\n",i+1,config[i].waveParameters.analyteIndex);
+            fprintf(configFile,"SPEC%d.CORRECTIONENABLE=%d\n",i+1,config[i].waveParameters.correctionEnabled);
+            fprintf(configFile,"SPEC%d.PHINDICATOR=%d\n",i+1,config[i].waveParameters.pHIndicator);
             fprintf(configFile,"SPEC%d.UNITS=%d\n",i+1,config[i].waveParameters.units);
             fprintf(configFile,"SPEC%d.TEMP=%f\n",i+1,config[i].waveParameters.temperature);
-            fprintf(configFile,"SPEC%d.CTS1=%f\n",i+1,config[i].waveParameters.CtS1);
-            fprintf(configFile,"SPEC%d.PCO2S1=%f\n",i+1,config[i].waveParameters.pCO2S1);
-            fprintf(configFile,"SPEC%d.PCO2S2=%f\n",i+1,config[i].waveParameters.pCO2S2);
+            fprintf(configFile,"SPEC%d.Ctb0=%f\n",i+1,config[i].waveParameters.Ctb0);
+            fprintf(configFile,"SPEC%d.Ctb1=%f\n",i+1,config[i].waveParameters.Ctb1);
+            fprintf(configFile,"SPEC%d.Ctb2=%f\n",i+1,config[i].waveParameters.Ctb2);
+            fprintf(configFile,"SPEC%d.PCO2a0=%f\n",i+1,config[i].waveParameters.pCO2a0);
+            fprintf(configFile,"SPEC%d.PCO2a1=%f\n",i+1,config[i].waveParameters.pCO2a1);
+            fprintf(configFile,"SPEC%d.PCO2b0=%f\n",i+1,config[i].waveParameters.pCO2b0);
+            fprintf(configFile,"SPEC%d.PCO2b1=%f\n",i+1,config[i].waveParameters.pCO2b1);
             fprintf(configFile,"SPEC%d.SYSMEASUREMODE=%d\n",i+1,config[i].waveParameters.systemMeasureMode);
             fprintf(configFile,"SPEC%d.CMEASUREMODE=%d\n",i+1,config[i].waveParameters.cMeasureMode);
-            fprintf(configFile,"SPEC%d.SLOPE=",i+1);
+            fprintf(configFile,"SPEC%d.SLOPES=",i+1);
             for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
                 if(j==0)
                     fprintf(configFile,"%f",config[i].waveParameters.slope[j]);
@@ -216,7 +252,7 @@ void writeConfigFile(){
                     fprintf(configFile,",%f",config[i].waveParameters.slope[j]);
             } 
             fprintf(configFile,"\n");
-            fprintf(configFile,"SPEC%d.INTERCEPT=",i+1);
+            fprintf(configFile,"SPEC%d.INTERCEPTS=",i+1);
             for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
                 if(j==0)
                     fprintf(configFile,"%f",config[i].waveParameters.intercept[j]);
@@ -330,12 +366,14 @@ specConfig* getConfigCopy(int specIndex){
         if(retVal){
             pthread_mutex_lock(&writeConfigMutex);
             memcpy(retVal,&config[specIndex],sizeof(specConfig));
+            pthread_mutex_unlock(&writeConfigMutex);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate enough memory to copy spectrometer #%d config.",specIndex);
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Out of Bounds Spectrometer Index (%d) Passed to getConfigCopy.",specIndex);
     }
+    return retVal;
 }
 
 // This method is very simple at the moment, but is here just in case spec config becomes any more complicated
@@ -443,16 +481,26 @@ void logConfig(){
         syslog(LOG_DAEMON|LOG_INFO,"Absorbing Wavelength Count: %d",config[i].waveParameters.absorbingWavelengthCount);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++){
             syslog(LOG_DAEMON|LOG_INFO,"Absorbing Wavelength %i: %f",j+1,config[i].waveParameters.absorbingWavelengths[j]);
+            syslog(LOG_DAEMON|LOG_INFO,"Absorbing Pixel Index %i: %d",j+1,config[i].absCalcParameters.absorbingPixels[j]);
         }
-        syslog(LOG_DAEMON|LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength); 
+        syslog(LOG_DAEMON|LOG_INFO,"Non Absorbing Wavelength: %f",config[i].waveParameters.nonAbsorbingWavelength);
+        syslog(LOG_DAEMON|LOG_INFO,"Non Absorbing Wavelength: %d",config[i].absCalcParameters.nonAbsorbingPixel);
+
         syslog(LOG_DAEMON|LOG_INFO,"Analyte Name: %s",config[i].waveParameters.analyteName);
+        syslog(LOG_DAEMON|LOG_INFO,"Analyte Index: %d",config[i].waveParameters.analyteIndex);
+        syslog(LOG_DAEMON|LOG_INFO,"Correction Enabled: %s",config[i].waveParameters.correctionEnabled ? "TRUE" : "FALSE");
+        syslog(LOG_DAEMON|LOG_INFO,"pH Indicator: %d",config[i].waveParameters.pHIndicator);
         syslog(LOG_DAEMON|LOG_INFO,"Units #: %d",config[i].waveParameters.units);
         syslog(LOG_DAEMON|LOG_INFO,"System Measure Mode: %d",config[i].waveParameters.systemMeasureMode);
         syslog(LOG_DAEMON|LOG_INFO,"Carbon Measure Mode: %d",config[i].waveParameters.cMeasureMode);
         syslog(LOG_DAEMON|LOG_INFO,"Temperature: %f",config[i].waveParameters.temperature);
-        syslog(LOG_DAEMON|LOG_INFO,"CtS1: %f",config[i].waveParameters.CtS1);
-        syslog(LOG_DAEMON|LOG_INFO,"pCO2S1: %f",config[i].waveParameters.pCO2S1);
-        syslog(LOG_DAEMON|LOG_INFO,"pCO2S2: %f",config[i].waveParameters.pCO2S2);
+        syslog(LOG_DAEMON|LOG_INFO,"Ctb0: %f",config[i].waveParameters.Ctb0);
+        syslog(LOG_DAEMON|LOG_INFO,"Ctb1: %f",config[i].waveParameters.Ctb1);
+        syslog(LOG_DAEMON|LOG_INFO,"Ctb2: %f",config[i].waveParameters.Ctb2);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2a0: %f",config[i].waveParameters.pCO2a0);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2a1: %f",config[i].waveParameters.pCO2a1);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2b0: %f",config[i].waveParameters.pCO2b0);
+        syslog(LOG_DAEMON|LOG_INFO,"pCO2b1: %f",config[i].waveParameters.pCO2b1);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)
             syslog(LOG_DAEMON|LOG_INFO,"Slope %i: %f",j+1,config[i].waveParameters.slope[j]);
         for(j=0; j < config[i].waveParameters.absorbingWavelengthCount; j++)

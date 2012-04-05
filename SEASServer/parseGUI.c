@@ -47,8 +47,10 @@ GUIHandler const handlers[] = {
 static const int numGUIHandlers = 0x28;
 
 void parseGUI(int connection,char* command){
+    char ack = 0x00;
     if(command[0] <= numGUIHandlers && command[0] > 0){
         if(handlers[command[0]]){
+            send(connection,&ack,1,0);
             handlers[command[0]](connection,command);
         } else {
             syslog(LOG_DAEMON||LOG_INFO,"Nothing to do, function handlers for %x not yet implemented.", command[0]);

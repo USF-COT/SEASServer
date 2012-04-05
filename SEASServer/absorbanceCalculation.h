@@ -13,7 +13,7 @@
 #include "libUSB4000.h"
 #include "globalIncludes.h"
 
-float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel, BOOL nonLinearCorrect);
+float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel, BOOL nonLinearCorrect, BOOL subBaseline);
 
 float ComputeCorrectionAbsorbance(spectrometer* USB4000, unsigned short nonAbsorbingPixel, BOOL nonLinearCorrect);
 

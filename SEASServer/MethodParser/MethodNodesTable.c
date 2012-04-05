@@ -200,7 +200,6 @@ void closeControlNode()
 
 // Control Command Functions
 BOOL methodDelay(unsigned long* delayInSeconds,unsigned long* originalValue){
-    sleep(1);
     (*delayInSeconds)--;
     if(*delayInSeconds != 0){
         return TRUE;

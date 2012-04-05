@@ -47,8 +47,35 @@ typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
     unsigned short scansPerSample;
     unsigned short boxcarSmoothing;
-}spectrometerParameters;
+}__attribute__((packed)) spectrometerParameters;
 
+/* Absorbance computation data */
+typedef  struct WAVELENGTHPARAMETERS{
+
+  char           analyteName[MAX_ANA_NAME];
+  unsigned char  analyteIndex;
+  unsigned char  units;
+  unsigned char  absorbingWavelengthCount;
+  unsigned char  systemMeasureMode;
+  unsigned char  cMeasureMode;
+  unsigned char  correctionEnabled;
+  unsigned char  pHIndicator;
+  float          absorbingWavelengths[MAX_ABS_WAVES];
+  float          nonAbsorbingWavelength;
+  float          temperature;
+  float          Ctb0;
+  float          Ctb1;
+  float          Ctb2;
+  float          pCO2a0;
+  float          pCO2a1;
+  float          pCO2b0;
+  float          pCO2b1;
+  float          slope[MAX_ABS_WAVES];
+  float          intercept[MAX_ABS_WAVES];
+
+}__attribute__((packed)) wavelengthParameters;
+
+/* Old structure
 typedef struct WAVELENGTHPARAMETERS{
     char analyteName[MAX_ANA_NAME];
     unsigned char units;
@@ -64,11 +91,12 @@ typedef struct WAVELENGTHPARAMETERS{
     float slope[MAX_ABS_WAVES];
     float intercept[MAX_ABS_WAVES]; 
 }wavelengthParameters;
+*/
 
 typedef struct ABSORBANCECALCPARAMETERS{
     unsigned short absorbingPixels[MAX_ABS_WAVES];
     unsigned short nonAbsorbingPixel;
-}absorbanceCalcParameters;
+}__attribute__((packed)) absorbanceCalcParameters;
 
 typedef struct SPECCONFIG{
     char serial[12];
@@ -76,7 +104,7 @@ typedef struct SPECCONFIG{
     spectrometerParameters specParameters;
     wavelengthParameters waveParameters; 
     absorbanceCalcParameters absCalcParameters;
-}specConfig;
+}__attribute__((packed)) specConfig;
 
 // Config File Managment Methods
 void applyConfig();

@@ -139,9 +139,6 @@ int main(){
     exit(EXIT_FAILURE);
   }
 
-  logConfig();
-
-
   /* Create a new SID for the child process */
   sid = setsid();
   if(sid < 0){
@@ -190,6 +187,7 @@ int main(){
 #endif
 
   applyConfig();
+  logConfig();
 
   // Start LON Dispatch
   syslog(LOG_DAEMON|LOG_INFO,"Starting LON Connection.");

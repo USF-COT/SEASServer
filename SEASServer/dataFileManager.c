@@ -1,5 +1,6 @@
 #include "dataFileManager.h"
 
+
 static sqlite3 *db = NULL;
 static int64_t currConfigID[NUM_SPECS];
 static pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -9,7 +10,7 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE  TABLE  IF NOT EXISTS \"main\".\"configs\" (\"config_id\" INTEGER PRIMARY KEY NOT NULL AUTOINCREMENT, \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"integration_time\" INTEGER NOT NULL, \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB , \"absorbance_wavelength_1\" REAL, \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non-absorbing_wavelength\" REAL)";
+    query = "CREATE  TABLE  IF NOT EXISTS main.configs (\"config_id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  \"time\" INTEGER NOT NULL, \"spec_id\" INTEGER NOT NULL, \"analyte_name\" TEXT NOT NULL , \"integration_time\" INTEGER NOT NULL, \"dwell\" INTEGER NOT NULL , \"scans_per_sample\" INTEGER NOT NULL , \"boxcar\" INTEGER NOT NULL , \"reference_spectrum\" BLOB , \"absorbance_wavelength_1\" REAL, \"absorbance_wavelength_2\" REAL, \"absorbance_wavelength_3\" REAL, \"absorbance_wavelength_4\" REAL, \"absorbance_wavelength_5\" REAL, \"absorbance_wavelength_6\" REAL, \"absorbance_wavelength_7\" REAL, \"absorbance_wavelength_8\" REAL, \"absorbance_wavelength_9\" REAL, \"non_absorbing_wavelength\" REAL)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
@@ -21,13 +22,13 @@ void applyDBSchema(sqlite3* db){
     }
 
     // Create concentrations table
-    query = "CREATE TABLE IF NOT EXISTS \"main\".\"concentrations\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measured_absorbance_non_absorbing\" REAL NOT NULL,ctd_reading_id INTEGER NOT NULL DEFAULT 0 REFERENCES ctd_readings.ctd_reading_id ON UPDATE CASCADE ON DELETE SET DEFAULT,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time,config_id) )";
+    query = "CREATE TABLE IF NOT EXISTS main.concentrations (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"concentration_1\" REAL NOT NULL, \"concentration_2\" REAL,\"concentration_3\" REAL,\"concentration_4\" REAL,\"concentration_5\" REAL,\"concentration_6\" REAL,\"concentration_7\" REAL,\"concentration_8\" REAL,\"concentration_9\" REAL,\"original_count_1\" REAL NOT NULL,\"original_count_2\" REAL,\"original_count_3\" REAL,\"original_count_4\" REAL,\"original_count_5\" REAL,\"original_count_6\" REAL,\"original_count_7\" REAL,\"original_count_8\" REAL,\"original_count_9\" REAL,\"measured_absorbance_1\" REAL NOT NULL,\"measured_absorbance_2\" REAL,\"measured_absorbance_3\" REAL,\"measured_absorbance_4\" REAL,\"measured_absorbance_5\" REAL,\"measured_absorbance_6\" REAL,\"measured_absorbance_7\" REAL,\"measured_absorbance_8\" REAL,\"measured_absorbance_9\" REAL,\"original_count_non_absorbing\" REAL NOT NULL, \"measured_absorbance_non_absorbing\" REAL NOT NULL,ctd_reading_id INTEGER NOT NULL DEFAULT 0 REFERENCES ctd_readings(ctd_reading_id) ON UPDATE CASCADE ON DELETE SET DEFAULT,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time,config_id) )";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Table Query Failed: %s", errMsg);
     }
 
     // Create full_spectrums table
-    query = "CREATE TABLE IF NOT EXISTS \"main\".\"full_spectrums\" (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"sample_spectrum\" BLOB NOT NULL, ctd_reading_id INTEGER NOT NULL DEFAULT 0 REFERENCES ctd_readings.ctd_reading_id ON UPDATE CASCADE ON DELETE SET DEFAULT ,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time, config_id))";
+    query = "CREATE TABLE IF NOT EXISTS main.full_spectrums (\"time\" INTEGER NOT NULL, \"config_id\" INTEGER NOT NULL DEFAULT 0 REFERENCES configs(config_id) ON UPDATE CASCADE ON DELETE SET DEFAULT, \"sample_spectrum\" BLOB NOT NULL, ctd_reading_id INTEGER NOT NULL DEFAULT 0 REFERENCES ctd_readings(ctd_reading_id) ON UPDATE CASCADE ON DELETE SET DEFAULT ,\"heater_temperature\" REAL NOT NULL, PRIMARY KEY(time, config_id))";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Full_Spectrums Table Query Failed: %s", errMsg);
     }
@@ -107,7 +108,7 @@ void writeConfigToDB(){
     specConfig* config = NULL;
     specSample* refSample = NULL;
     // If MAX_ABS_WAVES in config.h is changed, this line must be changed manually!
-    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum,absorbance_wavelength_1,absorbance_wavelength_2,absorbance_wavelength_3,absorbance_wavelength_4,absorbance_wavelength_5,absorbance_wavelength_6,absorbance_wavelength_7,absorbance_wavelength_8,absorbance_wavelength_9,non-absorbing_wavelength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum,absorbance_wavelength_1,absorbance_wavelength_2,absorbance_wavelength_3,absorbance_wavelength_4,absorbance_wavelength_5,absorbance_wavelength_6,absorbance_wavelength_7,absorbance_wavelength_8,absorbance_wavelength_9,non_absorbing_wavelength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 	
     // Do nothing if a data file is not currently open
@@ -218,7 +219,7 @@ void writeConcData(){
     float* counts;
     
     // If MAX_ABS_WAVES in config.h is changed, this line must be changed manually!
-    const char* insertStmt = "INSERT INTO main.concentrations (time,config_id,concentration_1,concentration_2,concentration_3,concentration_4,concentration_5,concentration_6,concentration_7,concentration_8,concentration_9,original_count_1,original_count_2,original_count_3,original_count_4,original_count_5,original_count_6,,original_count_7,original_count_8,original_count_9,measured_absorbance_1,measured_absorbance_2,measured_absorbance_3,measured_absorbance_4,measured_absorbance_5,measured_absorbance_6,measured_absorbance_7,measured_absorbance_8,measured_absorbance_9,original_count_non_absorbing,measured_absorbance_non_absorbing,ctd_reading_id,heater_temperature) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    const char* insertStmt = "INSERT INTO main.concentrations (time,config_id,concentration_1,concentration_2,concentration_3,concentration_4,concentration_5,concentration_6,concentration_7,concentration_8,concentration_9,original_count_1,original_count_2,original_count_3,original_count_4,original_count_5,original_count_6,,original_count_7,original_count_8,original_count_9,measured_absorbance_1,measured_absorbance_2,measured_absorbance_3,measured_absorbance_4,measured_absorbance_5,measured_absorbance_6,measured_absorbance_7,measured_absorbance_8,measured_absorbance_9,original_count_non_absorbing,measured_absorbance_non_absorbing,ctd_reading_id,heater_temperature) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     ctd_id = writeCTDData();
@@ -295,7 +296,7 @@ void writeConcData(){
                     return;
                 }
                 
-                // Log non-absorbing count and absorbance
+                // Log non_absorbing count and absorbance
                 sqlite3_bind_double(pStmt,stmtI++,(double)counts[MAX_ABS_WAVES]);
                 sqlite3_bind_double(pStmt,stmtI++,(double)abs[MAX_ABS_WAVES]);
                 free(counts);

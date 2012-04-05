@@ -7,7 +7,7 @@
    
    Computes the absorbance for the specified spectrometer.
 */
-float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel,BOOL nonLinearCorrect)
+float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, unsigned short nonAbsorbingPixel,BOOL nonLinearCorrect, BOOL subBaseline)
 {
    float Absorbance;
    float Fraction;
@@ -43,11 +43,12 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
        return 0;
    }
 
-   /* Compute baseline absorbance */
-   BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel,nonLinearCorrect);
-   
-   /* Subtract baseline */
-   Absorbance -= BaselineAbsorbance;
+   if(subBaseline){
+       /* Compute baseline absorbance */
+       BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel,nonLinearCorrect); 
+       /* Subtract baseline */
+       Absorbance -= BaselineAbsorbance;
+   }
 
    /* Return the absorbance */
    return( Absorbance );
