@@ -377,8 +377,8 @@ specConfig* getConfigCopy(int specIndex){
 }
 
 // This method is very simple at the moment, but is here just in case spec config becomes any more complicated
-void freeSpecConfig(specConfig* config){
-    free(config);
+void freeSpecConfig(specConfig** config){
+    free(*config);
 }
 
 systemMode getMode(){

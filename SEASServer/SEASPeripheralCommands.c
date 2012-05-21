@@ -359,7 +359,7 @@ CTDreadings_s* getCTDValues(){
     LONresponse_s* response = sendLONCommand(CTD,CTR,0,NULL);
     if(response){
         if(response->data && response->deviceID == CTD){
-            readings = malloc(sizeof(CTDreadings_s));
+            readings = (CTDreadings_s*)malloc(sizeof(CTDreadings_s));
             copyReverseBytes(&(readings->conductivity),response->data,4);
             copyReverseBytes(&(readings->temperature),response->data+4,4);
             copyReverseBytes(&(readings->pressure),response->data+8,4);

@@ -116,8 +116,8 @@ dataFileExp:   OPEN DATA FIL { addCommandNode(0,NULL,methodOpenDataFile,MAX_RUNT
 
 /* Write Expressions */
 
-writeExp:   WRITE CONC DATA VAL { addCommandNode(0,NULL,methodWriteConcData,MAX_RUNTIME_COMMANDS); }
-          | WRITE FULL SPEC VAL { addCommandNode(0,NULL,methodWriteFullSpec,MAX_RUNTIME_COMMANDS)}
+writeExp:   WRITE CONC DATA VAL { double* params = allocateParamArray(1); params[0] = $4; addCommandNode(1,(void*)params,methodWriteConcData,MAX_RUNTIME_COMMANDS); }
+          | WRITE FULL SPEC VAL { double* params = allocateParamArray(1); params[0] = $4; addCommandNode(1,(void*)params,methodWriteFullSpec,MAX_RUNTIME_COMMANDS)}
 ;
 
 /* Delay Expression */

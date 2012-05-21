@@ -20,8 +20,8 @@ void closeDataFile();
 
 // Write Functions
 void writeConfigToDB();
-void writeConcData();
-void writeFullSpec();
+void writeConcData(unsigned char specID);
+void writeFullSpec(unsigned char specID);
 
 // Method Wrapper Functions
 void methodOpenDataFile(unsigned long argc, void* argv);

@@ -4,8 +4,7 @@ volatile sig_atomic_t executingMethod = 0;
 static pthread_t methodFileRunnerThread;
 
 void *methodFileRunner(void* name){
-    struct s_node* node;
-    char* filename = (char*)name;
+    char* filename = (char*)getActiveMethodFilename();
 
     yyin = fopen(filename,"r");
     if(yyin){
@@ -20,7 +19,7 @@ void *methodFileRunner(void* name){
     stopNodes();
     clearNodes();
     syslog(LOG_DAEMON|LOG_INFO,"Stopped Running Method File: %s.",filename);
-    free(filename);
+    free(name);
 }
 
 // Generic Methods
@@ -30,7 +29,7 @@ void executeMethodFile(){
     if(!executingMethod){
         pthread_attr_init(&methodFileAttr);
         pthread_attr_setdetachstate(&methodFileAttr, PTHREAD_CREATE_DETACHED);
-        pthread_create(&methodFileRunnerThread,&methodFileAttr,methodFileRunner,(void *)getActiveMethodFilename());
+        pthread_create(&methodFileRunnerThread,&methodFileAttr,methodFileRunner,NULL);
     }
 }
 

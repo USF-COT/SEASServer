@@ -1629,14 +1629,14 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 119 "MethodParser/MethodParser.y"
-    { addCommandNode(0,NULL,methodWriteConcData,MAX_RUNTIME_COMMANDS); ;}
+    { double* params = allocateParamArray(1); params[0] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(1,(void*)params,methodWriteConcData,MAX_RUNTIME_COMMANDS); ;}
     break;
 
   case 39:
 
 /* Line 1455 of yacc.c  */
 #line 120 "MethodParser/MethodParser.y"
-    { addCommandNode(0,NULL,methodWriteFullSpec,MAX_RUNTIME_COMMANDS);}
+    { double* params = allocateParamArray(1); params[0] = (yyvsp[(4) - (4)].doubleVal); addCommandNode(1,(void*)params,methodWriteFullSpec,MAX_RUNTIME_COMMANDS);}
     break;
 
   case 40:

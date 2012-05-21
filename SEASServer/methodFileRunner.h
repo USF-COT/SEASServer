@@ -8,8 +8,8 @@
 
 #include <syslog.h>
 #include <pthread.h>
-#include "MethodNodesTable.h"
-#include "MethodParser.tab.h"
+#include "MethodParser/MethodNodesTable.h"
+#include "MethodParser/MethodParser.tab.h"
 
 extern FILE* yyin;
 

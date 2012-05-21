@@ -123,7 +123,7 @@ void setSlopeIntercept(int specIndex, float* slopeInterceptPairs);
 
 // Get Methods
 specConfig* getConfigCopy(int specIndex);
-void freeSpecConfig(specConfig* config);
+void freeSpecConfig(specConfig** config);
 systemMode getMode();
 char* getSerialNumber(int specIndex);
 spectrometerParameters* getSpecParameters(int specIndex);

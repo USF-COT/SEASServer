@@ -119,6 +119,10 @@ void setDwellRunResponse(int connection, s_node* node){
     }
 }
 
+void methodCompletedRunResponse(int connection, s_node* node){
+    syslog(LOG_DAEMON|LOG_INFO,"Method complete command received");
+}
+
 RUNNODEHandler const runProtoHandlers[] = {
     pumpRunResponse,
     pumpRunResponse,
@@ -137,11 +141,12 @@ RUNNODEHandler const runProtoHandlers[] = {
     waitHeaterRunResponse,
     readTempRunResponse,
     setDwellRunResponse,
+    methodCompletedRunResponse,
     NULL
 };
 
 void sendRunProtocolMessage(int connection, s_node* node){
-    if(node->commandID < MAX_RUNTIME_COMMANDS-1){
+    if(node->commandID < MAX_RUNTIME_COMMANDS){
          if(runProtoHandlers[node->commandID]){
              runProtoHandlers[node->commandID](connection,node);
          } else {

@@ -232,7 +232,6 @@ float* getRawCounts(unsigned char specNumber){
         countValues[i] = sample->pixels[nonAbsPixel];
 
         // housekeeping!
-        free(absPixels);
         deallocateSample(&sample);
     }
     return countValues;
@@ -316,7 +315,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
 float* getConcentrations(unsigned char specNumber){
     int i;
 
-    float* concentrations = calloc(MAX_ABS_WAVES,sizeof(float));
+    float* concentrations = calloc(MAX_ABS_WAVES+1,sizeof(float));
     if(!concentrations){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to calloc concentration memory.  PROBABLY OUT OF MEMORY!");
         return NULL;
@@ -498,14 +497,10 @@ void readSampRunResponse(int connection, s_node* node){
             numPixels = spectrometers[data.Spectrometer]->status->numPixels;
             
             // Request all necessary arrays
-            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Reading %dpx sample for spectrometer %d.",numPixels,data.Spectrometer);
             sample = getLastSample(data.Spectrometer);
             if(!sample) syslog(LOG_DAEMON|LOG_ERR,"Unable to read last sample from spectrometer.");
-            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read sample.");
             abs = getAbsorbance(data.Spectrometer);
-            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read wavelengths.");
             absSpec = getAbsorbanceSpectrum(data.Spectrometer);
-            syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully read absorbance spectrum.");
             
             // Send Sample, If All Arrays Retrieved
             if(sample && abs && absSpec){
@@ -514,24 +509,20 @@ void readSampRunResponse(int connection, s_node* node){
                 data.CorrectionAbsorbance = abs[MAX_ABS_WAVES];
                 for(i=0;i<numPixels;i++) data.AbsorbanceSpectra[i]=absSpec[i];
                 send(connection,(void*)&data,sizeof(READ_SAMPLE_RUNTIME_DATA),0);
-                syslog(LOG_DAEMON|LOG_INFO,"RUNRESP: Successfully sent read sample response.");
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve data for read sample runtime response.");
             }
 
-            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the sample.");
             if(abs){
                 free(abs);
             } else {              
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance values.");
             }
-            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the absorbance values.");
             if(absSpec){
                 free(absSpec);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance spectrum.");
             }
-            syslog(LOG_DAEMON|LOG_INFO,"Successfully freed the absorbance spectrum.");
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"Spectrometer index (%d) out of bounds.",data.Spectrometer);
         }
