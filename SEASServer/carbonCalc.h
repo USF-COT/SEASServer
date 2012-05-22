@@ -51,7 +51,8 @@
 // Base Methods
 float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
 float computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonAbsWave);
-float computeSystempH(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
+float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
+float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading);
 float computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorbance, float nonAbsWave);
 
 #endif

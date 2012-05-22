@@ -20,16 +20,26 @@ void applyDBSchema(sqlite3* db){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create ctd_readings Table Query Failed: %s",errMsg);
     }
 
-    // Create concentration sets table
-    query = "CREATE TABLE [concentration_sets] ([concentration_set_id] INTEGER  PRIMARY KEY AUTOINCREMENT NOT NULL,[time] INTEGER  NOT NULL,[config_id] INTEGER  NOT NULL,[non_absorbing_wavelength] REAL  NOT NULL,[original_count_non_absorbing] REAL  NOT NULL,[measured_absorbance_non_absorbing] REAL  NOT NULL,[ctd_reading_id] INTEGER  NOT NULL,[heater_temperature] REAL  NOT NULL)";
+    // Create wavelength sets table
+    query = "CREATE TABLE [wavelength_sets] ([wavelength_set_id] INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT,[time] INTEGER  NOT NULL,[config_id] INTEGER  NOT NULL,[non_absorbing_wavelength] REAL  NOT NULL,[original_count_non_absorbing] REAL  NOT NULL,[measured_absorbance_non_absorbing] REAL  NOT NULL,[ctd_reading_id] INTEGER  NOT NULL,[heater_temperature] REAL  NOT NULL)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
-        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentration Sets Table Query Failed: %s",errMsg);
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Wavelength Sets Table Query Failed: %s",errMsg);
     }
 
     // Create concentrations table
-    query = "CREATE TABLE [concentrations] ([concentration_set_id] INTEGER  NOT NULL,[wavelength] REAL  NOT NULL,[concentration] REAL  NOT NULL,[original_count] REAL  NOT NULL,[measured_absorbance] REAL  NOT NULL,PRIMARY KEY ([concentration_set_id],[wavelength]))";
+    query = "CREATE TABLE [concentrations] ([wavelength_set_id] INTEGER  NOT NULL,[wavelength] REAL  NOT NULL,[concentration] REAL  NOT NULL,[original_count] REAL  NOT NULL,[measured_absorbance] REAL  NOT NULL,PRIMARY KEY ([wavelength_set_id],[wavelength]))";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Concentrations Table Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE TABLE [pH_wavelengths] ([wavelength_set_id] INTEGER  NOT NULL,[wavelength] REAL  NOT NULL,[original_count] REAL  NOT NULL,[measured_absorbance] REAL  NOT NULL,PRIMARY KEY ([wavelength_set_id],[wavelength]))";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create pH Waves Table Query Failed: %s", errMsg);
+    }
+
+    query = "CREATE TABLE [pH] ([wavelength_set_id] INTEGER PRIMARY KEY NOT NULL, [pH] REAL NOT NULL)";
+    if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
+        syslog(LOG_DAEMON|LOG_ERR, "SQLite Create pH Table Query Failed: %s", errMsg);
     }
 
     // Create full_spectrums table
@@ -149,15 +159,13 @@ void writeConfigToDB(){
 
 }
 
-uint64_t writeCTDData(){
+uint64_t writeCTDData(struct CTDREADINGS* ctd){
     uint64_t retVal = 0;
-    CTDreadings_s* ctd;
     char* insertStmt = "INSERT INTO ctd_readings (time,conductivity,temperature,depth,salinity) VALUES (?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     pthread_mutex_lock(&dataMutex);
     if(db){
-        ctd = getCTDValues();
         if(ctd){
             if(sqlite3_prepare(db,insertStmt,256,&pStmt,NULL) == SQLITE_OK){
 
@@ -177,7 +185,6 @@ uint64_t writeCTDData(){
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Cannot create prepared statement for writeCTDData() method.  Error: %s",sqlite3_errmsg(db));
             }
-            free(ctd);
         } else {
             syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve CTD data.");
         }
@@ -189,14 +196,25 @@ uint64_t writeCTDData(){
     return retVal;
 }
 
-uint64_t writeConcentrationSet(time_t t, int64_t configID, float nonAbsWave, float nonAbsCount, float nonAbsAbsorbance){
+uint64_t writeCTDDefault(){
+    uint64_t retVal;
+    CTDreadings_s* ctd;
+
+    ctd = getCTDValues();
+    retVal = writeCTDData(ctd);
+    free(ctd);
+
+    return retVal;
+}
+
+uint64_t writeWavelengthSet(time_t t, int64_t configID, float nonAbsWave, float nonAbsCount, float nonAbsAbsorbance){
     uint64_t retVal=0,ctd_id=0;
     double heaterTemp = -1;
 
-    ctd_id = writeCTDData();
+    ctd_id = writeCTDDefault();
     heaterTemp = (double)getHeaterCurrentTemperature(1);
 
-    const char* setStmt = "INSERT INTO main.concentration_sets (time,config_id, non_absorbing_wavelength, original_count_non_absorbing, measured_absorbance_non_absorbing, ctd_reading_id, heater_temperature) VALUES (?,?,?,?,?,?,?)";
+    const char* setStmt = "INSERT INTO main.wavelength_sets (time,config_id, non_absorbing_wavelength, original_count_non_absorbing, measured_absorbance_non_absorbing, ctd_reading_id, heater_temperature) VALUES (?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     pthread_mutex_lock(&dataMutex);
@@ -216,7 +234,7 @@ uint64_t writeConcentrationSet(time_t t, int64_t configID, float nonAbsWave, flo
             }
             sqlite3_finalize(pStmt);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"Cannot create prepared statement for writeConcentrationSet.  Error: %s", sqlite3_errmsg(db));
+            syslog(LOG_DAEMON|LOG_ERR,"Cannot create prepared statement for writeWavelengthSet.  Error: %s", sqlite3_errmsg(db));
         }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Cannot log concentration set.  SQLite file is not open.");
@@ -285,18 +303,18 @@ void writeConcData(unsigned char specID){
     }
 
     // Log the concentration set
-    set_id = writeConcentrationSet(t,currConfigID[specID],waves[MAX_ABS_WAVES],counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES]); 
+    set_id = writeWavelengthSet(t,currConfigID[specID],waves[MAX_ABS_WAVES],counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES]); 
 
     pthread_mutex_lock(&dataMutex);
     if(db){
-        const char* insertStmt = "INSERT INTO main.concentrations (concentration_set_id,wavelength,concentration,original_count,measured_absorbance) VALUES (?,?,?,?,?)";
+        const char* insertStmt = "INSERT INTO main.concentrations (wavelength_set_id,wavelength,concentration,original_count,measured_absorbance) VALUES (?,?,?,?,?)";
         sqlite3_stmt* pStmt = NULL;
 
         if(sqlite3_prepare(db,insertStmt,2048,&pStmt,NULL) == SQLITE_OK){
             unsigned int i;
             for(i=0; i < waveCount; ++i){
                 sqlite3_bind_int64(pStmt,1,set_id);
-                sqlite3_bind_int64(pStmt,2,waves[i]);
+                sqlite3_bind_double(pStmt,2,waves[i]);
                 sqlite3_bind_double(pStmt,3,conc[i]);
                 sqlite3_bind_double(pStmt,4,counts[i]);
                 sqlite3_bind_double(pStmt,5,abs[i]);
@@ -315,10 +333,92 @@ void writeConcData(unsigned char specID){
         syslog(LOG_DAEMON|LOG_ERR, "Unable to create prepared statement for concentrations data.  Error: %s",sqlite3_errmsg(db));
     }
     pthread_mutex_unlock(&dataMutex);
-    
+
     //Housekeeping!
     free(conc);
     free(abs);
+    free(counts);
+}
+
+void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, float* abs, struct CTDREADINGS* ctd){
+    uint64_t ctd_id, set_id;
+    float* waves;
+    float* counts;
+    time_t t;
+
+    t = time(NULL);
+
+    waves = getAbsorbingWavelengths(specIndex);
+    if(!waves){
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve wavelengths. Creating zero padded array.");
+        waves = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        if(!waves) {
+            syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate waves array.");
+            return;
+        }
+    }
+
+    counts = getRawCounts(specIndex);
+    if(!counts){
+        syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
+        counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        if(!counts) {
+            syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate absorbance array.");
+            return;
+        }
+    }
+
+    // Log the wavelength set
+    set_id = writeWavelengthSet(t,currConfigID[specIndex],waves[MAX_ABS_WAVES],counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES]);
+
+    // Log the CTD
+    ctd_id = writeCTDData(ctd);
+
+
+    pthread_mutex_lock(&dataMutex);
+    if(db){
+        // INSERT wavelengths
+        const char* insertStmt = "INSERT INTO main.pH_wavelengths (wavelength_set_id,wavelength,original_count,measured_absorbance) VALUES (?,?,?,?)";
+        sqlite3_stmt* pStmt = NULL;
+
+        if(sqlite3_prepare(db,insertStmt,2048,&pStmt,NULL) == SQLITE_OK){
+            unsigned int i;
+            for(i=0; i < absWaveCount; ++i){
+                sqlite3_bind_int64(pStmt,1,set_id);
+                sqlite3_bind_double(pStmt,2,waves[i]);
+                sqlite3_bind_double(pStmt,3,counts[i]);
+                sqlite3_bind_double(pStmt,4,abs[i]);
+
+                if(sqlite3_step(pStmt) == SQLITE_ERROR){
+                    syslog(LOG_DAEMON|LOG_ERR,"Unable to log pH wavelength to DB for spectrometer #%d, wave #%d.  Error: %s",specIndex,i,sqlite3_errmsg(db));
+                }
+
+                // Reset Prepared Statement for Next Call
+                sqlite3_reset(pStmt);
+            }
+        }
+        sqlite3_finalize(pStmt);
+
+        // INSERT pH
+        const char* pHStmt = "INSERT INTO main.pH (wavelength_set_id,pH) VALUES (?,?)";
+        pStmt = NULL;
+
+        if(sqlite3_prepare(db,pHStmt,2048,&pStmt,NULL) == SQLITE_OK){
+            sqlite3_bind_int64(pStmt,1,set_id);
+            sqlite3_bind_double(pStmt,2,pH);
+
+            if(sqlite3_step(pStmt) == SQLITE_ERROR){
+                syslog(LOG_DAEMON|LOG_ERR,"Unable to log pH to DB for spectrometer #%d.  Error: %s",specIndex,sqlite3_errmsg(db));
+            }
+        }
+        sqlite3_finalize(pStmt);
+
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR, "Unable to create prepared statement for concentrations data.  Error: %s",sqlite3_errmsg(db));
+    }
+    pthread_mutex_unlock(&dataMutex);
+
+    //Housekeeping!
     free(counts);
 }
 
@@ -329,7 +429,7 @@ void writeFullSpec(unsigned char specID){
     char* insertStmt = "INSERT INTO full_spectrums (time,config_id,sample_spectrum,ctd_reading_id,heater_temperature) VALUES (?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
-    ctd_id = writeCTDData();
+    ctd_id = writeCTDDefault();
 
     pthread_mutex_lock(&dataMutex);
     if(db){

@@ -24,7 +24,7 @@ char readConfig(){
     configFile = fopen(CONFIGPATH,"r+");
     while(!feof(configFile)){
         fgets(configLine,MAXCONFIGLINE,configFile);
- 
+
         // Skip Comments and Empty Lines
         if(configLine[0] == '#' | strlen(configLine) == 0){
             syslog(LOG_DAEMON|LOG_INFO,"Skipped Commented or Empty Config Line: %s",configLine);
@@ -45,7 +45,7 @@ char readConfig(){
                 syslog(LOG_DAEMON|LOG_INFO,"Skipped Unrecognized Prefixed Config Line: %s",configLine);
                 continue;
             }
-            
+
             tok = strtok(NULL,"="); 
             if(strcmp(tok,"MODE") == 0){
                 tok = strtok(NULL,"\n");
@@ -88,7 +88,7 @@ char readConfig(){
                 }
                 config[specIndex].waveParameters.absorbingWavelengthCount = wavelengthCount; 
             }
-           else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
+            else if(strcmp(tok,"NON_ABSORBING_WAVELENGTH") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
             }
@@ -188,10 +188,31 @@ char readConfig(){
 
 void applyConfig(){
     int i,j;
-  
+
     for(i=0; i < NUM_SPECS; i++)
     {
         setSpecIntegrationTimeinMilli(i,getIntegrationTime(i)); 
+        if(config[i].waveParameters.systemMeasureMode == CARBON){
+            switch(config[i].waveParameters.cMeasureMode){
+                case Ct:
+                    break;
+                case pCO2:
+                    break;
+                case pH:
+                    if(config[i].waveParameters.pHIndicator == MCP){
+                        config[i].waveParameters.absorbingWavelengths[0] = 434;
+                        config[i].waveParameters.absorbingWavelengths[1] = 578;
+                        config[i].waveParameters.nonAbsorbingWavelength = 685;
+                        config[i].waveParameters.absorbingWavelengthCount = 2;
+                    } else if (config[i].waveParameters.pHIndicator == TB){
+
+                    }
+                    break;
+            }
+            for(j=getAbsorbingWavelengthCount(i); j < MAX_ABS_WAVES; ++j){
+                config[i].waveParameters.absorbingWavelengths[j] = 0;
+            }
+        }
         for(j=0; j < getAbsorbingWavelengthCount(i); j++)
         {
             config[i].absCalcParameters.absorbingPixels[j] = calcPixelValueForWavelength(i,config[i].waveParameters.absorbingWavelengths[j]);
@@ -360,7 +381,7 @@ wavelengthParameters* getWaveParameters(int specIndex){
 // Get Methods
 specConfig* getConfigCopy(int specIndex){
     specConfig* retVal = NULL;
-	
+
     if(specIndex < NUM_SPECS){
         retVal = malloc(sizeof(specConfig));
         if(retVal){
@@ -385,7 +406,7 @@ systemMode getMode(){
     systemMode retVal = mode; // Make a copy to return
     return retVal;
 }
- 
+
 char* getSerialNumber(int specIndex){
     if(specIndex < NUM_SPECS)
         return config[specIndex].serial;
@@ -516,3 +537,9 @@ void logConfig(){
     }
 }
 
+pHMeasure getpHMeasureMode(int specIndex){
+    if(specIndex < NUM_SPECS)
+        return config[specIndex].waveParameters.pHIndicator;
+    else
+        return MCP;
+}

@@ -43,6 +43,22 @@ typedef enum SYS_MODE {
     PROGRAM
 }systemMode;
 
+typedef enum MEASURE_MODE {
+    ANALYTE,
+    CARBON
+}measureMode;
+
+typedef enum CARBON_MEASURE {
+    Ct,
+    pCO2,
+    pH
+}carbonMeasure;
+
+typedef enum PH_IND{
+    MCP,
+    TB
+}pHMeasure;
+
 typedef struct SPECTROMETERPARAMETERS{
     unsigned short integrationTime;
     unsigned short scansPerSample;
@@ -140,6 +156,8 @@ uint16_t getDwell(int specIndex);
 float* getSlopes(int specIndex);
 float* getIntercepts(int specIndex);
 BOOL isCorrectionEnabled(int specIndex);
+
+pHMeasure getpHMeasureMode(int specIndex);
 
 // Config Debug Methods
 void logConfig();

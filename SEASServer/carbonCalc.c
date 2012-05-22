@@ -88,12 +88,43 @@ float  computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonA
   
 }
 
+float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
+{
+    float S;
+    float T;
+    float R;
+    float a;
+    float b;
+    float c;
+    float d;
+    float E1;
+    float E32;
+    float Rt;
+    float pH;
+
+    if(absWaveCount >= 2){
+        S = computeSalinity(CTDReading->conductivity,CTDReading->temperature,CTDReading->pressure);
+        T = CTDReading->temperature;
+        R = absorbance[1]/absorbance[0];
+        a = -246.64209+0.315971*S+(2.8855*pow(10,-4))*pow(S,2);
+        b = 7229.23864-7.098137*S-0.057034*pow(S,2);
+        c = 44.493382-0.052711*S;
+        d = 0.0781344;
+        E1 = -0.007762+4.5174*(pow(10,-5))*T;
+        E32 = -0.020813+2.60262*(pow(10,-4))*T + 1.0436*(pow(10,-4))*(S-35);
+        Rt = (R-E1)/(1-R*E32);
+        pH = a + b/T + c*log(T) - d*T + log10(Rt);
+        return pH;
+    } else {
+        return -1;
+    }
+}
 /*
   void  ComputeSystempH( int Spectrometer )
 
   Computes the system pH.
 */
-float computeSystempH(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
+float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
 {
   float   AbsorbanceRatio;
   float   Temperature;
@@ -137,7 +168,9 @@ float   computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorban
 
   if(absorbingWaveCount > 2){
       /* Compute the absorbance ratio */
-      absorbanceRatio = (float) ( (absorbance[1] - nonAbsWave) / (absorbance[0] - nonAbsWave ) );
+      absorbanceRatio = (float) absorbance[1] / absorbance[0];
+      // Correction already applied in getAbsorbance method
+      //absorbanceRatio = (float) ( (absorbance[1] - nonAbsWave) / (absorbance[0] - nonAbsWave ) );
   } else {
       syslog(LOG_DAEMON|LOG_ERR,"Too few wavelengths (%d) passed to computeAbsorbanceRatio function.",absorbingWaveCount);
   }

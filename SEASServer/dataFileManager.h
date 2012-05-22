@@ -3,6 +3,9 @@
  * By: Michael Lindemuth
  */
 
+#ifndef DATAFILEMAN_H
+#define DATAFILEMAN_H
+
 #include <stdio.h>
 #include <time.h>
 #include <syslog.h>
@@ -28,3 +31,7 @@ void methodOpenDataFile(unsigned long argc, void* argv);
 void methodCloseDataFile(unsigned long argc, void* argv);
 void methodWriteConcData(unsigned long argc, void* argv);
 void methodWriteFullSpec(unsigned long argc, void* argv);
+
+void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, float* abs, struct CTDREADINGS* ctd);
+
+#endif

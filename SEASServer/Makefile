@@ -15,7 +15,8 @@ LIBS = -lUSB4000 -lsqlite3 -lusb -lm -lpthread
 
 SEASServer:$(OBJS) 
 	$(LD) -o $@ $(INC_DIRS) $(LDFLAGS) $(LIBS) $^; \
-	sudo cp SEASServer /usr/local/bin;
+
+#sudo cp SEASServer /usr/local/bin;
 
 objs/%.o:%.c 
 	$(CC) -c $(CFLAGS) $(INC_DIRS) $< -o $@; 

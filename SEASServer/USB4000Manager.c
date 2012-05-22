@@ -591,7 +591,39 @@ void methodCalcPCO2(unsigned long argc, void* argv){
 }
 
 void methodCalcPH(unsigned long argc, void* argv){
+    unsigned char specIndex, absWaveCount;
+    float* abs;
+    CTDreadings_s* ctd;
+    float pH = -1;
 
+    if(argc >= 1){
+        double* args = (double*)argv;
+        specIndex = (unsigned char)args[0]-1; // zero index conversion
+        if(specIndex < NUM_SPECS){
+            absWaveCount = getAbsorbingWavelengthCount(specIndex);
+            abs = getAbsorbance(specIndex);
+            ctd = getCTDValues();
+            if(ctd && abs){
+                if(getpHMeasureMode(specIndex) == MCP){
+                    pH = computeSystempHMCP(absWaveCount,abs,abs[MAX_ABS_WAVES],ctd);
+                } else if (getpHMeasureMode(specIndex) == TB){
+                   pH = computeSystempHTB(absWaveCount,abs,abs[MAX_ABS_WAVES],ctd);
+                }
+
+                if(pH != -1){
+                    writepHToDB(specIndex,pH,absWaveCount,abs,ctd);
+                } else {
+                    syslog(LOG_DAEMON|LOG_ERR,"Could not calculate pH correctly.  Function return -1.");
+                }
+                free(abs);
+                free(ctd);
+            } else {
+                syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve CTD reading for pH calculation.");
+            }        
+        }
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Not enough arguments supplied to methodCalcPH");
+    }
 }
 
 // Run Response Methods
