@@ -139,6 +139,7 @@ unsigned short getNonAbsorbancePixel(int specIndex);
 uint16_t getDwell(int specIndex);
 float* getSlopes(int specIndex);
 float* getIntercepts(int specIndex);
+BOOL isCorrectionEnabled(int specIndex);
 
 // Config Debug Methods
 void logConfig();

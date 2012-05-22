@@ -30,8 +30,6 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
    Denominator = nonLinearCorrect ? NonLinearCountCorrection(USB4000,USB4000->sample->pixels[absorbingPixel]) : USB4000->sample->pixels[absorbingPixel];
    Denominator -= SampDarkValue;
 
-   /* Apply Non-Linear Count Correction */
-
    /* Compute the absorbance */
    Fraction = Numerator/Denominator; 
    if(Fraction > 0)
@@ -48,7 +46,9 @@ float ComputeAbsorbance(spectrometer* USB4000, unsigned short absorbingPixel, un
        BaselineAbsorbance = ComputeCorrectionAbsorbance(USB4000, nonAbsorbingPixel,nonLinearCorrect); 
        /* Subtract baseline */
        Absorbance -= BaselineAbsorbance;
+       //syslog(LOG_DAEMON|LOG_INFO,"Computed absorbance %g for pixel %d with non-absorbing pixel %d @ %g",Absorbance,absorbingPixel, nonAbsorbingPixel, BaselineAbsorbance);
    }
+
 
    /* Return the absorbance */
    return( Absorbance );
@@ -155,7 +155,7 @@ float NonLinearCountCorrection(spectrometer* USB4000, float Counts)
 }
 
 
-/************************** Spectrometer uitilities. *********************************************/
+/************************** Spectrometer utilities. *********************************************/
 
 /*
    void  ComputeSpectrometerLambdaValues( unsigned char Spectrometer )

@@ -464,6 +464,14 @@ float* getIntercepts(int specIndex){
     return intercepts;
 }
 
+BOOL isCorrectionEnabled(int specIndex){
+    if(specIndex < NUM_SPECS){
+        return config[specIndex].waveParameters.correctionEnabled > 0;
+    } else {
+        return FALSE;
+    }
+}
+
 // Config Debug Methods
 void logConfig(){
     int i,j;
