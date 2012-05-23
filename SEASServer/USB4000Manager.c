@@ -4,8 +4,9 @@
  * By: Michael Lindemuth
  */
 
-
 #include "USB4000Manager.h"
+#include "carbonCalc.h"
+#include "dataFileManager.h"
 
 spectrometer* spectrometers[NUM_SPECS];
 char specsConnected = DISCONNECTED;
@@ -246,7 +247,7 @@ float* getAbsorbance(unsigned char specNumber)
 
     if(!absorbanceValues){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for absorbance array.");
-        return;
+        return NULL;
     }
 
     if(specNumber < NUM_SPECS)
@@ -271,7 +272,7 @@ float* getCorrectionAbsorbance(unsigned char origSpecNumber, unsigned char corrS
 
     if(!absorbanceValues){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for correction absorbance array.");
-        return;
+        return NULL;
     }
     
     if(origSpecNumber < NUM_SPECS && corrSpecNumber < NUM_SPECS){
@@ -444,7 +445,6 @@ void receiveRecordSpecSample(int connection, char* command){
 
 // Run Protocol Methods
 void readRefRunResponse(int connection, s_node* node){
-    int i;
     unsigned short numPixels = 0; // for readability
     unsigned char header[3] = {RTH,READ_REFERENCE_RUNTIME_CMD,0};
     specSample* refSample = NULL;
@@ -596,6 +596,7 @@ void methodCalcPH(unsigned long argc, void* argv){
     CTDreadings_s* ctd;
     float pH = -1;
 
+    syslog(LOG_DAEMON|LOG_INFO,"Called method calculate pH");
     if(argc >= 1){
         double* args = (double*)argv;
         specIndex = (unsigned char)args[0]-1; // zero index conversion
@@ -605,13 +606,16 @@ void methodCalcPH(unsigned long argc, void* argv){
             ctd = getCTDValues();
             if(ctd && abs){
                 if(getpHMeasureMode(specIndex) == MCP){
-                    pH = computeSystempHMCP(absWaveCount,abs,abs[MAX_ABS_WAVES],ctd);
+                    syslog(LOG_DAEMON|LOG_INFO,"Calculating pH using MCP for spec %d",specIndex); 
+                    pH = computeSystempHMCP(absWaveCount,abs,abs[MAX_ABS_WAVES],*ctd);
                 } else if (getpHMeasureMode(specIndex) == TB){
-                   pH = computeSystempHTB(absWaveCount,abs,abs[MAX_ABS_WAVES],ctd);
+                    syslog(LOG_DAEMON|LOG_INFO,"Calculating pH using TB for spec %d",specIndex);
+                   pH = computeSystempHTB(absWaveCount,abs,abs[MAX_ABS_WAVES],*ctd);
                 }
 
-                if(pH != -1){
-                    writepHToDB(specIndex,pH,absWaveCount,abs,ctd);
+                if(pH >= 0){
+                    syslog(LOG_DAEMON|LOG_INFO,"Writing pH");
+                    writepHToDB(specIndex,pH,absWaveCount,abs,*ctd);
                 } else {
                     syslog(LOG_DAEMON|LOG_ERR,"Could not calculate pH correctly.  Function return -1.");
                 }

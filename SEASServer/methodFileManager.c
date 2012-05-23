@@ -21,7 +21,6 @@ int checkStorageDirectory(){
 }
 
 FILE* createMethodFile(char* filename){
-    struct stat statResult;
     char fullPath[MAXMETHODPATHLENGTH];
     unsigned short length = 0;
     FILE* methodFile = NULL;
@@ -269,12 +268,9 @@ char* getActiveMethodFilename(){
 }
 
 void sendActiveMethodFile(int connection, char* command){
-    char* fullPath;
     char* filename;
     char response[258]; // 256 for filename + 1 for command + 1 for terminal
     char commandTerminal[2] = {'\n','\0'};
-
-    FILE* activeConfigFile;
 
     // Initialize response
     response[0] = '\0';

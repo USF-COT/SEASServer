@@ -11,9 +11,9 @@
 #include <syslog.h>
 #include "pthread.h"
 #include "sqlite3.h"
-#include "SEASPeripheralCommands.h"
 #include "USB4000Manager.h"
 #include "salinity.h"
+#include "SEASPeripheralCommands.h"
 
 #define DATAFILEPATH "/home/datauser/data/"
 
@@ -25,13 +25,12 @@ void closeDataFile();
 void writeConfigToDB();
 void writeConcData(unsigned char specID);
 void writeFullSpec(unsigned char specID);
+void writepHToDB(unsigned char,float,unsigned char,float*,struct CTDREADINGS);
 
 // Method Wrapper Functions
 void methodOpenDataFile(unsigned long argc, void* argv);
 void methodCloseDataFile(unsigned long argc, void* argv);
 void methodWriteConcData(unsigned long argc, void* argv);
 void methodWriteFullSpec(unsigned long argc, void* argv);
-
-void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, float* abs, struct CTDREADINGS* ctd);
 
 #endif

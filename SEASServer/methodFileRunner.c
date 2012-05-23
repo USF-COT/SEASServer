@@ -20,6 +20,7 @@ void *methodFileRunner(void* name){
     clearNodes();
     syslog(LOG_DAEMON|LOG_INFO,"Stopped Running Method File: %s.",filename);
     free(name);
+    return NULL;
 }
 
 // Generic Methods

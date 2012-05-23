@@ -17,6 +17,7 @@
 #include "MethodParser/MethodParser.tab.h"
 #include "MethodParser/MethodNodesTable.h"
 #include "socketUtils.h"
+#include "runProtocolManager.h"
 
 extern FILE* yyin;
 

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include "MethodParser/MethodNodesTable.h"
 #include "MethodParser/MethodParser.tab.h"
+#include "methodFileManager.h"
 
 extern FILE* yyin;
 

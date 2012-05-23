@@ -85,7 +85,6 @@ BOOL getPumpLONState(unsigned char pumpLONNode){
 void switchPumpNode(unsigned char pumpID,BOOL powerOn){
     unsigned char pumpLONNode;
 
-    int i;
     BOOL currLONState = FALSE;
     BOOL nextLONState = FALSE;
     BOOL switchedOn = FALSE;

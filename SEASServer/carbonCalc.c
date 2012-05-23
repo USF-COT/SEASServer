@@ -15,7 +15,7 @@ const float pCO2S2 = pCO2S2_DEFAULT;
 
   Computes the system total carbon.
 */
-float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
+float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave, struct CTDREADINGS ctd)
 {
   float   AbsorbanceRatio;
   float   Temperature;
@@ -34,10 +34,10 @@ float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,floa
   AbsorbanceRatio = computeAbsorbanceRatio(absWaveCount,absorbance,nonAbsWave);
 
   /* Get the temperature */
-  Temperature = CTDReading->temperature;
+  Temperature = ctd.temperature;
 
   /* Get the salinity */
-  Salinity = (float) computeSalinity(CTDReading->conductivity, CTDReading->temperature, CTDReading->pressure);
+  Salinity = (float) computeSalinity(ctd.conductivity, ctd.temperature, ctd.pressure);
 
   /* Compute the equation terms */
   Term1 = (float) ( Salinity / (float) Ct1 );
@@ -88,7 +88,7 @@ float  computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonA
   
 }
 
-float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
+float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd)
 {
     float S;
     float T;
@@ -103,8 +103,10 @@ float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonA
     float pH;
 
     if(absWaveCount >= 2){
-        S = computeSalinity(CTDReading->conductivity,CTDReading->temperature,CTDReading->pressure);
-        T = CTDReading->temperature;
+        syslog(LOG_DAEMON|LOG_INFO,"Computing salinity. Cond: %g, Temp: %g, Press: %g",ctd.conductivity,ctd.temperature,ctd.pressure);
+        S = (float) computeSalinity((double)ctd.conductivity,(double)ctd.temperature,(double)ctd.pressure);
+        syslog(LOG_DAEMON|LOG_INFO,"Salinity computed.");
+        T = ctd.temperature;
         R = absorbance[1]/absorbance[0];
         a = -246.64209+0.315971*S+(2.8855*pow(10,-4))*pow(S,2);
         b = 7229.23864-7.098137*S-0.057034*pow(S,2);
@@ -113,9 +115,15 @@ float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonA
         E1 = -0.007762+4.5174*(pow(10,-5))*T;
         E32 = -0.020813+2.60262*(pow(10,-4))*T + 1.0436*(pow(10,-4))*(S-35);
         Rt = (R-E1)/(1-R*E32);
-        pH = a + b/T + c*log(T) - d*T + log10(Rt);
+        if(T == 0 || Rt == 0){
+            syslog(LOG_DAEMON|LOG_ERR,"T (%g) or Rt (%g) is 0. Setting pH to -1",T,Rt);
+            pH = -1;
+        } else {
+            pH = a + b/T + c*log(T) - d*T + log10(Rt);
+        }
         return pH;
     } else {
+        syslog(LOG_DAEMON|LOG_ERR,"Not enough waves passed for pH calculation.  Setting pH to -1");
         return -1;
     }
 }
@@ -124,7 +132,7 @@ float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonA
 
   Computes the system pH.
 */
-float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS* CTDReading)
+float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd)
 {
   float   AbsorbanceRatio;
   float   Temperature;
@@ -140,10 +148,10 @@ float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAb
   AbsorbanceRatio = computeAbsorbanceRatio(absWaveCount,absorbance,nonAbsWave);
 
   /* Get the temperature */
-  Temperature = CTDReading->temperature;
+  Temperature = ctd.temperature;
 
   /* Get the salinity */
-  Salinity = computeSalinity(CTDReading->conductivity,CTDReading->temperature,CTDReading->pressure);
+  Salinity = computeSalinity(ctd.conductivity,ctd.temperature,ctd.pressure);
 
   /* Compute the equation terms */
   Term1 = (float) ( (float) ( (float) pHC1 * Salinity ) / Temperature );

@@ -1,4 +1,5 @@
 #include "config.h"
+#include "dataFileManager.h"
 
 #define CONFIGPATH "/etc/SEASServer/config.txt"
 #define MAXCONFIGLINE 128
@@ -26,7 +27,7 @@ char readConfig(){
         fgets(configLine,MAXCONFIGLINE,configFile);
 
         // Skip Comments and Empty Lines
-        if(configLine[0] == '#' | strlen(configLine) == 0){
+        if((configLine[0] == '#') | (strlen(configLine) == 0)){
             syslog(LOG_DAEMON|LOG_INFO,"Skipped Commented or Empty Config Line: %s",configLine);
             continue;
         }
@@ -193,19 +194,24 @@ void applyConfig(){
     {
         setSpecIntegrationTimeinMilli(i,getIntegrationTime(i)); 
         if(config[i].waveParameters.systemMeasureMode == CARBON){
+            syslog(LOG_DAEMON|LOG_INFO,"Carbon measure mode found.");
             switch(config[i].waveParameters.cMeasureMode){
                 case Ct:
+                    syslog(LOG_DAEMON|LOG_INFO,"Ct carbon measure mode selected.");
                     break;
                 case pCO2:
+                    syslog(LOG_DAEMON|LOG_INFO,"pCO2 carbon measure mode selected.");
                     break;
                 case pH:
+                    syslog(LOG_DAEMON|LOG_INFO,"pH carbon measure mode selected.");
                     if(config[i].waveParameters.pHIndicator == MCP){
+                        syslog(LOG_DAEMON|LOG_INFO,"MCP pH mode selected.");
                         config[i].waveParameters.absorbingWavelengths[0] = 434;
                         config[i].waveParameters.absorbingWavelengths[1] = 578;
                         config[i].waveParameters.nonAbsorbingWavelength = 685;
                         config[i].waveParameters.absorbingWavelengthCount = 2;
                     } else if (config[i].waveParameters.pHIndicator == TB){
-
+                        syslog(LOG_DAEMON|LOG_INFO,"TB pH mode selected.");
                     }
                     break;
             }
@@ -310,6 +316,7 @@ char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned 
     setSpecIntegrationTimeinMilli(specIndex,config[specIndex].specParameters.integrationTime);
     config[specIndex].specParameters.scansPerSample = newScansPerSample;
     config[specIndex].specParameters.boxcarSmoothing = newBoxcarSmoothing;
+    return 1;
 }
 
 char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUnits, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave){
@@ -326,6 +333,7 @@ char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUn
     config[specIndex].absCalcParameters.nonAbsorbingPixel = calcPixelValueForWavelength(specIndex,newNonAbsWave);
     applyConfig();
     writeConfigFile();
+    return 1;
 }
 
 void setAbsorbanceWavelengths(int specIndex, unsigned char newAbsWaveCount,float* newAbsWaves){

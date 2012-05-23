@@ -4,6 +4,9 @@
  * By: Michael Lindemuth
  */
 
+#ifndef _USB4000MANAGER_H
+#define _USB4000MANAGER_H
+
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/syslog.h>
@@ -15,9 +18,7 @@
 #include "MethodParser/MethodNodesTable.h"
 #include "runProtocol.h"
 #include "globalIncludes.h"
-
-#ifndef _USB4000MANAGER_H
-#define _USB4000MANAGER_H
+#include "SEASPeripheralCommands.h"
 
 #define CONNECTED 1
 #define DISCONNECTED 0

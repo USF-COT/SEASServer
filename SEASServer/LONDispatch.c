@@ -119,13 +119,12 @@ unsigned char* NAKresponse(){
 
 // Private method meant to clean up code a bit
 unsigned char* readLONResponse(){
-    int i,totalBytesRead,bytesRead,tries=0;
-    unsigned int responseLength,dataLength;
+    int i;
+    unsigned int responseLength;
     unsigned char* response;
     unsigned char responseHeader[3];
     unsigned char readBuffer[3];
 
-    const int MAX_TRIES = 3;
 
     // Read Device ID
     if(readByte(readBuffer) == 1){
@@ -201,7 +200,6 @@ unsigned char* readLONResponse(){
 
 LONresponse_s* createLONResponse(unsigned char* buffer){
     LONresponse_s* retVal = NULL;
-    unsigned int dataLength;
 
     if(buffer){
         retVal = malloc(sizeof(LONresponse_s));
@@ -262,7 +260,6 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     // [DEV ID] [TOT #BYTES MSB] [TOT #BYTES LSB] [COMMAND ID] [DATA] [BCC]
     unsigned int i,check,length = 1 + 1 + 1 + 1 + dataLength + 1;
     unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
-    unsigned char responseHeader[3];
     LONresponse_s* response = NULL;
 
     char hexChar[4];

@@ -103,9 +103,9 @@ absExp:   ABSO CORR VAL VAL { double* params = allocateParamArray(2); params[0] 
 ;
 
 /* Calculate Expression Grammers Follow */
-calcExp: CALC CONC VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcConc,CAL_CONCENTRATION_RUNTIME_CMD);}
-         CALC PCO2 VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPCO2,CAL_PCO2_RUNTIME_CMD); }
-         CALC PH VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPH,CAL_PH_RUNTIME_CMD);}
+calcExp:  CALC CONC VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcConc,CAL_CONCENTRATION_RUNTIME_CMD);}
+         | CALC PCO2 VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPCO2,CAL_PCO2_RUNTIME_CMD); }
+         | CALC PH VAL { double* params = allocateParamArray(1); params[0] = $3; addCommandNode(1,(void*)params,methodCalcPH,CAL_PH_RUNTIME_CMD);}
 ;
 
 /* Data File Expressions */

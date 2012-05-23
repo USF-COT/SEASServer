@@ -68,7 +68,7 @@ void* handleConnection(void* info){
     char buffer[MAXBUF+1];
     char hexString[3*MAXBUF+10];
     char hexBuf[4];
-    int i,j;
+    int i;
     int numBytesReceived;    
 
     numBytesReceived = recv(*connection,buffer,MAXBUF,0);
@@ -107,7 +107,7 @@ int main(){
   int       conn_s;                /*  connection socket         */
   short int port = 1995;                  /*  port number               */
   struct    sockaddr_in servaddr;  /*  socket address structure  */
-  int i,availableThreadID;
+  int i;
   uint8_t numClients = 0;
   threadInfo* info;
 
