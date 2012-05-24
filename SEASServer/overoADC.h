@@ -9,6 +9,10 @@
 #ifndef OVEROADC_H
 #define OVEROADC_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,5 +30,9 @@ struct adc_channel {
 
 float getBatteryVoltage();
 void receiveGetBatteryVoltage(int connection, char* command);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

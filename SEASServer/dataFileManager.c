@@ -277,7 +277,7 @@ void writeConcData(unsigned char specID){
     waves = getAbsorbingWavelengths(specID);
     if(!waves){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve wavelengths. Creating zero padded array.");
-        waves = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        waves = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!waves) {
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate waves array.");
             return;
@@ -288,7 +288,7 @@ void writeConcData(unsigned char specID){
     conc = getConcentrations(specID);
     if(!conc){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
-        conc = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        conc = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!conc) {
             free(waves);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate concentration array.");
@@ -299,7 +299,7 @@ void writeConcData(unsigned char specID){
     abs = getAbsorbance(specID);
     if(!abs){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance.  Creating zero padded array.");
-        abs = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        abs = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!abs) {
             free(waves);
             free(conc);
@@ -311,7 +311,7 @@ void writeConcData(unsigned char specID){
     counts = getRawCounts(specID);
     if(!counts){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
-        counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        counts = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!counts) {
             free(waves);
             free(conc);
@@ -376,7 +376,7 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
     waves = getAbsorbingWavelengths(specIndex);
     if(!waves){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve wavelengths. Creating zero padded array.");
-        waves = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        waves = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!waves) {
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate waves array.");
             return;
@@ -387,7 +387,7 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
     counts = getRawCounts(specIndex);
     if(!counts){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
-        counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        counts = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!counts) {
             free(waves);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate absorbance array.");

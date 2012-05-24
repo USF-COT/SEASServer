@@ -391,7 +391,7 @@ specConfig* getConfigCopy(int specIndex){
     specConfig* retVal = NULL;
 
     if(specIndex < NUM_SPECS){
-        retVal = malloc(sizeof(specConfig));
+        retVal = (specConfig*)malloc(sizeof(specConfig));
         if(retVal){
             pthread_mutex_lock(&writeConfigMutex);
             memcpy(retVal,&config[specIndex],sizeof(specConfig));
@@ -450,7 +450,7 @@ float* getAbsorbingWavelengths(int specIndex){
     float* waves = NULL;
 
     if(specIndex < NUM_SPECS){
-        waves = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        waves = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         for(i=0; i < MAX_ABS_WAVES; i++){
            waves[i] = config[specIndex].waveParameters.absorbingWavelengths[i]; 
         }
@@ -488,14 +488,14 @@ uint16_t getDwell(int specIndex){
 
 float* getSlopes(int specIndex){
     size_t arraySize = sizeof(float) * getAbsorbingWavelengthCount(specIndex);
-    float* slopes = malloc(arraySize);
+    float* slopes = (float*)malloc(arraySize);
     memcpy(slopes,config[specIndex].waveParameters.slope,arraySize);
     return slopes;
 }
 
 float* getIntercepts(int specIndex){
     size_t arraySize = sizeof(float) * getAbsorbingWavelengthCount(specIndex);
-    float* intercepts = malloc(arraySize);
+    float* intercepts = (float*)malloc(arraySize);
     memcpy(intercepts,config[specIndex].waveParameters.intercept,arraySize);
     return intercepts;
 }
@@ -554,7 +554,12 @@ void logConfig(){
 
 pHMeasure getpHMeasureMode(int specIndex){
     if(specIndex < NUM_SPECS)
-        return config[specIndex].waveParameters.pHIndicator;
+        switch(config[specIndex].waveParameters.pHIndicator){
+            case 0:
+                return MCP;
+            default:
+                return TB;
+        }
     else
         return MCP;
 }

@@ -36,6 +36,7 @@
 #include "LONDispatch.h"
 #include "SEASPeripheralCommands.h"
 #include "dataFileManager.h"
+#include "CTDSink.hpp"
 
 #define LONPORT "/dev/ttyO0"
 
@@ -158,6 +159,9 @@ int main(){
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
+  // Start CTD Sink
+  CTDSink* ctdSink = CTDSink::Instance();
+
   /* Setup TCP/IP Socket */
   if((list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0){
       syslog(LOG_DAEMON|LOG_ERR,"Unable to create socket. Daemon Terminated.");
@@ -235,7 +239,7 @@ int main(){
             thread_bin_available[i] = UNAVAILABLE;
             syslog(LOG_DAEMON|LOG_INFO,"Handling new connection on port %i",port);
             numClients++;
-            info = malloc(sizeof(threadInfo));
+            info = (threadInfo*)malloc(sizeof(threadInfo));
             info->socket_connection = conn_s;
             info->thread_bin_index = i;
             pthread_create(&thread_bin[i],NULL,handleConnection, (void*)info);

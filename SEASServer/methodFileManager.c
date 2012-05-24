@@ -148,7 +148,7 @@ void sendMethodFileList(int connection, char* command){
 char* createFullPath(char* filename){
     char* fullPath;
 
-    fullPath = malloc(sizeof(char)*(strlen(STORAGEDIRECTORY)+strlen(filename)+1));
+    fullPath = (char*)malloc(sizeof(char)*(strlen(STORAGEDIRECTORY)+strlen(filename)+1));
     fullPath[0] = '\0';
     strcat(fullPath,STORAGEDIRECTORY);
     strcat(fullPath,filename);

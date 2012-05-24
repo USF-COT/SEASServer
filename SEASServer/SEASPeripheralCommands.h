@@ -6,11 +6,16 @@
 #ifndef SEASPERIPHCOMM_H
 #define SEASPERIPHCOMM_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <math.h>
+#include <time.h>
 #include "GUIprotocol.h"
 #include "LONprotocol.h"
 #include "LONDispatch.h"
@@ -50,6 +55,7 @@ typedef struct HEATERSTATUS{
 }heaterStatus_s;
 
 typedef struct CTDREADINGS{
+    time_t t;
     float conductivity;
     float temperature;
     float pressure;
@@ -106,5 +112,9 @@ void methodLampOn(unsigned long argc, void* argv);
 void methodLampOff(unsigned long argc, void* argv);
 void methodHeaterOn(unsigned long argc, void* argv);
 void methodHeaterOff(unsigned long argc, void* argv);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

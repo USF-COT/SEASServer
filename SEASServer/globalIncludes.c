@@ -3,7 +3,7 @@
 char* byteArrayToString(unsigned char* bytes, unsigned int length){
     int i;
     char byteValue[5];
-    char* string = calloc((length*3)+1, sizeof(char));
+    char* string = (char*)calloc((length*3)+1, sizeof(char));
     string[0] = '\0';
     
     for(i=0; i < length; i++){
@@ -18,7 +18,7 @@ char* byteArrayToString(unsigned char* bytes, unsigned int length){
 void copyReverseBytes(void* dest, const void* src, unsigned int numBytes){
     int i;
     unsigned char* destBytes = (unsigned char*)dest;
-    unsigned char* bytes = calloc(numBytes,sizeof(unsigned char));
+    unsigned char* bytes = (unsigned char*)calloc(numBytes,sizeof(unsigned char));
     memcpy(bytes,src,numBytes);
 
     if(destBytes){

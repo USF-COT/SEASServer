@@ -71,7 +71,7 @@ calibrationCoefficients* getCalCos(char specNumber){
     if(specNumber < NUM_SPECS)
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
-        calCos = malloc(sizeof(calibrationCoefficients));  
+        calCos = (calibrationCoefficients*)malloc(sizeof(calibrationCoefficients));  
         original = spectrometers[specNumber]->calibration;
         memcpy(calCos,original,sizeof(calibrationCoefficients));
         pthread_mutex_unlock(&specsMutex[specNumber]);
@@ -217,7 +217,7 @@ unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavele
 
 float* getRawCounts(unsigned char specNumber){
     uint8_t i;
-    float* countValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    float* countValues = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
     unsigned short* absPixels = getAbsorbancePixels(specNumber);
     unsigned short nonAbsPixel = getNonAbsorbancePixel(specNumber);
     specSample* sample = getLastSample(specNumber); 
@@ -241,7 +241,7 @@ float* getRawCounts(unsigned char specNumber){
 float* getAbsorbance(unsigned char specNumber)
 {
     unsigned char i;
-    float* absorbanceValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    float* absorbanceValues = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
     unsigned short* absPixels = getAbsorbancePixels(specNumber);
     unsigned short nonAbsPixel = getNonAbsorbancePixel(specNumber);    
 
@@ -268,7 +268,7 @@ float* getCorrectionAbsorbance(unsigned char origSpecNumber, unsigned char corrS
     unsigned char i;
     float* origAbs = NULL;
     float* corrAbs = NULL;
-    float* absorbanceValues = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    float* absorbanceValues = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
 
     if(!absorbanceValues){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for correction absorbance array.");
@@ -302,7 +302,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
     if(specNumber < NUM_SPECS)
     {
         pthread_mutex_lock(&specsMutex[specNumber]);
-        absValues = malloc(sizeof(float) * spectrometers[specNumber]->status->numPixels);
+        absValues = (float*)malloc(sizeof(float) * spectrometers[specNumber]->status->numPixels);
         for(i=0; i < spectrometers[specNumber]->status->numPixels; i++)
         {
             absValues[i] = ComputeAbsorbance(spectrometers[specNumber],i,nonAbsPixel,FALSE,FALSE);
@@ -316,7 +316,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
 float* getConcentrations(unsigned char specNumber){
     int i;
 
-    float* concentrations = calloc(MAX_ABS_WAVES+1,sizeof(float));
+    float* concentrations = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
     if(!concentrations){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to calloc concentration memory.  PROBABLY OUT OF MEMORY!");
         return NULL;

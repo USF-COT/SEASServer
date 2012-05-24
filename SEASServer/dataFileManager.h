@@ -6,6 +6,10 @@
 #ifndef DATAFILEMAN_H
 #define DATAFILEMAN_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <time.h>
 #include <syslog.h>
@@ -32,5 +36,9 @@ void methodOpenDataFile(unsigned long argc, void* argv);
 void methodCloseDataFile(unsigned long argc, void* argv);
 void methodWriteConcData(unsigned long argc, void* argv);
 void methodWriteFullSpec(unsigned long argc, void* argv);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

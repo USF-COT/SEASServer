@@ -1,6 +1,10 @@
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include "config.h"
 #include "GUIprotocol.h"
 #include <sys/socket.h>
@@ -19,5 +23,9 @@ void methodSetNonAbsorbanceWavelength(unsigned long argc, void* argv);
 void methodSetDwell(unsigned long argc, void* argv);
 
 void writeConfigChanges(int connection, char* command);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

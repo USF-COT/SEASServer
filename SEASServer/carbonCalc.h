@@ -6,6 +6,10 @@
 #ifndef CARBONCALC_H
 #define CARBONCALC_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -54,5 +58,9 @@ float computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonAb
 float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd);
 float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd);
 float computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorbance, float nonAbsWave);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

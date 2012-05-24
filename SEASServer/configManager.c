@@ -6,7 +6,7 @@ void receiveWaveSetCommand(int connection, char* command){
     syslog(LOG_DAEMON||LOG_INFO,"Setting Wavelength Configuration."); 
     specID = (int)command[1];
 
-    setComputationDataBytes(specID,command+2);
+    setComputationDataBytes(specID,(unsigned char*)command+2);
     syslog(LOG_DAEMON||LOG_INFO,"Wavelength Configuration Set.");
 }
 
@@ -97,7 +97,7 @@ void methodSetAbsorbanceWavelengths(unsigned long argc, void* argv){
 
     // This is a special circumstance because the number of wavelengths is variable
     absWaveCount = ((unsigned char)params[0])-2; // Array contents [Array Length] [Spec ID] [Wavelength]...[Wavelength]
-    waves = malloc(sizeof(float)*absWaveCount);
+    waves = (float*)malloc(sizeof(float)*absWaveCount);
     specIndex = (int)params[1]-1;
     syslog(LOG_DAEMON|LOG_INFO,"Setting %d wavelengths for spectrometer %d.",absWaveCount,specIndex);
     for(i=0; i < absWaveCount; i++){

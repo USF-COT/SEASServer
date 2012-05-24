@@ -25,6 +25,10 @@
 #ifndef _TWL4030_MADC_H 
 #define _TWL4030_MADC_H 
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #ifndef u8
 #define u8 uint8_t
 #endif
@@ -130,6 +134,10 @@ struct twl4030_madc_user_parms {
 }; 
 
 int twl4030_madc_conversion(struct twl4030_madc_request *conv); 
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

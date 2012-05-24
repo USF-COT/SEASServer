@@ -110,7 +110,7 @@ short readByte(unsigned char* buffer){
 }
 
 unsigned char* NAKresponse(){
-    unsigned char* response = malloc(sizeof(unsigned char)*2);
+    unsigned char* response = (unsigned char*)malloc(sizeof(unsigned char)*2);
 
     response[0] = NAK;
     response[1] = '\0';
@@ -129,7 +129,7 @@ unsigned char* readLONResponse(){
     // Read Device ID
     if(readByte(readBuffer) == 1){
         if(readBuffer[0] == ACK){
-            response = malloc(sizeof(unsigned char)*2);
+            response = (unsigned char*)malloc(sizeof(unsigned char)*2);
             response[0] = ACK;
             response[1] = '\0';
             return response;
@@ -159,7 +159,7 @@ unsigned char* readLONResponse(){
 
     // Calculate response length based on header and allocate a response buffer
     responseLength = (responseHeader[1] << 8) + responseHeader[2];
-    response = malloc(sizeof(unsigned char)*responseLength);
+    response = (unsigned char*)malloc(sizeof(unsigned char)*responseLength);
 
     // Copy Header
     for(i=0; i < 3; i++){
@@ -202,7 +202,7 @@ LONresponse_s* createLONResponse(unsigned char* buffer){
     LONresponse_s* retVal = NULL;
 
     if(buffer){
-        retVal = malloc(sizeof(LONresponse_s));
+        retVal = (LONresponse_s*)malloc(sizeof(LONresponse_s));
         if(buffer[0] == ACK || buffer[0] == NAK){
             retVal->deviceID = buffer[0];
             retVal->numBytes = 4;
@@ -217,7 +217,7 @@ LONresponse_s* createLONResponse(unsigned char* buffer){
             retVal->commandID = buffer[3];
             retVal->dataLength = retVal->numBytes - 5; // dataLength = numBytes - deviceIDByte - numByteMSB - numByteLSB - commandIDByte - checkSumByte
             syslog(LOG_DAEMON|LOG_INFO,"LON Device ID: %02X, Num Bytes: %d, Command ID: %02X, Data Length: %d.",retVal->deviceID,retVal->numBytes,retVal->commandID,retVal->dataLength);
-            retVal->data = malloc(sizeof(unsigned char)*retVal->dataLength);
+            retVal->data = (unsigned char*)malloc(sizeof(unsigned char)*retVal->dataLength);
             memcpy(retVal->data,buffer+4,retVal->dataLength);
             retVal->checkSum = buffer[retVal->numBytes-1];
         }
@@ -259,7 +259,7 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     // The length of a LON command is determined by:
     // [DEV ID] [TOT #BYTES MSB] [TOT #BYTES LSB] [COMMAND ID] [DATA] [BCC]
     unsigned int i,check,length = 1 + 1 + 1 + 1 + dataLength + 1;
-    unsigned char* commBuffer = malloc(sizeof(unsigned char)*length);
+    unsigned char* commBuffer = (unsigned char*)malloc(sizeof(unsigned char)*length);
     LONresponse_s* response = NULL;
 
     char hexChar[4];

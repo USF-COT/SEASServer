@@ -1,6 +1,9 @@
 
 #include "overoADC.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 /* OVEROADC.H - Used only to read the battery voltage from TWL-4030 Channel 3.
  * 
  * By: Michael Lindemuth

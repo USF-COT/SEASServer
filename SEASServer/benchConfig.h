@@ -9,6 +9,10 @@
 #ifndef BENCHCONFIG_H
 #define BENCHCONFIG_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -63,5 +67,9 @@ float getBenchAbsRangeMin(uint8_t specID);
 float getBenchAbsRangeMax(uint8_t specID);
 float getBenchSpectraRangeMin(uint8_t specID);
 float getBenchSpectraRangeMax(uint8_t specID);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

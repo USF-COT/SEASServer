@@ -12,6 +12,10 @@
 #ifndef RUN_PROTO_H
 #define RUN_PROTO_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Static Size of Scan Size */
 #define USB4000_NUMPIXELS 3840
 #define MAX_ABSORBANCE_WAVELENGTHS 9
@@ -125,6 +129,10 @@ typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    float  Temperature;
 }__attribute__((packed)) READ_TEMPERATURE_RUNTIME_DATA;
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

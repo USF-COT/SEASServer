@@ -285,7 +285,7 @@ pumpStatus_s* getPumpStatus(unsigned char pumpID){
     LONresponse_s* response = sendLONCommand(PMP,STS,1,sendData);
     if(response){
         if(response->data && response->deviceID == PMP){
-            status = malloc(sizeof(pumpStatus_s));
+            status = (pumpStatus_s*)malloc(sizeof(pumpStatus_s));
             status->pumpID = response->data[0];
             status->power = response->data[1];
             copyReverseBytes(&(status->percent),response->data+2,4);        
@@ -322,7 +322,7 @@ heaterStatus_s* getHeaterStatus(unsigned char heaterID){
     LONresponse_s* response = sendLONCommand(HTR,STS,1,sendData);
     if(response){
         if(response->deviceID == HTR && response->data && response->data[0] == heaterID){
-            status = malloc(sizeof(heaterStatus_s));
+            status = (heaterStatus_s*)malloc(sizeof(heaterStatus_s));
             status->heaterID = heaterID;
             status->power = response->data[1];
             copyReverseBytes(&(status->setTemperature),response->data+2,4);
@@ -359,6 +359,7 @@ CTDreadings_s* getCTDValues(){
     if(response){
         if(response->data && response->deviceID == CTD){
             readings = (CTDreadings_s*)malloc(sizeof(CTDreadings_s));
+            readings->t = time(NULL);
             copyReverseBytes(&(readings->conductivity),response->data,4);
             copyReverseBytes(&(readings->temperature),response->data+4,4);
             copyReverseBytes(&(readings->pressure),response->data+8,4);

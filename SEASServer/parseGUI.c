@@ -64,7 +64,7 @@ void sendErrorMessageBack(int connection, char* message){
     char* completeMessage;
     unsigned int messageLength = strlen(message) + 2;
 
-    completeMessage = malloc(sizeof(char)*messageLength);
+    completeMessage = (char*)malloc(sizeof(char)*messageLength);
     completeMessage[0] = ERR;
     completeMessage[1] = '\0';
     strcat(completeMessage+1,message);

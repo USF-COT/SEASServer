@@ -6,6 +6,10 @@
 #ifndef METHODFILERUNNER_H
 #define METHODFILERUNNER_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <syslog.h>
 #include <pthread.h>
 #include "MethodParser/MethodNodesTable.h"
@@ -17,5 +21,9 @@ extern FILE* yyin;
 // Generic Methods
 void executeMethodFile();
 void terminateMethodFile();
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

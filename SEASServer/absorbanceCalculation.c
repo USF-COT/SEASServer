@@ -175,7 +175,7 @@ void  ComputeSpectrometerLambdaValues(spectrometer* USB4000)
 
    // Prepare for calculation by allocating a new lambdaValues array if necessary
    if(USB4000->lambdaValues == NULL)
-     USB4000->lambdaValues = malloc(sizeof(double)*USB4000->status->numPixels);
+     USB4000->lambdaValues = (double*)malloc(sizeof(double)*USB4000->status->numPixels);
 
    /* Get the coefficients */
    FirstCoefficient = (double) USB4000->calibration->wavelengthOrder[1];

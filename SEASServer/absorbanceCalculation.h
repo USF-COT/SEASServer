@@ -7,6 +7,10 @@
 #ifndef _ABSORBANCE_H
 #define _ABSORBANCE_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -23,5 +27,9 @@ float NonLinearCountCorrection(spectrometer* USB4000, float Counts);
 void  ComputeSpectrometerLambdaValues(spectrometer* USB4000);
 float GetCountsForWavelength(spectrometer* USB4000, double Lambda );
 unsigned short GetPixelForWavelength(spectrometer* USB4000, double Lambda );
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

@@ -7,6 +7,10 @@
 #ifndef _USB4000MANAGER_H
 #define _USB4000MANAGER_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/syslog.h>
@@ -79,5 +83,9 @@ void calTCRunResponse(int connection, s_node* node);
 void readFullSpecRunResponse(int connection, s_node* node);
 
 int disconnectSpectrometers();
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

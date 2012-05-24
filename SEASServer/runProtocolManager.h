@@ -7,6 +7,10 @@
 #ifndef RUNPROTOMAN_H
 #define RUNPROTOMAN_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "SEASPeripheralCommands.h"
@@ -17,5 +21,9 @@
 typedef void (*RUNNODEHandler)(int,s_node*);
 
 void sendRunProtocolMessage(int connection, s_node* node);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
