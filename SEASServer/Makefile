@@ -20,13 +20,13 @@ SEASServer:$(COBJS) $(CPPOBJS)
 	sudo cp SEASServer /usr/local/bin;
 
 objs/%.o:%.c 
-	$(CC) -O2 -c $(CFLAGS) $(INC_DIRS) $< -o $@; 
+	$(CC) -O2  -c $(CFLAGS) $(INC_DIRS) $< -o $@; 
 
 objs/%.o:%.cpp
 	g++ -O2 -c $(CFLAGS) $(INC_DIRS) $< -o $@;
 
 MethodParser/%.o:MethodParser/%.c 
-	$(CC) -O2 -c $(CFLAGS) $(INC_DIRS) $< -o $@;
+	$(CC) -O2  -c $(CFLAGS) $(INC_DIRS) $< -o $@;
 
 MethodParser/MethodLexAna.lex.c: MethodParser/MethodParser.tab.c MethodParser/MethodLexAna.y
 	flex -o $@ -i MethodParser/MethodLexAna.y 

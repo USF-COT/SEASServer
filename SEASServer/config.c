@@ -2,7 +2,7 @@
 #include "dataFileManager.h"
 
 #define CONFIGPATH "/etc/SEASServer/config.txt"
-#define MAXCONFIGLINE 128
+#define MAXCONFIGLINE 2048 
 
 static pthread_mutex_t writeConfigMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -47,7 +47,9 @@ char readConfig(){
                 continue;
             }
 
+            syslog(LOG_DAEMON|LOG_INFO,"Prefix: %s",tok);
             tok = strtok(NULL,"="); 
+            syslog(LOG_DAEMON|LOG_INFO,"Keyword: %s",tok);
             if(strcmp(tok,"MODE") == 0){
                 tok = strtok(NULL,"\n");
                 if(strcmp(tok,"MANUAL") == 0){
@@ -93,7 +95,6 @@ char readConfig(){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.nonAbsorbingWavelength = atof(tok);
             }
-
             else if(strcmp(tok,"ANALYTE") == 0){
                 tok = strtok(NULL,"\n");
                 strncpy(config[specIndex].waveParameters.analyteName,tok,MAX_ANA_NAME-1);
@@ -103,11 +104,11 @@ char readConfig(){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.analyteIndex = (unsigned char) atoi(tok);
             }
-            else if(strcmp(tok,"CORRECTIONENABLE")){
+            else if(strcmp(tok,"CORRECTIONENABLE") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.correctionEnabled = (unsigned char) atoi(tok);
             }
-            else if(strcmp(tok,"PHINDICATOR")){
+            else if(strcmp(tok,"PHINDICATOR") == 0){
                 tok = strtok(NULL,"\n");
                 config[specIndex].waveParameters.pHIndicator = (unsigned char) atoi(tok);
             }
@@ -168,12 +169,13 @@ char readConfig(){
                 tok = strtok(NULL,",\n");
                 i=0;
                 while(tok != NULL && i < MAX_ABS_WAVES){
+                    syslog(LOG_DAEMON|LOG_INFO,"Intercept %d is %f",i,atof(tok));
                     config[specIndex].waveParameters.intercept[i++] = atof(tok);
                     tok = strtok(NULL,",\n");
                 }
             }
             else{ // Unrecognized spectrometer parameter, skip this line
-                syslog(LOG_DAEMON|LOG_INFO,"Skipped Unrecognized Config Line: %s",configLine);
+                syslog(LOG_DAEMON|LOG_INFO,"Skipped Unrecognized Config Line: %s",tok);
                 continue;
             }
         }
@@ -452,7 +454,7 @@ float* getAbsorbingWavelengths(int specIndex){
     if(specIndex < NUM_SPECS){
         waves = (float*)calloc(MAX_ABS_WAVES+1,sizeof(float));
         for(i=0; i < MAX_ABS_WAVES; i++){
-           waves[i] = config[specIndex].waveParameters.absorbingWavelengths[i]; 
+            waves[i] = config[specIndex].waveParameters.absorbingWavelengths[i]; 
         }
         waves[MAX_ABS_WAVES] = config[specIndex].waveParameters.nonAbsorbingWavelength;
     }
