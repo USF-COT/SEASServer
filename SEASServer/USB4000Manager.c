@@ -669,16 +669,19 @@ void calPCO2RunResponse(int connection, s_node* node){
 void calPHRunResponse(int connection, s_node* node){
     CAL_CONCENTRATION_RUNTIME_DATA data;
 
+    syslog(LOG_DAEMON|LOG_INFO,"Sending pH runtime response");
     if(node->commandID == CAL_PH_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
         data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
-        // TODO: Fill in PH code
-        data.Concentration[0] = 0;
-        data.RRatio = 0;
+        pHCalc* lastCalc = getLastpHCalc();
+        data.Concentration[0] = lastCalc->pH;
+        data.RRatio = lastCalc->rRatio;
+        free(lastCalc);
 
         send(connection,(void*)&data,sizeof(CAL_CONCENTRATION_RUNTIME_DATA),0);
+        syslog(LOG_DAEMON|LOG_INFO,"Sent pH runtime response");
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Incorrect command ID (%02x) passed to calPHRunResponse.",node->commandID);
     }

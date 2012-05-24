@@ -3,7 +3,7 @@
 void pumpRunResponse(int connection, s_node* node){
     PUMP_ON_RUNTIME_DATA onData;
     PUMP_OFF_RUNTIME_DATA offData;
-    
+
     double* argv = (double*)node->argv;
 
     if(node->commandID == PUMP_ON_RUNTIME_CMD){
@@ -75,7 +75,7 @@ void waitHeaterRunResponse(int connection, s_node* node){
     if(node->commandID == WAIT_HEATER_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
-        
+
         // Check to see if the counter has just been reset
         if(node->argc ==  args[0]){
             data.Seconds = 0xFFFF;
@@ -147,13 +147,13 @@ RUNNODEHandler const runProtoHandlers[] = {
 
 void sendRunProtocolMessage(int connection, s_node* node){
     if(node->commandID < MAX_RUNTIME_COMMANDS){
-         if(runProtoHandlers[node->commandID]){
-             runProtoHandlers[node->commandID](connection,node);
-         } else {
-             syslog(LOG_DAEMON|LOG_INFO,"No handler defined for command ID %02x.",node->commandID);
-         }
+        if(runProtoHandlers[node->commandID]){
+            runProtoHandlers[node->commandID](connection,node);
+        } else {
+            syslog(LOG_DAEMON|LOG_INFO,"No handler defined for command ID %02x.",node->commandID);
+        }
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Command ID %02x is out of range (%02x to %02x)",node->commandID,0,MAX_RUNTIME_COMMANDS-1);
-    }    
+    }
 }
 

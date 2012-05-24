@@ -52,12 +52,19 @@
 #define  K1                0.0000004592
 #define  K2                0.0000000000468813
 
+typedef struct PHCALC{
+    float pH;
+    float rRatio;
+} pHCalc;
+
 // Base Methods
 float computeSystemTotalCarbon(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd);
 float computeSystempCO2(unsigned char absWaveCount,float* absorbance,float nonAbsWave);
 float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd);
 float computeSystempHTB(unsigned char absWaveCount,float* absorbance,float nonAbsWave,struct CTDREADINGS ctd);
 float computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorbance, float nonAbsWave);
+
+pHCalc* getLastpHCalc();
 
 #ifdef __cplusplus
  }

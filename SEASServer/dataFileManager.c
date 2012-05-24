@@ -187,7 +187,7 @@ uint64_t writeCTDData(struct CTDREADINGS ctd){
     pthread_mutex_lock(&dataMutex);
     if(db){
         if(sqlite3_prepare(db,insertStmt,256,&pStmt,NULL) == SQLITE_OK){
-            sqlite3_bind_int64(pStmt,1,(int64_t)time(NULL));
+            sqlite3_bind_int64(pStmt,1,(int64_t)ctd.t);
             sqlite3_bind_double(pStmt,2,(double)ctd.conductivity);
             sqlite3_bind_double(pStmt,3,(double)ctd.temperature);
             sqlite3_bind_double(pStmt,4,(double)ctd.pressure);

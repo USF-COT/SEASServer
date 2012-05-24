@@ -87,7 +87,6 @@ typedef  struct   {
 typedef  struct   {
    RUNTIME_RESPONSE_HEADER Header;
    unsigned char Spectrometer;
-   float Absorbance;
    float Concentration[MAX_ABSORBANCE_WAVELENGTHS];
    float RRatio;
 }__attribute__((packed)) CAL_CONCENTRATION_RUNTIME_DATA;

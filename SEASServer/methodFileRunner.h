@@ -21,6 +21,7 @@ extern FILE* yyin;
 // Generic Methods
 void executeMethodFile();
 void terminateMethodFile();
+void terminateMethodAndWait();
 
 #ifdef __cplusplus
  }

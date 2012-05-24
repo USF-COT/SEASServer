@@ -21,7 +21,7 @@ void *methodFileRunner(void* name){
     clearNodes();
     syslog(LOG_DAEMON|LOG_INFO,"Stopped Running Method File: %s.",filename);
     free(name);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 // Generic Methods
@@ -39,3 +39,7 @@ void terminateMethodFile(){
     executingMethod = 0;
 }
 
+void terminateMethodAndWait(){
+    executingMethod = 0;
+    pthread_join(methodFileRunnerThread,NULL);
+}

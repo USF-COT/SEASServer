@@ -293,6 +293,8 @@ void sendActiveMethodFile(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Sent active filename: %s",response);
 }
 
+volatile sig_atomic_t runResponding;
+
 void receiveExecuteMethod(int connection, char* command){
     s_node* node = NULL;
     s_node* nextNode = NULL;
@@ -312,6 +314,7 @@ void receiveExecuteMethod(int connection, char* command){
             syslog(LOG_DAEMON|LOG_INFO,"Executing method file @ path: %s.",fullPath);
             yyin = fopen(fullPath,"r");
             if(yyin){
+                runResponding = 1;
                 clearNodes();
                 yyparse();
                 fclose(yyin);
@@ -320,7 +323,7 @@ void receiveExecuteMethod(int connection, char* command){
                 syslog(LOG_DAEMON|LOG_INFO,"Sucessfully started executing method file @ path: %s.",fullPath);
                 while(node != NULL){
                     nextNode = evaluateNode(node);
-                    sendRunProtocolMessage(connection,node);
+                    if(runResponding) sendRunProtocolMessage(connection,node);
                     node = nextNode;
                     numBytesReceived = recv(connection,termRecBuf,1,0);
                     if(numBytesReceived > 0 && termRecBuf[0] == TRM){
@@ -330,6 +333,7 @@ void receiveExecuteMethod(int connection, char* command){
                 }
                 setSocketTimeout(connection,0,0);
                 syslog(LOG_DAEMON|LOG_INFO,"Execution finished for file @ path: %s.",fullPath);
+                closeDataFile(); // In case the user forgets
             } else {
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to open method file @: %s.",fullPath);
             }
@@ -348,6 +352,7 @@ void receiveExecuteMethod(int connection, char* command){
 
 void receiveTerminateMethod(int connection, char* command){
     syslog(LOG_DAEMON|LOG_INFO,"Terminating method file execution.");
+    runResponding = 0;
     stopNodes();
     clearNodes();
     syslog(LOG_DAEMON|LOG_INFO,"Method file execution terminated.");

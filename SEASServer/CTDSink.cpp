@@ -9,6 +9,7 @@ void *queryCTD(void* obj){
         r = getCTDValues();
         if(r){
             sink->addNode(r->t,r);
+            free(r);
         }
         sleep(1);
     }
