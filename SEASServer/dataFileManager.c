@@ -9,7 +9,7 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE TABLE [configs] ([config_id] INTEGER  PRIMARY KEY AUTOINCREMENT NOT NULL,[time] INTEGER  NOT NULL,[spec_id] INTEGER  NOT NULL,[analyte_name] TEXT  NOT NULL,[integration_time] INTEGER  NOT NULL,[dwell] INTEGER  NOT NULL,[scans_per_sample] INTEGER  NOT NULL,[boxcar] INTEGER  NOT NULL,[reference_spectrum] BLOB  NULL)";
+    query = "CREATE TABLE [configs] ([config_id] INTEGER  PRIMARY KEY AUTOINCREMENT NOT NULL,[time] INTEGER  NOT NULL,[spec_id] INTEGER  NOT NULL,[analyte_name] TEXT  NOT NULL,[integration_time] INTEGER  NOT NULL,[dwell] INTEGER  NOT NULL,[scans_per_sample] INTEGER  NOT NULL,[boxcar] INTEGER  NOT NULL, [slopes] TEXT NOT NULL, [intercepts] TEXT NOT NULL, [reference_spectrum] BLOB  NULL)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
@@ -83,12 +83,16 @@ void closeDataFile(){
 
 // Write Functions
 void writeConfigToDB(){
-    int i;
+    unsigned int i,j;
 
     specConfig* config = NULL;
+    float* slopes = NULL;
+    char slopeString[1024];
+    float* intercepts = NULL;
+    char intString[1024];
     specSample* refSample = NULL;
     // If MAX_ABS_WAVES in config.h is changed, this line must be changed manually!
-    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,reference_spectrum) VALUES (?,?,?,?,?,?,?,?)";
+    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,slopes,intercepts,reference_spectrum) VALUES (?,?,?,?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     // Do nothing if a data file is not currently open
@@ -111,10 +115,28 @@ void writeConfigToDB(){
                 sqlite3_bind_int64(pStmt,5,config->dwell);
                 sqlite3_bind_int(pStmt,6,config->specParameters.scansPerSample);
                 sqlite3_bind_int(pStmt,7,config->specParameters.boxcarSmoothing);
-                if(refSample){
-                    sqlite3_bind_blob(pStmt,8,refSample->pixels,getNumPixels(i)*sizeof(float),SQLITE_TRANSIENT);
+                
+                // Store slopes
+                slopes = getSlopes(i);
+                intercepts = getIntercepts(i);
+                if(slopes && intercepts){
+                    sprintf(slopeString,"%f",slopes[0]);
+                    sprintf(intString,"%f",intercepts[0]);
+                    for(j=1; j < getAbsorbingWavelengthCount(i); ++j){
+                        sprintf(slopeString,"%s,%f",slopeString,slopes[i]);
+                        sprintf(intString,"%s,%f",intString,intercepts[i]);
+                    }
                 } else {
-                    sqlite3_bind_null(pStmt,8);
+                    slopeString[0] = '\0';
+                    intString[0] = '\0';
+                }
+                sqlite3_bind_text(pStmt,8,slopeString,strlen(slopeString),SQLITE_TRANSIENT);
+                sqlite3_bind_text(pStmt,9,intString,strlen(intString),SQLITE_TRANSIENT);
+
+                if(refSample){
+                    sqlite3_bind_blob(pStmt,10,refSample->pixels,getNumPixels(i)*sizeof(float),SQLITE_TRANSIENT);
+                } else {
+                    sqlite3_bind_null(pStmt,10);
                 }
 
                 /*
@@ -140,9 +162,7 @@ void writeConfigToDB(){
 
                 // housekeeping!
                 if(refSample) deallocateSample(&refSample);
-                syslog(LOG_DAEMON|LOG_INFO,"Freeing spec config");
                 freeSpecConfig(&config);
-                syslog(LOG_DAEMON|LOG_INFO,"Spec config free'd");
             } else {
                 syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);
             }
@@ -208,30 +228,20 @@ uint64_t writeWavelengthSet(time_t t, int64_t configID, float nonAbsWave, float 
     uint64_t retVal=0;
     double heaterTemp = -1;
 
-    syslog(LOG_DAEMON|LOG_INFO,"Getting heater temperature.");
     heaterTemp = (double)getHeaterCurrentTemperature(1);
-    syslog(LOG_DAEMON|LOG_INFO,"Got heater temperature");
 
     const char* setStmt = "INSERT INTO main.wavelength_sets (time,config_id, non_absorbing_wavelength, original_count_non_absorbing, measured_absorbance_non_absorbing, ctd_reading_id, heater_temperature) VALUES (?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     pthread_mutex_lock(&dataMutex);
     if(db){
-        syslog(LOG_DAEMON|LOG_INFO,"Creating pStmt");
         if(sqlite3_prepare(db,setStmt,2048,&pStmt,NULL) == SQLITE_OK){
-            syslog(LOG_DAEMON|LOG_INFO,"Binding time");
             sqlite3_bind_int64(pStmt,1,(int64_t)t);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding configID");
             sqlite3_bind_int64(pStmt,2,configID);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding nonAbsWave");
-            sqlite3_bind_double(pStmt,3,nonAbsWave);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding nonAbsCount");
-            sqlite3_bind_double(pStmt,4,nonAbsCount);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding nonAbsAbsorbance");
-            sqlite3_bind_double(pStmt,5,nonAbsAbsorbance);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding ctd_id");
+            sqlite3_bind_double(pStmt,3,(double)nonAbsWave);
+            sqlite3_bind_double(pStmt,4,(double)nonAbsCount);
+            sqlite3_bind_double(pStmt,5,(double)nonAbsAbsorbance);
             sqlite3_bind_int64(pStmt,6,(int64_t)ctd_id);
-            syslog(LOG_DAEMON|LOG_INFO,"Binding heater temp");
             sqlite3_bind_double(pStmt,7,heaterTemp);
             if(sqlite3_step(pStmt) == SQLITE_ERROR){
                 syslog(LOG_DAEMON|LOG_ERR, "Unable to log concentration set to SQLite database.  Error: %s",sqlite3_errmsg(db));
@@ -280,6 +290,7 @@ void writeConcData(unsigned char specID){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
         conc = calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!conc) {
+            free(waves);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate concentration array.");
             return;
         }
@@ -290,6 +301,7 @@ void writeConcData(unsigned char specID){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve absorbance.  Creating zero padded array.");
         abs = calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!abs) {
+            free(waves);
             free(conc);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate absorbance array.");
             return;
@@ -301,6 +313,7 @@ void writeConcData(unsigned char specID){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
         counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!counts) {
+            free(waves);
             free(conc);
             free(abs);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate absorbance array.");
@@ -312,7 +325,7 @@ void writeConcData(unsigned char specID){
     ctd_id = writeCTDDefault();
 
     // Log the concentration set
-    set_id = writeWavelengthSet(t,currConfigID[specID],waves[MAX_ABS_WAVES],counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES],ctd_id); 
+    set_id = writeWavelengthSet(t,currConfigID[specID],nonAbsWave,counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES],ctd_id); 
 
     pthread_mutex_lock(&dataMutex);
     if(db){
@@ -344,6 +357,7 @@ void writeConcData(unsigned char specID){
     pthread_mutex_unlock(&dataMutex);
 
     //Housekeeping!
+    free(waves);
     free(conc);
     free(abs);
     free(counts);
@@ -375,20 +389,17 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
         syslog(LOG_DAEMON|LOG_ERR,"Unable to retrieve concentrations.  Creating zero padded array.");
         counts = calloc(MAX_ABS_WAVES+1,sizeof(float));
         if(!counts) {
+            free(waves);
             syslog(LOG_DAEMON|LOG_ERR,"SEVERE: Out of Memory.  Cannot allocate absorbance array.");
             return;
         }
     }
 
     // Log the CTD
-    syslog(LOG_DAEMON|LOG_INFO,"Writing CTD Data.");
     ctd_id = writeCTDData(ctd);
-    syslog(LOG_DAEMON|LOG_INFO,"CTD Data Written.");
 
     // Log the wavelength set
-    syslog(LOG_DAEMON|LOG_INFO,"Writing wavlength set.");
     set_id = writeWavelengthSet(t,currConfigID[specIndex],nonAbsWave,counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES],ctd_id);
-    syslog(LOG_DAEMON|LOG_INFO,"Wavelength set written.");
 
     pthread_mutex_lock(&dataMutex);
     if(db){
@@ -399,10 +410,10 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
         if(sqlite3_prepare(db,insertStmt,2048,&pStmt,NULL) == SQLITE_OK){
             unsigned int i;
             for(i=0; i < absWaveCount; ++i){
-                sqlite3_bind_int64(pStmt,1,set_id);
-                sqlite3_bind_double(pStmt,2,waves[i]);
-                sqlite3_bind_double(pStmt,3,counts[i]);
-                sqlite3_bind_double(pStmt,4,abs[i]);
+                sqlite3_bind_int64(pStmt,1,(int64_t)set_id);
+                sqlite3_bind_double(pStmt,2,(double)waves[i]);
+                sqlite3_bind_double(pStmt,3,(double)counts[i]);
+                sqlite3_bind_double(pStmt,4,(double)abs[i]);
 
                 if(sqlite3_step(pStmt) == SQLITE_ERROR){
                     syslog(LOG_DAEMON|LOG_ERR,"Unable to log pH wavelength to DB for spectrometer #%d, wave #%d.  Error: %s",specIndex,i,sqlite3_errmsg(db));
@@ -415,18 +426,18 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
         sqlite3_finalize(pStmt);
 
         // INSERT pH
-        const char* pHStmt = "INSERT INTO main.pH (wavelength_set_id,pH) VALUES (?,?)";
-        pStmt = NULL;
+        const char* pHinsertStmt = "INSERT INTO main.pH (wavelength_set_id,pH) VALUES (?,?)";
+        sqlite3_stmt* pHStmt = NULL;
 
-        if(sqlite3_prepare(db,pHStmt,2048,&pStmt,NULL) == SQLITE_OK){
-            sqlite3_bind_int64(pStmt,1,set_id);
-            sqlite3_bind_double(pStmt,2,pH);
+        if(sqlite3_prepare(db,pHinsertStmt,2048,&pHStmt,NULL) == SQLITE_OK){
+            sqlite3_bind_int64(pHStmt,1,(int64_t)set_id);
+            sqlite3_bind_double(pHStmt,2,(double)pH);
 
-            if(sqlite3_step(pStmt) == SQLITE_ERROR){
+            if(sqlite3_step(pHStmt) == SQLITE_ERROR){
                 syslog(LOG_DAEMON|LOG_ERR,"Unable to log pH to DB for spectrometer #%d.  Error: %s",specIndex,sqlite3_errmsg(db));
             }
         }
-        sqlite3_finalize(pStmt);
+        sqlite3_finalize(pHStmt);
 
     } else {
         syslog(LOG_DAEMON|LOG_ERR, "Unable to create prepared statement for concentrations data.  Error: %s",sqlite3_errmsg(db));
@@ -434,6 +445,7 @@ void writepHToDB(unsigned char specIndex, float pH,unsigned char absWaveCount, f
     pthread_mutex_unlock(&dataMutex);
 
     //Housekeeping!
+    free(waves);
     free(counts);
 }
 
@@ -456,7 +468,7 @@ void writeFullSpec(unsigned char specID){
                 sqlite3_bind_int64(pStmt,2,currConfigID[specID]);
                 sqlite3_bind_blob(pStmt,3,sample->pixels,getNumPixels(specID)*sizeof(float),SQLITE_TRANSIENT);
                 sqlite3_bind_int64(pStmt,4,ctd_id);
-                sqlite3_bind_double(pStmt,5,getHeaterCurrentTemperature(1));
+                sqlite3_bind_double(pStmt,5,(double)getHeaterCurrentTemperature(1));
 
                 if(sqlite3_step(pStmt) == SQLITE_ERROR){
                     syslog(LOG_DAEMON|LOG_ERR,"Error logging full spectrum prepared statement for spectrometer #%d.  Error: %s",specID,sqlite3_errmsg(db));

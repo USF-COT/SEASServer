@@ -1,4 +1,5 @@
 #include "methodFileRunner.h"
+#include "dataFileManager.h"
 
 volatile sig_atomic_t executingMethod = 0;
 static pthread_t methodFileRunnerThread;

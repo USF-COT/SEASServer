@@ -106,7 +106,7 @@ float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonA
         syslog(LOG_DAEMON|LOG_INFO,"Computing salinity. Cond: %g, Temp: %g, Press: %g",ctd.conductivity,ctd.temperature,ctd.pressure);
         S = (float) computeSalinity((double)ctd.conductivity,(double)ctd.temperature,(double)ctd.pressure);
         syslog(LOG_DAEMON|LOG_INFO,"Salinity computed.");
-        T = ctd.temperature;
+        T = 273.15+ctd.temperature;
         R = absorbance[1]/absorbance[0];
         a = -246.64209+0.315971*S+(2.8855*pow(10,-4))*pow(S,2);
         b = 7229.23864-7.098137*S-0.057034*pow(S,2);
@@ -121,6 +121,7 @@ float computeSystempHMCP(unsigned char absWaveCount,float* absorbance,float nonA
         } else {
             pH = a + b/T + c*log(T) - d*T + log10(Rt);
         }
+        syslog(LOG_DAEMON|LOG_INFO,"Computed pH=%g. S:%g, T: %g, R: %g, a: %g, b: %g, c: %g, d: %g, e1: %g, e3/e2: %g, R-term: %g, Abs(578): %g, Abs(434): %g",pH,S,T,R,a,b,c,d,E1,E32,Rt,absorbance[1],absorbance[0]);
         return pH;
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Not enough waves passed for pH calculation.  Setting pH to -1");
@@ -174,7 +175,7 @@ float   computeAbsorbanceRatio(unsigned char absorbingWaveCount, float* absorban
 {
   float   absorbanceRatio = -1;
 
-  if(absorbingWaveCount > 2){
+  if(absorbingWaveCount >= 2){
       /* Compute the absorbance ratio */
       absorbanceRatio = (float) absorbance[1] / absorbance[0];
       // Correction already applied in getAbsorbance method

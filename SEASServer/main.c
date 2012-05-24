@@ -35,6 +35,7 @@
 #include "USB4000Manager.h"
 #include "LONDispatch.h"
 #include "SEASPeripheralCommands.h"
+#include "dataFileManager.h"
 
 #define LONPORT "/dev/ttyO0"
 
@@ -59,6 +60,7 @@ void catch_term(int sig)
 {
     syslog(LOG_DAEMON|LOG_INFO,"SIGTERM Caught.");
     keep_going = 0;
+    closeDataFile();
     close(list_s);
     stopDispatch();
 }

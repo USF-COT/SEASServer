@@ -446,10 +446,17 @@ unsigned char getAbsorbingWavelengthCount(int specIndex){
         return -1;
 }
 float* getAbsorbingWavelengths(int specIndex){
-    if(specIndex < NUM_SPECS)
-        return config[specIndex].waveParameters.absorbingWavelengths;
-    else
-        return NULL;
+    unsigned int i;
+    float* waves = NULL;
+
+    if(specIndex < NUM_SPECS){
+        waves = calloc(MAX_ABS_WAVES+1,sizeof(float));
+        for(i=0; i < MAX_ABS_WAVES; i++){
+           waves[i] = config[specIndex].waveParameters.absorbingWavelengths[i]; 
+        }
+        waves[MAX_ABS_WAVES] = config[specIndex].waveParameters.nonAbsorbingWavelength;
+    }
+    return waves;
 }
 float getNonAbsorbingWavelength(int specIndex){
     if(specIndex < NUM_SPECS)

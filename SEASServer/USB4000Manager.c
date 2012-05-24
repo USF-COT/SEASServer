@@ -25,12 +25,12 @@ int connectSpectrometers(char* serialNumber[]){
         for(i=0; i < NUM_SPECS; i++)
         {
             pthread_mutex_init(&specsMutex[i],NULL);
-	    pthread_mutex_lock(&specsMutex[i]);
-	    syslog(LOG_DAEMON|LOG_INFO,"Connecting Spectrometer %s",serialNumber[i]);
-	    spectrometers[i] = openUSB4000(serialNumber[i]);
+            pthread_mutex_lock(&specsMutex[i]);
+            syslog(LOG_DAEMON|LOG_INFO,"Connecting Spectrometer %s",serialNumber[i]);
+            spectrometers[i] = openUSB4000(serialNumber[i]);
             if(spectrometers[i] == NULL)
                 return CONNECT_ERR;
-	    setSpecIntegrationTimeinMilli(i,getIntegrationTime(i));
+            setSpecIntegrationTimeinMilli(i,getIntegrationTime(i));
             pthread_mutex_unlock(&specsMutex[i]);
         }
         specsConnected = CONNECTED;
@@ -51,7 +51,7 @@ void setSpecIntegrationTimeinMilli(short specID, unsigned int integrationTime){
 
 unsigned short getNumPixels(char specNumber){
     unsigned short numPixels = 0;
-    
+
     if(specNumber < NUM_SPECS){
         pthread_mutex_lock(&specsMutex[specNumber]);
         numPixels = spectrometers[specNumber]->status->numPixels;
@@ -59,7 +59,7 @@ unsigned short getNumPixels(char specNumber){
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"Invalid spectrometer index (%d) passed to getNumPixels.",specNumber);
     }
-    
+
     return numPixels;
 }
 
@@ -225,12 +225,12 @@ float* getRawCounts(unsigned char specNumber){
     if(!countValues){
         syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for counts array.");         
     }
-    
+
     if(specNumber < NUM_SPECS && absPixels && sample){
         for(i=0; i < getAbsorbingWavelengthCount(specNumber);i++){
             countValues[i] = sample->pixels[absPixels[i]];
         }
-        countValues[i] = sample->pixels[nonAbsPixel];
+        countValues[MAX_ABS_WAVES] = sample->pixels[nonAbsPixel];
 
         // housekeeping!
         deallocateSample(&sample);
@@ -274,7 +274,7 @@ float* getCorrectionAbsorbance(unsigned char origSpecNumber, unsigned char corrS
         syslog(LOG_DAEMON|LOG_ERR,"Unable to allocate memory for correction absorbance array.");
         return NULL;
     }
-    
+
     if(origSpecNumber < NUM_SPECS && corrSpecNumber < NUM_SPECS){
         origAbs = getAbsorbance(origSpecNumber);
         corrAbs = getAbsorbance(corrSpecNumber);
@@ -310,7 +310,7 @@ float* getAbsorbanceSpectrum(unsigned char specNumber){
         pthread_mutex_unlock(&specsMutex[specNumber]);
     }
     return absValues;
-             
+
 }
 
 float* getConcentrations(unsigned char specNumber){
@@ -402,7 +402,7 @@ void sendAbsorbanceSpectrum(int connection, char* command){
 
 void sendConcentration(int connection, char* command){
     float* conc = NULL;
-    
+
     if(command[0] == RCC){
         syslog(LOG_DAEMON|LOG_INFO,"Retrieving Spec %d Concentration for %d Wavelengths.",command[1],getAbsorbingWavelengthCount(command[1]));
         conc = getConcentrations(command[1]);
@@ -430,7 +430,7 @@ void receiveRecordDarkSample(int connection, char* command){
 
 void receiveRecordRefSample(int connection, char* command){
     char response[1] = {RRS};
-    
+
     syslog(LOG_DAEMON|LOG_INFO,"Recording Reference Sample...");
     recordRefSample(command[1],getScansPerSample(command[1]),100,getBoxcarSmoothing(command[1]));
     send(connection,(void*)response,1,0);
@@ -456,7 +456,7 @@ void readRefRunResponse(int connection, s_node* node){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
         data.Spectrometer = (unsigned char) (((double*)node->argv)[0]-1);
-        
+
         header[2] = data.Spectrometer;
         // Store Reference Sample
         if(data.Spectrometer < NUM_SPECS){
@@ -495,13 +495,13 @@ void readSampRunResponse(int connection, s_node* node){
         data.Spectrometer = (unsigned char) (((double*)node->argv)[0]-1);
         if(data.Spectrometer < NUM_SPECS){
             numPixels = spectrometers[data.Spectrometer]->status->numPixels;
-            
+
             // Request all necessary arrays
             sample = getLastSample(data.Spectrometer);
             if(!sample) syslog(LOG_DAEMON|LOG_ERR,"Unable to read last sample from spectrometer.");
             abs = getAbsorbance(data.Spectrometer);
             absSpec = getAbsorbanceSpectrum(data.Spectrometer);
-            
+
             // Send Sample, If All Arrays Retrieved
             if(sample && abs && absSpec){
                 moveSpecSampleToFloats(data.Counts,sample,numPixels);
@@ -536,7 +536,7 @@ void readSampRunResponse(int connection, s_node* node){
 void methodReadReference(unsigned long argc, void* argv){
     double* args = (double*)argv;
     char specNumber = (char)args[0]-1;
-    
+
     recordRefSample(specNumber,getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
 
     // TODO: Write Reference to Data File?
@@ -546,7 +546,7 @@ void methodReadSample(unsigned long argc, void* argv){
     double* args = (double*)argv;
     char specNumber = (char)args[0]-1;
     float* absorbance = NULL;
-    
+
     recordSpecSample(specNumber, getScansPerSample(specNumber), 100,getBoxcarSmoothing(specNumber));
     absorbance = getAbsorbance(specNumber);
 
@@ -563,7 +563,7 @@ void methodReadFullSpec(unsigned long argc, void* argv){
 
     syslog(LOG_DAEMON|LOG_INFO,"METHOD: Recording Full Spectrum.");
     recordSpecSample(specNumber,getScansPerSample(specNumber),100,getBoxcarSmoothing(specNumber));
-   
+
 
     // TODO: Write Sample to Data File
 }
@@ -580,9 +580,9 @@ void methodAbsCorr(unsigned long argc, void* argv){
 }
 
 void methodCalcConc(unsigned long argc, void* argv){
-    
+
     if(argc == 1){
-        
+
     }        
 }
 
@@ -610,7 +610,7 @@ void methodCalcPH(unsigned long argc, void* argv){
                     pH = computeSystempHMCP(absWaveCount,abs,abs[MAX_ABS_WAVES],*ctd);
                 } else if (getpHMeasureMode(specIndex) == TB){
                     syslog(LOG_DAEMON|LOG_INFO,"Calculating pH using TB for spec %d",specIndex);
-                   pH = computeSystempHTB(absWaveCount,abs,abs[MAX_ABS_WAVES],*ctd);
+                    pH = computeSystempHTB(absWaveCount,abs,abs[MAX_ABS_WAVES],*ctd);
                 }
 
                 if(pH >= 0){
@@ -635,24 +635,24 @@ void calConcRunResponse(int connection, s_node* node){
     CAL_CONCENTRATION_RUNTIME_DATA data;
 
     if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
-        data.Header.HeadByte = RTH;
-        data.Header.Command = node->commandID;
-        data.Spectrometer = (float)(((double*)node->argv)[0]-1);
+    data.Header.HeadByte = RTH;
+    data.Header.Command = node->commandID;
+    data.Spectrometer = (float)(((double*)node->argv)[0]-1);
 
-        // TODO: Fill in concentration code
-        data.Concentration[0] = 0;
-        data.RRatio = 0;
+    // TODO: Fill in concentration code
+    data.Concentration[0] = 0;
+    data.RRatio = 0;
 
-        send(connection,(void*)&data,sizeof(CAL_CONCENTRATION_RUNTIME_DATA),0);
+    send(connection,(void*)&data,sizeof(CAL_CONCENTRATION_RUNTIME_DATA),0);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"Incorrect command ID (%02x) passed to calConcRunResponse.",node->commandID);
+    syslog(LOG_DAEMON|LOG_ERR,"Incorrect command ID (%02x) passed to calConcRunResponse.",node->commandID);
     }
 }
 
 void calPCO2RunResponse(int connection, s_node* node){
     CAL_CONCENTRATION_RUNTIME_DATA data;
 
-    if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
+    if(node->commandID == CAL_PCO2_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
         data.Spectrometer = (float)(((double*)node->argv)[0]-1);
@@ -669,7 +669,7 @@ void calPCO2RunResponse(int connection, s_node* node){
 void calPHRunResponse(int connection, s_node* node){
     CAL_CONCENTRATION_RUNTIME_DATA data;
 
-    if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
+    if(node->commandID == CAL_PH_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
         data.Spectrometer = (float)(((double*)node->argv)[0]-1);
@@ -687,7 +687,7 @@ void calPHRunResponse(int connection, s_node* node){
 void calTCRunResponse(int connection, s_node* node){
     CAL_CONCENTRATION_RUNTIME_DATA data;
 
-    if(node->commandID == CAL_CONCENTRATION_RUNTIME_CMD){
+    if(node->commandID == CAL_TC_RUNTIME_CMD){
         data.Header.HeadByte = RTH;
         data.Header.Command = node->commandID;
         data.Spectrometer = (float)(((double*)node->argv)[0]-1);
