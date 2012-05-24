@@ -603,7 +603,7 @@ void methodCalcPH(unsigned long argc, void* argv){
         if(specIndex < NUM_SPECS){
             absWaveCount = getAbsorbingWavelengthCount(specIndex);
             abs = getAbsorbance(specIndex);
-            ctd = getCTDValues();
+            ctd = getDwelledCTDValue(specIndex);
             if(ctd && abs){
                 if(getpHMeasureMode(specIndex) == MCP){
                     syslog(LOG_DAEMON|LOG_INFO,"Calculating pH using MCP for spec %d",specIndex); 

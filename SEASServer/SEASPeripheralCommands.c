@@ -1,4 +1,5 @@
 #include "SEASPeripheralCommands.h"
+#include "CTDSink.h"
 
 static periphStatuses_s status;
 static const uint16_t pumpLONGPIO[MAX_NUM_PUMP_LON_NODES] = {PUMP_A_GPIO,PUMP_B_GPIO,PUMP_C_GPIO};
@@ -372,6 +373,18 @@ CTDreadings_s* getCTDValues(){
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for battery voltage.");
     }
     return readings;
+}
+
+CTDreadings_s* getDwelledCTDValue(int specIndex){
+    time_t now,desired;
+    uint16_t dwellTime;
+
+    now = time(NULL);
+    dwellTime = getDwell(specIndex);
+    desired = now - dwellTime;
+    CTDreadings_s* r = cplusplus_callback_function(desired);
+    syslog(LOG_DAEMON|LOG_INFO,"Dwell CTD - Now: %d, Dwell: %d, Desired: %d, CTD Time: %d",now,dwellTime,desired,r->t);
+    return cplusplus_callback_function(desired);
 }
 
 // GUI Protocol Wrappers

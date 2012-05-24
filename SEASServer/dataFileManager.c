@@ -211,11 +211,11 @@ uint64_t writeCTDData(struct CTDREADINGS ctd){
     return retVal;
 }
 
-uint64_t writeCTDDefault(){
+uint64_t writeCTDDefault(int specIndex){
     uint64_t retVal = 0;
     CTDreadings_s* ctd;
 
-    ctd = getCTDValues();
+    ctd = getDwelledCTDValue(specIndex);
     if(ctd){
         retVal = writeCTDData(*ctd);
         free(ctd);
@@ -322,7 +322,7 @@ void writeConcData(unsigned char specID){
     }
 
     // Log the current CTD
-    ctd_id = writeCTDDefault();
+    ctd_id = writeCTDDefault(specID);
 
     // Log the concentration set
     set_id = writeWavelengthSet(t,currConfigID[specID],nonAbsWave,counts[MAX_ABS_WAVES],abs[MAX_ABS_WAVES],ctd_id); 
@@ -456,7 +456,7 @@ void writeFullSpec(unsigned char specID){
     char* insertStmt = "INSERT INTO full_spectrums (time,config_id,sample_spectrum,ctd_reading_id,heater_temperature) VALUES (?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
-    ctd_id = writeCTDDefault();
+    ctd_id = writeCTDDefault(specID);
 
     pthread_mutex_lock(&dataMutex);
     if(db){

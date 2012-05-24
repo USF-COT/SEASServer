@@ -36,7 +36,7 @@
 #include "LONDispatch.h"
 #include "SEASPeripheralCommands.h"
 #include "dataFileManager.h"
-#include "CTDSink.hpp"
+#include "CTDSink.h"
 
 #define LONPORT "/dev/ttyO0"
 
@@ -159,9 +159,6 @@ int main(){
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  // Start CTD Sink
-  CTDSink* ctdSink = CTDSink::Instance();
-
   /* Setup TCP/IP Socket */
   if((list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0){
       syslog(LOG_DAEMON|LOG_ERR,"Unable to create socket. Daemon Terminated.");
@@ -207,6 +204,9 @@ int main(){
   // Init Bench Config and Power Management GPIOs (See SEASPeriperalCommands.c)
   readBenchConfig();
   initPeripherals();
+
+  // Start CTD Sink
+  CTDSink* ctdSink = CTDSink::Instance();
 
   /*  Bind our socket addresss to the
 	listening socket, and call listen()  */

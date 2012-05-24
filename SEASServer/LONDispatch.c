@@ -210,13 +210,13 @@ LONresponse_s* createLONResponse(unsigned char* buffer){
             retVal->dataLength = 0;
             retVal->data = NULL;
             retVal->checkSum = (unsigned char)((buffer[0]*2)+4) & 0xFF;
-            syslog(LOG_DAEMON|LOG_ERR,"ACK or NAK command received.");
+            //syslog(LOG_DAEMON|LOG_ERR,"ACK or NAK command received.");
         } else {
             retVal->deviceID = buffer[0];
             retVal->numBytes = (buffer[1] << 8) + buffer[2];
             retVal->commandID = buffer[3];
             retVal->dataLength = retVal->numBytes - 5; // dataLength = numBytes - deviceIDByte - numByteMSB - numByteLSB - commandIDByte - checkSumByte
-            syslog(LOG_DAEMON|LOG_INFO,"LON Device ID: %02X, Num Bytes: %d, Command ID: %02X, Data Length: %d.",retVal->deviceID,retVal->numBytes,retVal->commandID,retVal->dataLength);
+            //syslog(LOG_DAEMON|LOG_INFO,"LON Device ID: %02X, Num Bytes: %d, Command ID: %02X, Data Length: %d.",retVal->deviceID,retVal->numBytes,retVal->commandID,retVal->dataLength);
             retVal->data = (unsigned char*)malloc(sizeof(unsigned char)*retVal->dataLength);
             memcpy(retVal->data,buffer+4,retVal->dataLength);
             retVal->checkSum = buffer[retVal->numBytes-1];
@@ -295,7 +295,7 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
         sprintf(hexChar,"%02X ",commBuffer[i]);
         strcat(debugLine,hexChar);
     }
-    syslog(LOG_DAEMON|LOG_INFO,"Sending LON %d bytes: %s.",length,debugLine);
+//    syslog(LOG_DAEMON|LOG_INFO,"Sending LON %d bytes: %s.",length,debugLine);
     write(portID,commBuffer,length);
     tcdrain(portID);
     free(commBuffer);

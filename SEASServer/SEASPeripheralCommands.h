@@ -91,6 +91,7 @@ float getHeaterCurrentTemperature(unsigned char heaterID);
 heaterStatus_s* getHeaterStatus(unsigned char heaterID);
 unsigned char getLampStatus();
 CTDreadings_s* getCTDValues();
+CTDreadings_s* getDwelledCTDValue(int specIndex);
 
 // GUI Protocol Wrappers
 void receiveSetPumpControl(int connection, char* command);
