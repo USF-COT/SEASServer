@@ -23,6 +23,8 @@ void executeMethodFile();
 void terminateMethodFile();
 void terminateMethodAndWait();
 
+void waitOnMethodFile();
+
 #ifdef __cplusplus
  }
 #endif

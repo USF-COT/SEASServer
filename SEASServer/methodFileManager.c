@@ -319,19 +319,19 @@ void receiveExecuteMethod(int connection, char* command){
                 yyparse();
                 fclose(yyin);
                 node = getHeadNode();
-                setSocketTimeout(connection,1,0);
+                if(connection)setSocketTimeout(connection,1,0);
                 syslog(LOG_DAEMON|LOG_INFO,"Sucessfully started executing method file @ path: %s.",fullPath);
                 while(node != NULL){
                     nextNode = evaluateNode(node);
-                    if(runResponding) sendRunProtocolMessage(connection,node);
+                    if(runResponding && connection) sendRunProtocolMessage(connection,node);
                     node = nextNode;
-                    numBytesReceived = recv(connection,termRecBuf,1,0);
+                    if(connection)numBytesReceived = recv(connection,termRecBuf,1,0);
                     if(numBytesReceived > 0 && termRecBuf[0] == TRM){
                         syslog(LOG_DAEMON|LOG_INFO,"Terminate Command Received.  Stopping Node Execution.");
                         break;
                     } 
                 }
-                setSocketTimeout(connection,0,0);
+                if(connection)setSocketTimeout(connection,0,0);
                 syslog(LOG_DAEMON|LOG_INFO,"Execution finished for file @ path: %s.",fullPath);
                 closeDataFile(); // In case the user forgets
             } else {
@@ -347,7 +347,7 @@ void receiveExecuteMethod(int connection, char* command){
     }
     
     // Let the GUI know that method file execution has terminated
-    send(connection,(void*)&termResponse,sizeof(RUNTIME_RESPONSE_HEADER),0);
+    if(connection)send(connection,(void*)&termResponse,sizeof(RUNTIME_RESPONSE_HEADER),0);
 }
 
 void receiveTerminateMethod(int connection, char* command){
@@ -357,3 +357,4 @@ void receiveTerminateMethod(int connection, char* command){
     clearNodes();
     syslog(LOG_DAEMON|LOG_INFO,"Method file execution terminated.");
 }
+

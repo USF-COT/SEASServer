@@ -183,9 +183,6 @@ char readConfig(){
 
     fclose(configFile);
 
-    // Apply Mode Setting After All Possible Settings Have Been Read
-    setMode(mode);
-
     return 1;
 }
 
@@ -303,10 +300,9 @@ void writeConfigFile(){
 }
 
 // Set Methods
-void setMode(systemMode sysMode){
-    mode = sysMode;
-
+void setMode(){
     if(mode == PROGRAM){
+        syslog(LOG_DAEMON|LOG_INFO,"Executing method file.");
         executeMethodFile();
     } else if (mode == MANUAL){
         terminateMethodFile();

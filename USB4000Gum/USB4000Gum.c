@@ -7,7 +7,6 @@
 
 #include "USB4000Gum.h"
 
-#define DEBUG 0
 
 specSample* allocateSample(unsigned int numScansPerSample, unsigned short numPixels){
     specSample* sample;
@@ -546,16 +545,22 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
             usleep(4100);
             // Handle Response Depending on USB Connection
             if(USB4000->status->isHighSpeed){
+                #ifdef DEBUG
                 fprintf(stdout,"Handling High-Speed USB Connection.");
+                #endif
                 numRead = usb_bulk_read(USB4000->usbHandle, EP6IN,response,2048,1000);
                 numRead += usb_bulk_read(USB4000->usbHandle, EP2IN,response+2048,5633,1000);
             }
             else{
+                #ifdef DEBUG
                 fprintf(stdout,"Handling Full Speed (Slower Speed) USB Connection.");
+                #endif
                 numRead = usb_bulk_read(USB4000->usbHandle, EP2IN,response,7681,10000);
             }
 
+            #ifdef DEBUG
             fprintf(stdout,"Read %d Bytes.  Sync byte (0x69) is 0x%x.\n",numRead,response[7680]);
+            #endif
 
             if((numRead == USB4000->status->numPixels*2 + 1) && response[7680] == 0x69){
                 #ifdef DEBUG
@@ -588,7 +593,9 @@ specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, uns
         }
     }
     
+    #ifdef DEBUG
     fprintf(stdout,"Applying %d point boxcar filter\n",boxcar);
+    #endif
     boxcarFilter(sample,boxcar,USB4000->status->numPixels);
 
     USB4000->sample = sample;

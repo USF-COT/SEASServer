@@ -8,6 +8,10 @@
 #ifndef _USB4000GUM_H
 #define _USB4000GUM_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -119,6 +123,10 @@ void readDarkSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsi
 void readRefSpectra(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar);
 specSample* copySample(specSample* source,unsigned short numPixels);
 specSample* getSample(spectrometer* USB4000, unsigned int numScansPerSample, unsigned int delayBetweenScansInMicroSeconds,unsigned short boxcar); // 0x09
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

@@ -1,9 +1,11 @@
 #include "methodFileRunner.h"
 #include "dataFileManager.h"
+#include "methodFileManager.h"
 
 volatile sig_atomic_t executingMethod = 0;
 static pthread_t methodFileRunnerThread;
 
+/*
 void *methodFileRunner(void* name){
     char* filename = (char*)getActiveMethodFilename();
 
@@ -22,6 +24,11 @@ void *methodFileRunner(void* name){
     syslog(LOG_DAEMON|LOG_INFO,"Stopped Running Method File: %s.",filename);
     free(name);
     pthread_exit(NULL);
+}
+*/
+
+void *methodFileRunner(void* name){
+    receiveExecuteMethod(-1,NULL);
 }
 
 // Generic Methods
@@ -42,4 +49,9 @@ void terminateMethodFile(){
 void terminateMethodAndWait(){
     executingMethod = 0;
     pthread_join(methodFileRunnerThread,NULL);
+}
+
+void waitOnMethodFile(){
+    if(executingMethod)
+        pthread_join(methodFileRunnerThread,NULL);
 }

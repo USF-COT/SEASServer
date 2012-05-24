@@ -13,7 +13,7 @@ testUSB4000: lib/libUSB4000.so
 	gcc -Iinclude -lusb -lm testUSB4000.c -o testUSB4000 -Llib -lUSB4000
 
 lib/libUSB4000.so: USB4000.o
-	gcc -shared -o lib/libUSB4000.so USB4000.o
+	gcc -O2 -shared -o lib/libUSB4000.so USB4000.o
 
 USB4000.o: USB4000Gum.c USB4000Gum.h include/libUSB4000.h
-	gcc -lusb -lm -c -fPIC USB4000Gum.c -o USB4000.o
+	gcc -O2 -lusb -lm -c -fPIC USB4000Gum.c -o USB4000.o
