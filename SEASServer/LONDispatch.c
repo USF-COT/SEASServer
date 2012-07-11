@@ -97,7 +97,7 @@ short readByte(unsigned char* buffer){
     bytesRead = read(portID,buffer,1);
 
     while(bytesRead <= 0 && tries < MAX_TRIES){
-        usleep(30000);
+       usleep(30000);
         bytesRead = read(portID,buffer,1);
         tries++;
     }
@@ -265,7 +265,6 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
     char hexChar[4];
     char debugLine[1025];
     debugLine[0] = '\0';
-
     if(portID == -1){
         // Kludgy, but this should be a rare case.
         free(commBuffer);
@@ -306,7 +305,6 @@ LONresponse_s* sendLONCommand(unsigned char device, unsigned char command, unsig
 
     response = createLONResponse(commBuffer);
     free(commBuffer);
-
     return response;
 }
 

@@ -1,5 +1,4 @@
 #include "methodFileManager.h"
-
 #define MAXMETHODPATHLENGTH 512
 #define STORAGEDIRECTORY "/home/datauser/methods/"
 #define ACTIVESCRIPTCONFIGFILE ".active.config"
@@ -325,8 +324,11 @@ void receiveExecuteMethod(int connection, char* command){
                     nextNode = evaluateNode(node);
                     if(runResponding && connection) sendRunProtocolMessage(connection,node);
                     node = nextNode;
-                    if(connection)numBytesReceived = recv(connection,termRecBuf,1,0);
-                    if(numBytesReceived > 0 && termRecBuf[0] == TRM){
+                    if(connection){
+                    numBytesReceived = recv(connection,termRecBuf,1,0);
+                  }
+                  sleep(1);
+                   if(numBytesReceived > 0 && termRecBuf[0] == TRM){
                         syslog(LOG_DAEMON|LOG_INFO,"Terminate Command Received.  Stopping Node Execution.");
                         break;
                     } 
