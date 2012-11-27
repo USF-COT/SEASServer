@@ -125,9 +125,10 @@ typedef struct SPECCONFIG{
 void applyConfig();
 void writeConfigFile();
 char readConfig();
+void execMode();
 
 // Set Methods
-void setMode();
+void setMode(BOOL autonomous);
 char setSpectrometerParameters(int specIndex,unsigned short newIntTime,unsigned short newScansPerSample, unsigned short newBoxcarSmoothing);
 char setComputationData(int specIndex, char* newAnalyteName, unsigned char newUnits, unsigned char newAbsWaveCount, float* newAbsWaves, float newNonAbsWave);
 void setAbsorbanceWavelengths(int specIndex,unsigned char newAbsWaveCount,float* newAbsWaves);

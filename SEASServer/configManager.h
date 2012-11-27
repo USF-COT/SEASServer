@@ -15,6 +15,7 @@ void sendWaveParameters(int connection, char* command);
 void receiveParameterBytes(int connection, char* command);
 void sendSpecParameters(int connection, char* command);
 void receiveSlopeInterceptPairs(int connection, char* command);
+void receiveSetAutonomousMode(int connection, char* command);
 
 // Method Script Handlers
 void methodSetSpectrometerParameters(unsigned long argc, void* argv);

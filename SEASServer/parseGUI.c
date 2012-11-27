@@ -41,7 +41,8 @@ GUIHandler const handlers[] = {
         receiveGetCTDValues, // 0x25 RTD
         receiveGetTemperatureValue, // 0x26 RHT
         receiveSaveBenchConfig, // 0x27 SBC
-        sendBenchConfig // 0x28 RBC
+        sendBenchConfig, // 0x28 RBC
+        receiveSetAutonomousMode // 0x29 SMM
     };
 
 static const int numGUIHandlers = 0x28;

@@ -63,6 +63,17 @@ void receiveSlopeInterceptPairs(int connection, char* command){
     }
 }
 
+void receiveSetAutonomousMode(int connection, char* command){
+    if(command[0] == SMM){
+        if(command[1] == MANMODE){
+            syslog(LOG_DAEMON|LOG_INFO, "MSEAS will be set to manual mode on next restart.");
+            setMode(FALSE);
+        } else {
+            syslog(LOG_DAEMON|LOG_INFO, "MSEAS will be set to autonomous mode on next restart.");
+        }
+    }
+}
+
 void writeConfigChanges(int connection, char* command){
     syslog(LOG_DAEMON||LOG_INFO,"Saving Configuration.");
     char response[1] = {SVC};

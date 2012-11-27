@@ -299,13 +299,25 @@ void writeConfigFile(){
     }
 }
 
-// Set Methods
-void setMode(){
+void execMode(){
     if(mode == PROGRAM){
         syslog(LOG_DAEMON|LOG_INFO,"Executing method file.");
         executeMethodFile();
     } else if (mode == MANUAL){
         terminateMethodFile();
+    }
+}
+
+// Set Methods
+void setMode(BOOL autonomous){
+    if(autonomous && mode == MANUAL){
+        mode = PROGRAM;
+        writeConfigFile();
+        execMode();
+    } else if (!autonomous && mode == PROGRAM){
+        mode = MANUAL;
+        writeConfigFile();
+        execMode();
     }
 }
 

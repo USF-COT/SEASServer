@@ -68,6 +68,11 @@
 #define  SBC      0x27           // Save Benchtop Configuration
 #define  RBC      0x28           // Read Benchtop Configuration
 
+/* Manual/Autonomous Mode Set Mnemonics */
+#define  SMM      0x29 // Set Mode
+#define  MANMODE 0x00 // Manual Mode
+#define  AUTOMODE  0x01 // Auto Mode
+
 
 /* Mini SEAS to GUI commands */
 

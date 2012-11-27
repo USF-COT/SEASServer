@@ -224,7 +224,7 @@ int main(){
   for(i=0; i < NUM_THREADS; i++)
       thread_bin_available[i] = AVAILABLE;
 
-  setMode();
+  execMode();
 
   while(keep_going){
     syslog(LOG_DAEMON|LOG_INFO,"Listening for connection on port %i", port);
