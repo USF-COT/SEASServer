@@ -5,6 +5,7 @@
  * Created on June 10, 2009, 10:52 AM
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/syslog.h>

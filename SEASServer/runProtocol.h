@@ -16,6 +16,8 @@
  extern "C" {
 #endif
 
+#include <inttypes.h>
+
 /* Static Size of Scan Size */
 #define USB4000_NUMPIXELS 3840
 #define MAX_ABSORBANCE_WAVELENGTHS 9

@@ -12,8 +12,8 @@ SRCS = $(wildcard *.c)
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 INC_DIRS = -I../../USB4000Gum/include 
 
-#%.o:%.c
-#	$(CC) -c $(CFLAGS) $(INC_DIRS) $< -o $@;
+objs/%.o:%.c
+	$(CC) -c $(CFLAGS) $(INC_DIRS) $< -o $@;
 
 MethodLexAna.lex.c: MethodParser.tab.c MethodLexAna.y
 	flex -o MethodLexAna.lex.c -i MethodLexAna.y

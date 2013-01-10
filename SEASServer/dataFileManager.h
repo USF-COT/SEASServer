@@ -10,6 +10,7 @@
  extern "C" {
 #endif
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
 #include <syslog.h>

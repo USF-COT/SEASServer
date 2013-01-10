@@ -11,6 +11,7 @@
  extern "C" {
 #endif
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/syslog.h>

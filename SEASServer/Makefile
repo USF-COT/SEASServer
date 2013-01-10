@@ -5,17 +5,18 @@ CC=gcc
 LD=g++
 CSRCS = $(wildcard *.c) 
 CPPSRCS += $(wildcard *.cpp)
+METHODSRCS = $(wildcard MethodParser/Method*.c)
 COBJS = $(patsubst %.c,objs/%.o,$(CSRCS))
-COBJS += $(wildcard MethodParser/*.o)
 CPPOBJS = $(patsubst %.cpp,objs/%.o,$(CPPSRCS))
+METHODOBJS = $(patsubst MethodParser/%.c,MethodParser/%.o,$(METHODSRCS))
 
 INC_DIRS = -I../USB4000Gum/include \
            -IMethodParser
-LDFLAGS = -L../USB4000Gum/lib
+LDFLAGS = -L../USB4000Gum/lib -L/lib
 LIBS = -lUSB4000 -lsqlite3 -lusb -lm -lpthread
 
 
-SEASServer:$(COBJS) $(CPPOBJS)
+SEASServer:$(COBJS) $(CPPOBJS) $(METHODOBJS)
 	$(LD) -O2 -o $@ $(INC_DIRS) $(LDFLAGS) $(LIBS) $^; \
 	sudo cp SEASServer /usr/local/bin;
 
