@@ -308,11 +308,11 @@ float getHeaterCurrentTemperature(unsigned char heaterID){
         if(response->data && response->deviceID == HTR && response->data[0] == heaterID){
             copyReverseBytes(&currentTemp,response->data+1,4);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve current temperature from heater %d.",heaterID);
+            //syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unable to retrieve current temperature from heater %d.",heaterID);
         }
         freeLONResponse(response);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for current temperature from heater %d.",heaterID);
+        //syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for current temperature from heater %d.",heaterID);
     }
     return currentTemp;
 }
@@ -329,11 +329,11 @@ heaterStatus_s* getHeaterStatus(unsigned char heaterID){
             copyReverseBytes(&(status->setTemperature),response->data+2,4);
             copyReverseBytes(&(status->currentTemperature),response->data+6,4);
         } else {
-            syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of heater %d.",heaterID);
+            //syslog(LOG_DAEMON|LOG_ERR,"ERROR: Incorrect LON response received when looking for status of heater %d.",heaterID);
         }
         freeLONResponse(response);
     } else {
-        syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for status from heater %d",heaterID);
+        //syslog(LOG_DAEMON|LOG_ERR,"ERROR: No LON response received when looking for status from heater %d",heaterID);
     }
     return status;
 }
