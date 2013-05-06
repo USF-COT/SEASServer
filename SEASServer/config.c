@@ -313,11 +313,10 @@ void setMode(BOOL autonomous){
     if(autonomous && mode == MANUAL){
         mode = PROGRAM;
         writeConfigFile();
-        execMode();
     } else if (!autonomous && mode == PROGRAM){
         mode = MANUAL;
         writeConfigFile();
-        execMode();
+        execMode(); // Break in to autonomous mode
     }
 }
 
