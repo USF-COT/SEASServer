@@ -557,7 +557,7 @@ void receiveGetTemperatureValue(int connection, char* command){
         sendBuffer[0] = RHT;
         heaterTemp = getHeaterCurrentTemperature(1);
         memcpy(sendBuffer+1,&heaterTemp,4);
-        syslog(LOG_DAEMON|LOG_INFO,"Sending heater current temperature: %3.5f",heaterTemp);
+//        syslog(LOG_DAEMON|LOG_INFO,"Sending heater current temperature: %3.5f",heaterTemp);
         send(connection,(void*)sendBuffer,sizeof(unsigned char)*5,0);
     } else {
         syslog(LOG_DAEMON|LOG_ERR,"ERROR: Unrecognized command (0x%02x) sent ot receive GetTemperatureValue.",command[0]);

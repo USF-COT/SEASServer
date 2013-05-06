@@ -45,7 +45,7 @@ GUIHandler const handlers[] = {
         receiveSetAutonomousMode // 0x29 SMM
     };
 
-static const int numGUIHandlers = 0x28;
+static const int numGUIHandlers = 0x29;
 
 void parseGUI(int connection,char* command){
     char ack = 0x00;

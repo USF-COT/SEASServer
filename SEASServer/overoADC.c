@@ -45,7 +45,7 @@ void receiveGetBatteryVoltage(int connection, char* command){
     float batteryVoltage;
 
     if(command[0] == RBS){
-        syslog(LOG_DAEMON|LOG_INFO,"Getting battery voltage for GUI");
+//        syslog(LOG_DAEMON|LOG_INFO,"Getting battery voltage for GUI");
         batteryVoltage = getBatteryVoltage();
         syslog(LOG_DAEMON|LOG_INFO,"Retrieved battery voltage as: %f.",batteryVoltage);
         sendBuffer[0] = RBS;

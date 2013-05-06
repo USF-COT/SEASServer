@@ -70,6 +70,7 @@ void receiveSetAutonomousMode(int connection, char* command){
             setMode(FALSE);
         } else {
             syslog(LOG_DAEMON|LOG_INFO, "MSEAS will be set to autonomous mode on next restart.");
+            setMode(TRUE);
         }
     }
 }
