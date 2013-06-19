@@ -13,17 +13,17 @@ METHODOBJS = $(patsubst MethodParser/%.c,MethodParser/%.o,$(METHODSRCS))
 INC_DIRS = -I../USB4000Gum/include \
            -IMethodParser
 LDFLAGS = -L../USB4000Gum/lib -L/lib
-LIBS = -lUSB4000 -lsqlite3 -lusb -lm -lpthread
+LIBS = -lUSB4000 -lsqlite3 -lusb -lm -lpthread 
 
 
 SEASServer:$(COBJS) $(CPPOBJS) $(METHODOBJS)
 	$(LD) -O2 -o $@ $(INC_DIRS) $(LDFLAGS) $(LIBS) $^; \
 	sudo cp SEASServer /usr/local/bin;
 
-objs/%.o:%.c objs_dir
+objs/%.o:%.c | objs_dir
 	$(CC) -O2  -c $(CFLAGS) $(INC_DIRS) $< -o $@; 
 
-objs/%.o:%.cpp objs_dir
+objs/%.o:%.cpp | objs_dir
 	g++ -O2 -c $(CFLAGS) $(INC_DIRS) $< -o $@;
 
 objs_dir:
