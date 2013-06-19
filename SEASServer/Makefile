@@ -20,14 +20,14 @@ SEASServer:$(COBJS) $(CPPOBJS) $(METHODOBJS)
 	$(LD) -O2 -o $@ $(INC_DIRS) $(LDFLAGS) $(LIBS) $^; \
 	sudo cp SEASServer /usr/local/bin;
 
-objs/%.o:%.c obj_dir
+objs/%.o:%.c objs_dir
 	$(CC) -O2  -c $(CFLAGS) $(INC_DIRS) $< -o $@; 
 
-objs/%.o:%.cpp obj_dir
+objs/%.o:%.cpp objs_dir
 	g++ -O2 -c $(CFLAGS) $(INC_DIRS) $< -o $@;
 
-obj_dir:
-	mkdir -p obj;
+objs_dir:
+	mkdir -p objs;
 
 MethodParser/%.o:MethodParser/%.c 
 	$(CC) -O2  -c $(CFLAGS) $(INC_DIRS) $< -o $@;
