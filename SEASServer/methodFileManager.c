@@ -72,23 +72,23 @@ void receiveMethodFile(int connection, char* command){
     // When an LRM character is found, close the file and return an LRM as a response.
     if(methodFile){
         // Write out remainder of command buffer
-        for(i=offset; i < strlen(command); i++){
-            if(command[i] == LRM){
-                // Close the file
-                fclose(methodFile);
-                methodFile = NULL;
+        // for(i=offset; i < strlen(command); i++){
+        //     if(command[i] == LRM){
+        //         // Close the file
+        //         fclose(methodFile);
+        //         methodFile = NULL;
 
-                // Create a response
-                send(connection,(void*)response,1,0);
-                syslog(LOG_DAEMON|LOG_INFO,"Successfully stored method file %s", filename);
-                return;
-            } else {
-                fputc(command[i],methodFile);
-            } 
-        }
+        //         // Create a response
+        //         send(connection,(void*)response,1,0);
+        //         syslog(LOG_DAEMON|LOG_INFO,"Successfully stored method file %s", filename);
+        //         return;
+        //     } else {
+        //         fputc(command[i],methodFile);
+        //     } 
+        // }
 
         // Retrieve the rest of the file stream from the socket
-        send(connection,(void*)response,1,0);
+        // send(connection,(void*)response,1,0);
         nBytesReceived = recv(connection,receiveBuffer,MAXMETHRECVBUF,0);
         while(nBytesReceived > 0){
             receiveBuffer[nBytesReceived] = '\0';
