@@ -9,7 +9,7 @@ void applyDBSchema(sqlite3* db){
     char *errMsg;
 
     // Create configs table
-    query = "CREATE TABLE [configs] ([config_id] INTEGER  PRIMARY KEY AUTOINCREMENT NOT NULL,[time] INTEGER  NOT NULL,[spec_id] INTEGER  NOT NULL,[analyte_name] TEXT  NOT NULL,[integration_time] INTEGER  NOT NULL,[dwell] INTEGER  NOT NULL,[scans_per_sample] INTEGER  NOT NULL,[boxcar] INTEGER  NOT NULL, [slopes] TEXT NOT NULL, [intercepts] TEXT NOT NULL, [reference_spectrum] BLOB  NULL)";
+    query = "CREATE TABLE [configs] ([config_id] INTEGER  PRIMARY KEY AUTOINCREMENT NOT NULL,[time] INTEGER  NOT NULL,[spec_id] INTEGER  NOT NULL,[analyte_name] TEXT  NOT NULL,[integration_time] INTEGER  NOT NULL,[dwell] INTEGER  NOT NULL,[scans_per_sample] INTEGER  NOT NULL,[boxcar] INTEGER  NOT NULL, [slopes] TEXT NOT NULL, [intercepts] TEXT NOT NULL, [reference_spectrum] BLOB  NULL, [wavelengths] BLOB NULL)";
     if(sqlite3_exec(db,query,NULL,NULL,&errMsg) != SQLITE_OK){
         syslog(LOG_DAEMON|LOG_ERR, "SQLite Create Configs Table Query Failed: %s", errMsg);
     }
@@ -91,8 +91,9 @@ void writeConfigToDB(){
     float* intercepts = NULL;
     char intString[1024];
     specSample* refSample = NULL;
+    double* wavelengths = NULL;
     // If MAX_ABS_WAVES in config.h is changed, this line must be changed manually!
-    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,slopes,intercepts,reference_spectrum) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    const char* insertStmt = "INSERT INTO main.configs (time,spec_id,analyte_name,integration_time,dwell,scans_per_sample,boxcar,slopes,intercepts,reference_spectrum,wavelengths) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     sqlite3_stmt* pStmt = NULL;
 
     // Do nothing if a data file is not currently open
@@ -106,6 +107,7 @@ void writeConfigToDB(){
         for(i=0; i < NUM_SPECS; i++){
             config = getConfigCopy(i);
             refSample = getRefSample(i);
+            wavelengths = getWavelengths(i);
             if(config){
                 // Fill prepared statement
                 sqlite3_bind_int64(pStmt,1,(int64_t)time(NULL));
@@ -139,6 +141,12 @@ void writeConfigToDB(){
                     sqlite3_bind_null(pStmt,10);
                 }
 
+                if (wavelengths){
+                    sqlite3_bind_blob(pStmt,11,wavelengths,getNumPixels(i)*sizeof(double),SQLITE_TRANSIENT);
+                } else {
+                    sqlite3_bind_null(pStmt,11);
+                }
+
                 /*
                    for(j=0; j < MAX_ABS_WAVES; j++){
                    if(config->waveParameters.absorbingWavelengths[j] > 0){
@@ -162,6 +170,7 @@ void writeConfigToDB(){
 
                 // housekeeping!
                 if(refSample) deallocateSample(&refSample);
+                if(wavelengths) free(wavelengths);
                 freeSpecConfig(&config);
             } else {
                 syslog(LOG_DAEMON|LOG_ERR, "Unable to retrieve config spec for spectrometer %d",i);

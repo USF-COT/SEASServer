@@ -266,5 +266,3 @@ unsigned short   GetPixelForWavelength(spectrometer* USB4000, double Lambda )
    /* Target not found - return zero */
    return(0);
 }
-
-

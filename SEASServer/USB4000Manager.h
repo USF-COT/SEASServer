@@ -53,6 +53,7 @@ unsigned short calcPixelValueForWavelength(unsigned char specNumber,float wavele
 float* getConcentrations(unsigned char specNumber);
 
 // Get last methods
+double* getWavelengths(char specNumber);
 specSample* getRefSample(char specNumber);
 specSample* getLastSample(char specNumber);
 

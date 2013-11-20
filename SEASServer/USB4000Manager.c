@@ -98,6 +98,25 @@ void sendCalCos(int connection, char* command){
 }
 
 // Utility methods
+double* getWavelengths(char specNumber){
+    double* retVal = NULL;
+    unsigned int i;
+
+    if(specNumber < NUM_SPECS){
+        pthread_mutex_lock(&specsMutex[specNumber]);
+        double* retVal = (double *) malloc(sizeof(double) * spectrometers[specNumber]->status->numPixels);
+
+        for(i = 0; i < spectrometers[specNumber]->status->numPixels; ++i){
+            retVal[i] = spectrometers[specNumber]->lambdaValues[i];
+        }
+
+        pthread_mutex_unlock(&specsMutex[specNumber]);
+    } else {
+        syslog(LOG_DAEMON|LOG_ERR, "Spectrometer index out of range.  Requested spectrometer number %i.",specNumber);
+    }
+    return retVal;
+}
+
 specSample* getRefSample(char specNumber){
     specSample* refSample = NULL;
 
